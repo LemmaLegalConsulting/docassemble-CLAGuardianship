@@ -1,0 +1,709 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - shared.yml
+---
+metadata:
+  title: >-
+    Petition for Removal of Guardian of Minor (MPC 240)
+  short title: >-
+    MPC 240
+  description: |-
+    This interview helps someone in Massachusetts file a petition for the removal of a guardian of a minor.
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  authors:
+    - Court Forms Online
+  allowed_courts:
+    - "Probate and Family Court"
+  typical_role: "unknown"
+  al_weaver_version: "playground"
+  generated_on: "2024-02-13"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name = 'docassemble-PetitionForRemovalOfGuardianOfMinor'
+---
+code: |
+  interview_short_title = "File a petition for the removal of a guardian of a minor"
+---
+code: |
+  al_form_type = "other"
+---
+objects:
+  - responsible_parents: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+  - guardian_successors: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
+---
+sections:
+  - review_case_information: About the case
+  - review_petitioner_information: About the Petitioners
+  - review_guardian_information: Current guardians
+  - review_requests: Your requests to the Court
+  - review_attorney_information: Your attorney
+  - review_petition_for_removal_of_guardian: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_petition_for_removal_of_guardian
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+
+  nav.set_section("review_petition_for_removal_of_guardian")
+
+  nav.set_section("review_case_information")
+  # trial_court.division
+  docket_number
+  children.gather()
+
+  nav.set_section("review_petitioner_information")
+  who_is_making_petition
+  users.gather()
+
+  nav.set_section("review_guardian_information")
+  guardians.gather()
+  bio_parents_can_resume_responsibilities
+  petitioners1_signature_date
+
+  nav.set_section("review_requests")
+  bio_parents_can_resume_responsibilities
+  responsible_parents.gather()
+  minor_adopted
+  has_attachment
+  guardian_successors.gather()
+
+  nav.set_section("review_attorney_information")
+  attorneys.gather()
+  attorneys1.bbo
+
+  interview_order_petition_for_removal_of_guardian = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+code: |
+  al_intro_screen
+  petition_for_removal_of_guardian_intro
+  interview_order_petition_for_removal_of_guardian
+  signature_date
+  petition_for_removal_of_guardian_download
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: petition_for_removal_of_guardian
+continue button field: petition_for_removal_of_guardian_intro
+question: |
+  Petition for Removal of Guardian of Minor (MPC 240)
+subquestion: |
+  This interview will help you file a Petition for the removal of a guardian of a minor.
+
+  Before you get started, please gather:
+
+  1. 
+  1. 
+  1. 
+
+  When you are finished, you will need to:
+
+  1. 
+  1. 
+
+  Most people take about _______ minutes to finish this interview.
+---
+#################### Object Blocks Start #####################
+---
+#NOTE: space left blank for now for additional object blocks that may be needed
+---
+#################### Object Blocks End #####################
+---
+#################### Question Blocks Start #####################
+---
+id: petitioners
+question: |
+  Who is making this petition?
+fields:
+  - no label: who_is_making_petition
+    datatype: radio
+    choices:
+      - the minor's parent(s)
+      - the minor
+      - a person interested in the minor's welfare
+  - no label: parents_making_petition
+    datatype: radio
+    choices:
+      - the minor's mother
+      - the minor's father
+      - both
+    show if:
+      variable: who_is_making_petition
+      is: "the minor's parent(s)"
+validation code: |
+  if who_is_making_petition == "the minor's parent(s)":
+    petitioner_is_parent = True
+  elif who_is_making_petition == "the minor":
+    petitioner_is_minor = True
+  elif who_is_making_petition == "a person interested in the minor's welfare":
+    petitioner_is_interested_party = True
+
+  if parents_making_petition == "both":
+    petitioner_is_both_parents = True
+  elif parents_making_petition == "the minor's father":
+    petitioner_is_father = True
+  elif parents_making_petition == "the minor's mother":
+    petitioner_is_mother = True
+---
+id: first petitioner information
+sets:
+  - users[0].name.first
+  - users[0].name.last
+  - users[0].name.middle
+  - users[0].name.suffix
+  - users[0].address.address
+  - users[0].address.unit
+  - users[0].address.city
+  - users[0].address.state
+  - users[0].address.zip
+  - users[0].address.country
+  - users[0].phone_number
+question: |
+  Tell us about yourself
+fields:
+  - code: |
+      users[0].name_fields()
+  - code: |
+      users[0].address_fields()
+  - Phone number: users[0].phone_number
+validation code: |
+  if petitioner_is_both_parents == True:
+    users.there_is_another = True
+---
+id: petitioner information
+sets:
+  - users[i].name.first
+  - users[i].name.last
+  - users[i].name.middle
+  - users[i].name.suffix
+  - users[i].address.address
+  - users[i].address.unit
+  - users[i].address.city
+  - users[i].address.state
+  - users[i].address.zip
+  - users[i].address.country
+  - users[i].phone_number
+question: |
+  Tell us about the other petitioner
+fields:
+  - code: |
+      users[i].name_fields()
+  - code: |
+      users[i].address_fields()
+  - Phone number: users[i].phone_number
+validation code: |
+  if len(users.complete_elements()) > 0:
+    users.there_is_another = False
+---
+id: guardian information
+sets:
+  - guardians[i].name.first
+  - guardians[i].name.last
+  - guardians[i].name.middle
+  - guardians[i].name.suffix
+  - guardians[i].address.address
+  - guardians[i].address.unit
+  - guardians[i].address.city
+  - guardians[i].address.state
+  - guardians[i].address.zip
+  - guardians[i].address.country
+  - guardians[i].phone_number
+  - guardians[i].appointment_date
+question: |
+  % if len(guardians.complete_elements()) < 1:
+  Tell us about the minor's current guardian(s)
+  % else:
+  Tell us about the second guardian
+  % endif
+subquestion: |
+  % if len(guardians.complete_elements()) < 1:
+  You can add up to two guardians in this petition. Start by telling us bout the first guardian.
+  % endif
+fields:
+  - code: |
+      guardians[i].name_fields()
+  - code: |
+      guardians[i].address_fields()
+  - Phone number: guardians[i].phone_number
+  - note: When was this person appointed as a guardian for the minor?
+  - no label: guardians[i].appointment_date
+    datatype: date
+    required: True
+validation code: |
+  if len(guardians.complete_elements()) > 0:
+    guardians.there_is_another = False
+---
+id: guardians there_is_another
+question: |
+  Do you want to add a second guardian to the petition?
+fields:
+  - no label: guardians.there_is_another
+    datatype: yesnoradio
+---
+id: Reasons for removing the child s guardian s
+question: |
+  Reasons for removing the child's guardian(s)
+subquestion: |
+  Tell us why the child's guardian(s) should be removed.
+fields:
+  - "Bio parents can resume responsibilities": bio_parents_can_resume_responsibilities
+    datatype: yesno
+  - "Minor adopted": minor_adopted
+    datatype: yesno
+  - "Has attachment": has_attachment
+    datatype: yesno
+---
+id: Requested successors
+question: |
+  Requested successors
+subquestion: |
+  Who does the petitioner request as the new guardian(s) for the minor
+fields:
+  - "Date of petitioners1 signature": petitioners1_signature_date
+    datatype: date
+  - "Date of petitioners2 signature": petitioners2_signature_date
+    datatype: date
+---
+id: Attorney s information
+question: |
+  Attorney's information
+subquestion: |
+  If you have an attorney, provide their information
+fields:
+  - "Attorneys1 bbo": attorneys1_bbo
+    datatype: number
+---
+id: preview petition_for_removal_of_guardian
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_petition_for_removal_of_guardian'), label='Edit answers', color='info') }
+
+  Remember to come back to this window to continue and sign your form.
+continue button field: petition_for_removal_of_guardian_preview_question
+---
+code: |
+  signature_fields = ['petitioners[0].signature', 'petitioners[1].signature']
+---
+code: |
+  # This is a placeholder for the addresses that will be searched
+  # for matching address to court. Edit if court venue is based on 
+  # a different address than the user's
+  [user.address.address for user in users.complete_elements()]
+  addresses_to_search = [user.address for user in users.complete_elements()]
+---
+#################### Question Blocks End #####################
+---
+#################### Review Blocks Start #####################
+---
+id: Petition for Removal of Guardian of review screen
+event: review_petition_for_removal_of_guardian
+question: |
+  Review your answers
+review:
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+  - Edit: trial_court
+    button: |
+      **Trial court**
+
+      % if defined("trial_court.division"):
+      * division: ${ trial_court.division }
+      % endif
+  - Edit: children.revisit
+    button: |
+      **Children**
+
+      % for item in children:
+        * ${ item }
+      % endfor
+  - Edit: petitioners.revisit
+    button: |
+      **Petitioners**
+
+      % for item in petitioners:
+        * ${ item }
+      % endfor
+  - Edit: petitioner_is_parent
+    button: |
+      **Petitioner(s) is/are the child's parent(s)**:
+      ${ petitioner_is_parent }
+  - Edit: petitioner_is_mother
+    button: |
+      **Petitioner is mother**:
+      ${ word(yesno(petitioner_is_mother)) }
+  - Edit: petitioner_is_father
+    button: |
+      **Petitioner is father**:
+      ${ word(yesno(petitioner_is_father)) }
+  - Edit: petitioner_is_both_parents
+    button: |
+      **Petitioner is both parents**:
+      ${ word(yesno(petitioner_is_both_parents)) }
+  - Edit: petitioner_is_minor
+    button: |
+      **Petitioner is minor**:
+      ${ word(yesno(petitioner_is_minor)) }
+  - Edit: petitioner_is_interested_party
+    button: |
+      **Petitioner is interested party**:
+      ${ word(yesno(petitioner_is_interested_party)) }
+  - Edit: guardians.revisit
+    button: |
+      **Guardians**
+
+      % for item in guardians:
+        * ${ item }
+      % endfor
+  - Edit: guardians[0].appointment_date
+    button: |
+      **Date of guardians1 appointment**:
+      ${ guardians[0].appointment_date }
+  - Edit: guardians[1].appointment_date
+    button: |
+      **Date of guardians2 appointment**:
+      ${ guardians[1].appointment_date }
+  - Edit: bio_parents_can_resume_responsibilities
+    button: |
+      **Bio parents can resume responsibilities**:
+      ${ word(yesno(bio_parents_can_resume_responsibilities)) }
+  - Edit: responsible_parents.revisit
+    button: |
+      **Responsible parents**
+
+      % for item in responsible_parents:
+        * ${ item }
+      % endfor
+  - Edit: minor_adopted
+    button: |
+      **Minor adopted**:
+      ${ word(yesno(minor_adopted)) }
+  - Edit: has_attachment
+    button: |
+      **Has attachment**:
+      ${ word(yesno(has_attachment)) }
+  - Edit: guardian_successors.revisit
+    button: |
+      **Guardian successors**
+
+      % for item in guardian_successors:
+        * ${ item }
+      % endfor
+  - Edit: petitioners1_signature_date
+    button: |
+      **Date of petitioners1 signature**:
+      ${ petitioners1_signature_date }
+  - Edit: petitioners2_signature_date
+    button: |
+      **Date of petitioners2 signature**:
+      ${ petitioners2_signature_date }
+  - Edit: attorneys.revisit
+    button: |
+      **Attorneys**
+
+      % for item in attorneys:
+        * ${ item }
+      % endfor
+  - Edit: attorneys1_bbo
+    button: |
+      **Attorneys1 bbo**:
+      ${ attorneys1_bbo }
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+---
+continue button field: petitioners.revisit
+question: |
+  Edit petitioners
+subquestion: |
+  ${ petitioners.table }
+
+  ${ petitioners.add_action() }
+---
+table: petitioners.table
+rows: petitioners
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.city") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.first
+  - address.city
+  - phone_number
+  - signature
+confirm: True
+---
+continue button field: guardians.revisit
+question: |
+  Edit guardians
+subquestion: |
+  ${ guardians.table }
+
+  ${ guardians.add_action() }
+---
+table: guardians.table
+rows: guardians
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.city") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.first
+  - address.city
+  - phone_number
+confirm: True
+---
+continue button field: responsible_parents.revisit
+question: |
+  Edit responsible_parents
+subquestion: |
+  ${ responsible_parents.table }
+
+  ${ responsible_parents.add_action() }
+---
+table: responsible_parents.table
+rows: responsible_parents
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.city") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.first
+  - address.city
+  - phone_number
+confirm: True
+---
+continue button field: guardian_successors.revisit
+question: |
+  Edit guardian_successors
+subquestion: |
+  ${ guardian_successors.table }
+
+  ${ guardian_successors.add_action() }
+---
+table: guardian_successors.table
+rows: guardian_successors
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+---
+continue button field: attorneys.revisit
+question: |
+  Edit attorneys
+subquestion: |
+  ${ attorneys.table }
+
+  ${ attorneys.add_action() }
+---
+table: attorneys.table
+rows: attorneys
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.first
+  - address.zip
+  - phone_number
+confirm: True
+---
+#################### Review Blocks End #####################
+---
+id: download petition_for_removal_of_guardian
+event: petition_for_removal_of_guardian_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_petition_for_removal_of_guardian'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+#################### Attachment Blocks Start #####################
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - petition_for_removal_of_guardian_Post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_removal_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
+  - petition_for_removal_of_guardian_attachment: ALDocument.using(title="Petition for Removal of Guardian of Minor", filename="petition_for_removal_of_guardian", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[petition_for_removal_of_guardian_Post_interview_instructions, petition_for_removal_of_guardian_attachment], filename="Petition_for_Removal_of_Guardian_of", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[petition_for_removal_of_guardian_attachment],  filename="petition_for_removal_of_guardian", title="All forms to deliver to court", enabled=True)
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
+# used for "preview" and "final" keys, and logic in the template checks the value of
+# `i` to show or hide the user's signature
+attachment:
+  name: Post-interview-Instructions
+  filename: petition_for_removal_of_guardian_next_steps
+  docx template file: petition_for_removal_of_guardian_next_steps.docx
+  variable name: petition_for_removal_of_guardian_Post_interview_instructions[i]
+  skip undefined: True
+  tagged pdf: True
+---
+attachment:
+  name: Petition for Removal of Guardian of
+  filename: petition_for_removal_of_guardian
+  variable name: petition_for_removal_of_guardian_attachment[i]
+  skip undefined: True
+  pdf template file: petition_for_removal_of_guardian.pdf
+  fields:
+    - "docket_number": ${ docket_number }
+    - "trial_court_division": ${ trial_court.division }
+    - "children1_name_middle": ${ children[0].name.middle }
+    - "children1_name_last": ${ children[0].name.last }
+    - "children1_name_first": ${ children[0].name.first }
+    - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
+    - "users1_name_last": ${ users[0].name.last }
+    - "users1_name_first": ${ users[0].name.first }
+    - "users1_address_address": ${ users[0].address.address }
+    - "users1_address_unit": ${ users[0].address.unit }
+    - "users1_address_state": ${ users[0].address.state }
+    - "users1_address_zip": ${ users[0].address.zip }
+    - "users1_address_city": ${ users[0].address.city }
+    - "users1_phone": ${ users[0].phone_number }
+    - "users2_name_middle_initial": ${ users[1].name.middle_initial() }
+    - "users2_name_last": ${ users[1].name.last }
+    - "users2_name_first": ${ users[1].name.first }
+    - "users2_address_address": ${ users[1].address.address }
+    - "users2_address_unit": ${ users[1].address.unit }
+    - "users2_address_state": ${ users[1].address.state }
+    - "users2_address_zip": ${ users[1].address.zip }
+    - "users2_address_city": ${ users[1].address.city }
+    - "users2_phone": ${ users[1].phone_number }
+    - "petitioner_is_parent": ${ petitioner_is_parent }
+    - "petitioner_is_mother": ${ petitioner_is_mother }
+    - "petitioner_is_father": ${ petitioner_is_father }
+    - "petitioner_is_both_parents": ${ petitioner_is_both_parents }
+    - "petitioner_is_minor": ${ petitioner_is_minor }
+    - "petitioner_is_interested_party": ${ petitioner_is_interested_party }
+    - "guardians1_name_last": ${ guardians[0].name.last }
+    - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
+    - "guardians1_name_first": ${ guardians[0].name.first }
+    - "guardians1_address_address": ${ guardians[0].address.address }
+    - "guardians1_address_unit": ${ guardians[0].address.unit }
+    - "guardians1_address_state": ${ guardians[0].address.state }
+    - "guardians1_address_zip": ${ guardians[0].address.zip }
+    - "guardians1_address_city": ${ guardians[0].address.city }
+    - "guardians1_phone": ${ guardians[0].phone_number }
+    - "guardians1_appointment_date": ${ guardians[0].appointment_date.format() }
+    - "guardians2_name_last": ${ guardians[1].name.last }
+    - "guardians2_name_middle_initial": ${ guardians[1].name.middle_initial() }
+    - "guardians2_name_first": ${ guardians[1].name.first }
+    - "guardians2_address_address": ${ guardians[1].address.address }
+    - "guardians2_address_unit": ${ guardians[1].address.unit }
+    - "guardians2_address_state": ${ guardians[1].address.state }
+    - "guardians2_address_zip": ${ guardians[1].address.zip }
+    - "guardians2_address_city": ${ guardians[1].address.city }
+    - "guardians2_phone": ${ guardians[1].phone_number }
+    - "guardians2_appointment_date": ${ guardians[1].appointment_date.format() }
+    - "bio_parents_can_resume_responsibilities": ${ bio_parents_can_resume_responsibilities }
+    - "responsible_parents1_name_middle_initial": ${ responsible_parents[0].name.middle_initial() }
+    - "responsible_parents1_name_first": ${ responsible_parents[0].name.first }
+    - "responsible_parents1_name_last": ${ responsible_parents[0].name.last }
+    - "responsible_parents1_address_address": ${ responsible_parents[0].address.address }
+    - "responsible_parents1_address_unit": ${ responsible_parents[0].address.unit }
+    - "responsible_parents1_address_state": ${ responsible_parents[0].address.state }
+    - "responsible_parents1_address_zip": ${ responsible_parents[0].address.zip }
+    - "responsible_parents1_address_city": ${ responsible_parents[0].address.city }
+    - "responsible_parents1_phone": ${ responsible_parents[0].phone_number }
+    - "responsible_parents2_name_middle_initial": ${ responsible_parents[1].name.middle_initial() }
+    - "responsible_parents2_name_last": ${ responsible_parents[1].name.last }
+    - "responsible_parents2_name_first": ${ responsible_parents[1].name.first }
+    - "responsible_parents2_address_address": ${ responsible_parents[1].address.address }
+    - "responsible_parents2_address_unit": ${ responsible_parents[1].address.unit }
+    - "responsible_parents2_address_state": ${ responsible_parents[1].address.state }
+    - "responsible_parents2_address_zip": ${ responsible_parents[1].address.zip }
+    - "responsible_parents2_address_city": ${ responsible_parents[1].address.city }
+    - "responsible_parents2_phone": ${ responsible_parents[1].phone_number }
+    - "minor_adopted": ${ minor_adopted }
+    - "has_attachment": ${ has_attachment }
+    - "guardian_successors1_name_middle_initial": ${ guardian_successors[0].name.middle_initial() }
+    - "guardian_successors1_name_last": ${ guardian_successors[0].name.last }
+    - "guardian_successors1_name_first": ${ guardian_successors[0].name.first }
+    - "guardian_successors2_name_middle_initial": ${ guardian_successors[1].name.middle_initial() }
+    - "guardian_successors2_name_last": ${ guardian_successors[1].name.last }
+    - "guardian_successors2_name_first": ${ guardian_successors[1].name.first }
+    - "petitioners1_signature": ${ petitioners[0].signature_if_final(i) }
+    - "petitioners1_signature_date": ${ petitioners1_signature_date.format() }
+    - "petitioners2_signature": ${ petitioners[1].signature_if_final(i) }
+    - "petitioners2_signature_date": ${ petitioners2_signature_date.format() }
+    - "attorneys1_name": ${ attorneys[0] }
+    - "attorneys1_address_address": ${ attorneys[0].address.address }
+    - "attorneys1_address_unit": ${ attorneys[0].address.unit }
+    - "attorneys1_address_city": ${ attorneys[0].address.city }
+    - "attorneys1_address_state": ${ attorneys[0].address.state }
+    - "attorneys1_address_zip": ${ attorneys[0].address.zip }
+    - "attorneys1_phone": ${ attorneys[0].phone_number }
+    - "attorneys1_bbo": ${ "{:,.2f}".format(attorneys1_bbo) }
+---
+#################### Attachment Blocks End #####################
+---
+
