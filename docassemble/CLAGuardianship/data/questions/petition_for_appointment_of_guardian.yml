@@ -69,21 +69,25 @@ code: |
   nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
-  docket_number
+
   who_is_making_petition
   children.gather()
+
+  docket_number
+  trial_court
 
   nav.set_section("review_petitioner_information")
   if who_is_making_petition == "interested_party": 
     users.gather()
+  else:
+    set_user_to_minor
 
   nav.set_section("review_bio_parents_information")
   bio_mother.gather()
   bio_father.gather()
 
   nav.set_section("review_requests")
-  has_guardian_nomination_signed_doc
-  guardian_nomination_probated_to_county_division
+  has_guardian_nomination_by_signed_doc
 
   if not minor_married:
     parents_consent_to_guardian_appointment
@@ -92,14 +96,10 @@ code: |
     parents_unfit_to_exercise_parental_rights
     previous_third_party_guardian_death_or_incapacitation
 
-    if who_is_making_petition == "interested_party":
-      petitioner_requesting_guardianship
+  if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
+    requested_guardians.gather()
 
   wants_sureties_waiver
-
-  if who_is_making_petition == "interested_party":
-    if not petitioner_requesting_guardianship:    
-      requested_guardians.gather()
 
   nav.set_section("review_other_custodians_information")
   if other_primary_care_or_custody:
@@ -115,8 +115,9 @@ code: |
     guardians.gather()
 
   nav.set_section("review_minor_assets")
-  if assets.there_are_any:
+  if (has_conservator_case_or_petition == False) and assets.there_are_any:
     assets.gather()
+    minor_assets_total_value
 
   nav.set_section("review_attorney_information")
   attorneys.gather()
@@ -218,13 +219,13 @@ code: |
     minor_assets_total_value = 0
 ---
 code: |
-  if assets[i].there_are_any == True:
-    minor_has_assets = True
+  if assets.there_are_any == True:
+    minor_has_assets_yes = True
   else:
-    minor_has_assets = False
+    minor_has_assets_no = True
 ---
 code: |
-  if (len(children.complete_elements()) > 0) and (who_is_making_petition == "minor"):
+  if who_is_making_petition == "minor":
     users[0].name.first = children[0].name.first
     users[0].name.last = children[0].name.last
     users[0].name.middle = children[0].name.middle
@@ -235,6 +236,15 @@ code: |
     users[0].address.state = children[0].address.state
     users[0].address.zip = children[0].address.zip
     users[0].relationship_to_minor = "Self"
+  set_user_to_minor = True
+---
+code: |
+  if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
+    requested_guardians.there_are_any = True
+---
+code: |
+  addresses_to_search = [children[0].address]
+---
 #################### Object Blocks End #####################
 ---
 #################### Override Blocks Start #####################
@@ -250,7 +260,6 @@ sets:
   - children[0].address.city
   - children[0].address.state
   - children[0].address.zip
-  - children[0].address.county
 question: |
   % if who_is_making_petition == "minor":
   Tell us about yourself
@@ -262,7 +271,6 @@ fields:
       children[0].name_fields()
   - code: |
       children[0].address_fields()
-  - County: children[0].address.county
 ---
 id: petitioner information
 sets:
@@ -322,6 +330,49 @@ fields:
     choices:
       - I am the minor: minor
       - I am someone interested in the minor's welfare: interested_party
+---
+if: |
+  len(all_matches) and all_courts.filter_courts(allowed_courts) 
+id: choose a court (courts matching provided address were found)
+question: |
+  % if al_form_type == 'starts_case':
+  What court do you want to file in?
+  % elif al_form_type == 'appeal':
+  What is the name of the trial court your case was originally filed in?
+  % else:
+  What court is your case in?
+  % endif
+subquestion: |
+  % if not al_form_type == 'starts_case':
+  Look at your court paperwork. Match the name listed there.
+  % endif
+
+  % if len(all_matches) > 0:
+  Below is a map of the court(s) that serve
+  the address you gave us, 
+  % if isinstance(addresses_to_search, Iterable):
+  ${comma_and_list([address.on_one_line() for address in addresses_to_search],comma_string='; ')}.
+  % else:
+  ${addresses_to_search.on_one_line()}
+  % endif
+  
+  ${map_of(combined_locations(all_matches))}
+  % endif
+fields:
+  - no label: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
+    default: | 
+      next(iter(all_matches), None)
+  - Why did you choose this court?: court_choice_reason
+    datatype: checkboxes
+    minlength: 1
+    none of the above: False
+    label above field: True
+    choices:
+      - It's in the county the minor lives in: minors_county
+      - The minor's parent(s) died and the guardian was nominated in a will that was probated in this county: will_county    
 ---
 id: bio_mother there_are_any
 question: |
@@ -390,15 +441,6 @@ question: |
   % endif
 fields:
   - I am the minor's...: users[i].relationship_to_minor
----
-id: is there a signed guardian nomination
-question: |
-  Has a parent or guardian nominated someone else as a guardian for the minor in a signed document?
-subquestion: |
-  If you select **Yes**, you will need to attach a copy of that signed document.
-fields:
-  - no label: has_guardian_nomination_by_signed_doc
-    datatype: yesnoradio
 ---
 id: bio father basic information
 sets:
@@ -483,20 +525,16 @@ question: |
   % endif
 subquestion: |
   The guardian may have been nominated in a will or other written document, signed by a parent or existing guardian.
+
+  If you select **Yes**, you will need to attach a copy of that signed document.
 fields:
-  - no label: has_guardian_nomination_signed_doc
+  - no label: has_guardian_nomination_by_signed_doc
     datatype: yesnoradio
----
-id: guardian nominated in will probated to county or division
-question: |
-  % if who_is_making_petition == "minor":
-  Was your guardian nominated in a will that could be probated to the court's county or Division?
-  % else:
-  Was ${ children[0].name }'s guardian nominated in a will that could be probated to the court's county or Division?
-  % endif
-fields:
-  - no label: guardian_nomination_probated_to_county_division
-    datatype: yesnoradio
+validation code: |
+  if has_guardian_nomination_by_signed_doc:
+    has_guardian_nomination_by_signed_doc_yes = True
+  else:
+    has_guardian_nomination_by_signed_doc_no = True
 ---
 id: is minor married
 question: |
@@ -710,9 +748,13 @@ sets:
   - requested_guardians[i].address.country
   - requested_guardians[i].phone_number
 question: |
-  % if len(requested_guardians.complete_elements()) < 1:
+  % if (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor"):
+  Who do you want the court to appoint as your guardian?
+  % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "interested_party"):
   Who do you want the court to appoint as a guardian for ${ children[0].name }?
-  % else:
+  % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor"):
+  Who else do you want the court to appoint as your guardian?
+  % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "interested_party"):
   Who else do you want the court to appoint as a guardian for ${ children[0].name }?
   % endif
 subquestion: |
@@ -734,7 +776,7 @@ id: requested_guardians there_is_another
 question: |
   Do you want the court to appoint anyone else as a guardian?
 fields:
-  - no label: guardians.there_is_another
+  - no label: requested_guardians.there_is_another
     datatype: yesnoradio
 ---
 id: relatives there_are_any
@@ -810,6 +852,13 @@ fields:
   - Primary phone number: guardians[i].phone_number
   - Relationship to ${ children[0].name }: guardians[i].relationship_to_minor
 ---
+id: has conservatorship case or petition
+question: |
+  Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
+fields:
+  - no label: has_conservator_case_or_petition
+    datatype: yesnoradio
+---
 id: minor assets there_are_any
 question: |
   % if who_is_making_petition == "minor":
@@ -869,13 +918,6 @@ code: |
 question: |
   Users1 signature, sign below
 signature: users[0].signature
----
-code: |
-  # This is a placeholder for the addresses that will be searched
-  # for matching address to court. Edit if court venue is based on 
-  # a different address than the user's
-  [user.address.address for user in users.complete_elements()]
-  addresses_to_search = [user.address for user in users.complete_elements()]
 ---
 #################### Review Blocks Start #####################
 ---
@@ -1276,10 +1318,6 @@ review:
     button: |
       **guardians1 relationship to minor**:
       ${ guardians[0].relationship_to_minor }
-  - Edit: minor_has_assets
-    button: |
-      **Minor has assets**:
-      ${ word(yesno(minor_has_assets)) }
   - Edit: minor_assets_total_value
     button: |
       **Minor assets total value**:

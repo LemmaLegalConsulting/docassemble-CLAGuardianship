@@ -1,6 +1,8 @@
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  # - docassemble.MassAccess:massaccess.yml
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
@@ -100,7 +102,7 @@ attachment:
     - "bio_mother_is_deceased": ${ bio_mother_deceased }
     - "bio_mother_name_first": ${ bio_mother[0].name.first }
     - "bio_mother_name_last": ${ bio_mother[0].name.last }
-    - "bio_mother_name_middle_initial": ${ bio_mother[0].name.middle_initial }
+    - "bio_mother_name_middle_initial": ${ bio_mother[0].name.middle_initial() }
     - "bio_mother_address_city": ${ bio_mother[0].address.city }
     - "bio_mother_address_address": ${ bio_mother[0].address.address }
     - "bio_mother_address_unit": ${ bio_mother[0].address.unit }
@@ -108,47 +110,28 @@ attachment:
     - "bio_mother_address_zip": ${ bio_mother[0].address.zip }
     - "bio_father_is_deceased": ${ bio_father_deceased }
     - "bio_father_name_first": ${ bio_father[0].name.first }
-    - "bio_father_name_middle_initial": ${ bio_father[0].name.middle_initial }
+    - "bio_father_name_middle_initial": ${ bio_father[0].name.middle_initial() }
     - "bio_father_name_last": ${ bio_father[0].name.last }
     - "bio_father_address_city": ${ bio_father[0].address.city }
     - "bio_father_address_address": ${ bio_father[0].address.address }
     - "bio_father_address_unit": ${ bio_father[0].address.unit }
     - "bio_father_address_state": ${ bio_father[0].address.state }
     - "bio_father_address_zip": ${ bio_father[0].address.zip }
-    - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc }
-    - "has_guardian_nomination_by_signed_doc_no": ${ not has_guardian_nomination_by_signed_doc }
+    - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc_yes }
+    - "has_guardian_nomination_by_signed_doc_no": ${ has_guardian_nomination_by_signed_doc_no }
     - "parents_consent_to_guardian_appointment": ${ parents_consent_to_guardian_appointment }
     - "parental_rights_terminated": ${ parental_rights_terminated }
     - "parental_rights_terminated_by_court_order": ${ parental_rights_terminated_by_court_order }
     - "parental_rights_terminated_by_voluntary_surrender": ${ parental_rights_terminated_by_voluntary_surrender }
     - "parental_rights_terminated_by_death": ${ parental_rights_terminated_by_death }
     - "parents_unavailable_to_exercise_parental_rights": ${ parents_unavailable_to_exercise_parental_rights }
+    - "parents_unavailable_to_exercise_parental_rights_exp": ${ parents_unavailable_to_exercise_parental_rights_exp }
     - "parents_unfit_to_exercise_parental_rights": ${ parents_unfit_to_exercise_parental_rights }
+    - "parents_unfit_to_exercise_parental_rights_exp": ${ parents_unfit_to_exercise_parental_rights_exp }
     - "previous_third_party_guardian_death_or_incapacitation": ${ previous_third_party_guardian_death_or_incapacitation }
+    - "previous_third_party_guardian_death_or_incapacitation_exp": ${ previous_third_party_guardian_death_or_incapacitation_exp }
     - "petitioner_requesting_guardianship": ${ petitioner_requesting_guardianship }
     - "wants_sureties_waiver": ${ wants_sureties_waiver }
-    - "guardians1_name_first": ${ guardians[0].name.first }
-    - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
-    - "guardians1_name_last": ${ guardians[0].name.last }
-    - "guardians1_address_address": ${ guardians[0].address.address }
-    - "guardians1_address_state": ${ guardians[0].address.state }
-    - "guardians1_address_zip": ${ guardians[0].address.zip }
-    - "guardians1_address_city": ${ guardians[0].address.city }
-    - "guardians1_address_unit": ${ guardians[0].address.unit }
-    - "guardians1_relationship_to_minor": ${ guardians[0].relationship_to_minor }
-    - "guardians1_phone": ${ guardians[0].phone_number }
-    - "guardians1_has_priority_appointment": ${ guardians[0].has_priority_appointment }
-    - "guardians2_name_first": ${ guardians[1].name.first }
-    - "guardians2_name_middle_initial": ${ guardians[1].name.middle_initial() }
-    - "guardians2_name_last": ${ guardians[1].name.last }
-    - "guardians2_address_address": ${ guardians[1].address.address }
-    - "guardians2_address_state": ${ guardians[1].address.state }
-    - "guardians2_address_zip": ${ guardians[1].address.zip }
-    - "guardians2_address_city": ${ guardians[1].address.city }
-    - "guardians2_address_unit": ${ guardians[1].address.unit }
-    - "guardians2_relationship_to_minor": ${ guardians[1].relationship_to_minor }
-    - "guardians2_phone": ${ guardians[1].phone_number }
-    - "guardians2_has_priority_appointment": ${ guardians[1].has_priority_appointment }
     - "other_primary_care_or_custody_yes": ${ other_primary_care_or_custody }
     - "other_primary_care_or_custody_no": ${ not other_primary_care_or_custody }
     - "other_custodian1_name_first": ${ other_custodians[0].name.first }
@@ -194,7 +177,29 @@ attachment:
     - "relatives2_phone": ${ relatives[1].phone_number }
     - "relatives2_relationship_to_minor": ${ relatives[1].relationship_to_minor }
     - "acting_guardian_or_conservator_yes": ${ acting_guardian_yes }
-    - "acting_guardian_or_conservator_no": ${ not acting_guardian_no }
+    - "acting_guardian_or_conservator_no": ${ acting_guardian_no }
+    - "requested_guardians1_name_first": ${ requested_guardians[0].name.first }
+    - "requested_guardians1_name_middle_initial": ${ requested_guardians[0].name.middle_initial }
+    - "requested_guardians1_name_last": ${ requested_guardians[0].name.last }
+    - "requested_guardians1_address_address": ${ requested_guardians[0].address.address }
+    - "requested_guardians1_address_state": ${ requested_guardians[0].address.state }
+    - "requested_guardians1_address_zip": ${ requested_guardians[0].address.zip }
+    - "requested_guardians1_address_city": ${ requested_guardians[0].address.city }
+    - "requested_guardians1_address_unit": ${ requested_guardians[0].address.unit }
+    - "requested_guardians1_phone": ${ requested_guardians[0].phone_number }
+    - "requested_guardians1_relationship_to_minor": ${ requested_guardians[0].relationship_to_minor }
+    - "requested_guardians1_has_priority_appointment": ${ requested_guardians[0].has_priority_appointment }
+    - "requested_guardians2_has_priority_appointment": ${ requested_guardians[1].has_priority_appointment }
+    - "requested_guardians2_name_first": ${ requested_guardians[1].name.first }
+    - "requested_guardians2_name_middle_initial": ${ requested_guardians[1].name.middle_initial }
+    - "requested_guardians2_name_last": ${ requested_guardians[1].name.last }
+    - "requested_guardians2_address_address": ${ requested_guardians[1].address.address }
+    - "requested_guardians2_address_state": ${ requested_guardians[1].address.state }
+    - "requested_guardians2_address_zip": ${ requested_guardians[1].address.zip }
+    - "requested_guardians2_address_city": ${ requested_guardians[1].address.city }
+    - "requested_guardians2_address_unit": ${ requested_guardians[1].address.unit }
+    - "requested_guardians2_phone": ${ requested_guardians[1].phone_number }
+    - "requested_guardians2_relationship_to_minor": ${ requested_guardians[1].relationship_to_minor }
     - "guardians1_name_first": ${ guardians[0].name.first }
     - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial }
     - "guardians1_name_last": ${ guardians[0].name.last }
@@ -205,8 +210,12 @@ attachment:
     - "guardians1_address_unit": ${ guardians[0].address.unit }
     - "guardians1_phone": ${ guardians[0].phone_number }
     - "guardians1_relationship_to_minor": ${ guardians[0].relationship_to_minor }
-    - "minor_has_assets_yes": ${ minor_has_assets }
-    - "minor_has_assets_no": ${ not minor_has_assets }
+    - "children1_assets1_description": ${ assets[0].description }
+    - "children1_assets1_value": ${ currency(assets[0].value) }
+    - "children1_assets2_description": ${ assets[1].description }
+    - "children1_assets2_value": ${ currency(assets[1].value) }
+    - "minor_has_assets_yes": ${ minor_has_assets_yes }
+    - "minor_has_assets_no": ${ minor_has_assets_no }
     - "minor_assets_total_value": ${ currency(minor_assets_total_value) }
     # It's a signature: test which file version this is; leave empty unless it's the final version)
     - "users1_signature": ${ users[0].signature if i == "final" else '' }
@@ -221,6 +230,8 @@ attachment:
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
     - "attorneys1_phone": ${ attorneys[0].phone_number }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
+    - "minor_resides_in_court_county_division": ${ court_choice_reason["minors_county"] }
+    - "guardian_nomination_probated_to_county_division": ${ court_choice_reason["will_county"] }
 ---
 #################### Attachment Blocks End #####################
 ---
