@@ -79,12 +79,17 @@ code: |
   nav.set_section("review_petitioner_information")
   if who_is_making_petition == "interested_party": 
     users.gather()
+    for user in users:
+      if not user.is_bio_parent:
+        user.relationship_to_minor
   else:
     set_user_to_minor
 
   nav.set_section("review_bio_parents_information")
-  bio_mother.gather()
-  bio_father.gather()
+  if not bio_mother_collected:
+    bio_mother.gather()
+  if not bio_father_collected:
+    bio_father.gather()
 
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
@@ -219,12 +224,6 @@ code: |
     minor_assets_total_value = 0
 ---
 code: |
-  if assets.there_are_any == True:
-    minor_has_assets_yes = True
-  else:
-    minor_has_assets_no = True
----
-code: |
   if who_is_making_petition == "minor":
     users[0].name.first = children[0].name.first
     users[0].name.last = children[0].name.last
@@ -244,6 +243,20 @@ code: |
 ---
 code: |
   addresses_to_search = [children[0].address]
+---
+code: |
+  if (users[i].is_bio_parent == True) and (users[i].relationship_to_minor == "biological father"):
+    bio_father_collected = True
+    bio_father_deceased = False
+  else:
+    bio_father_collected = False
+---
+code: |
+  if (users[i].is_bio_parent == True) and (users[i].relationship_to_minor == "biological mother"):
+    bio_mother_collected = True
+    bio_mother_deceased = False
+  else:
+    bio_mother_collected = False
 ---
 #################### Object Blocks End #####################
 ---
@@ -285,7 +298,7 @@ sets:
   - users[i].address.zip
   - users[i].phone_number
 question: |
-  % if len(users.complete_elements) < 1:
+  % if len(users.complete_elements()) < 1:
   Tell us about yourself
   % else:
   Tell us about the other petitioner
@@ -296,6 +309,9 @@ fields:
   - code: |
       users[i].address_fields()
   - Primary phone number: users[i].phone_number
+validation code: |
+  if len(users.complete_elements()) > 0:
+    users.there_is_another = False
 ---
 #################### Override Blocks End #####################
 ---
@@ -330,6 +346,11 @@ fields:
     choices:
       - I am the minor: minor
       - I am someone interested in the minor's welfare: interested_party
+validation code: |
+  if who_is_making_petition == "interested_party":
+    petitioner_is_interested_party = True
+  elif who_is_making_petition == "minor":
+    petitioner_is_minor = True
 ---
 if: |
   len(all_matches) and all_courts.filter_courts(allowed_courts) 
@@ -377,32 +398,35 @@ fields:
 id: bio_mother there_are_any
 question: |
   % if who_is_making_petition == "minor":
-  Tell us about your biological mother
+  Can you provide any information about your biological mother?
   % else:
-  Tell us about ${ children[0].name }'s biological mother
+  Can you provide any information about ${ children[0].name }'s biological mother?
   % endif
 fields:
-  - Is this person deceased?: bio_mother_deceased
-    datatype: yesnomaybe
-  - Can you provide more details about this person?: bio_mother.there_are_any
+  - no label: bio_mother.there_are_any
+    datatype: yesnoradio
+---
+id: users there_is_another
+question: |
+  Is anyone else making this petition with you?
+fields:
+  - no label: users.there_is_another
     datatype: yesnoradio
 ---
 id: bio_father there_are_any
 question: |
   % if who_is_making_petition == "minor":
-  Tell us about your biological father
+  Can you provide any information about your biological father?
   % else:
-  Tell us about ${ children[0].name }'s biological father
+  Can you provide any information about ${ children[0].name }'s biological father?
   % endif
 fields:
-  - Is this person deceased?: bio_father_deceased
-    datatype: yesnomaybe
-  - Can you provide more details about this person?: bio_father.there_are_any
+  - no label: bio_father.there_are_any
     datatype: yesnoradio
 ---
 id: are petitioners biological parents
 question: |
-  % if len(users.complete_elements()) < 1:
+  % if i == 0:
   Are you one of the minor's biological parents?
   % else:
   Is ${ users[i] } one of the minor's biological parents?
@@ -410,37 +434,29 @@ question: |
 fields:
   - no label: users[i].is_bio_parent
     datatype: yesnoradio
-
-  - I am the minor's: users[i].relationship_to_minor
+  - Please specify: users[i].relationship_to_minor
     datatype: radio
     choices:
       - biological father
       - biological mother
-    show if:
-      variable: i
-      is: 0
-
-  - ${ users[i] } is the minor's: users[i].relationship_to_minor
-    datatype: radio
-    choices:
-      - biological father
-      - biological mother
-    show if:
-      variable: i
-      is: 1
+    js show if: |
+      val('users[i].is_bio_parent') == true
 validation code: |
-  if (users[0].relationship_to_minor == "father" and users[1].relationship_to_minor == "father") or (users[0].relationship_to_minor == "mother" and users[1].relationship_to_minor == "mother"):
-    validation_error("It looks like you've named more than one person as the minor's biological father or mother. For biological parents, you can only name one person for each role.")
+  if users[i].is_bio_parent:
+    if users[i].relationship_to_minor == "biological mother":
+      bio_mother_deceased = False
+    if users[i].relationship_to_minor == "biological father":
+      bio_father_deceased = False
 ---
 id: petitioner relationship to minor
 question: |
-  % if len(users.complete_elements()) < 1:
-  What is your relationship to the minor?
+  % if i == 0:
+  What is your relationship to ${ children[0].name }?
   % else:
-  What is ${ users[i] }'s relationship to the minor?
+  What is ${ users[i] }'s relationship to ${ children[0].name }?
   % endif
 fields:
-  - I am the minor's...: users[i].relationship_to_minor
+  - no label: users[i].relationship_to_minor
 ---
 id: bio father basic information
 sets:
@@ -457,6 +473,8 @@ question: |
 fields:
   - code: |
       bio_father[0].name_fields()
+  - Is this person deceased?: bio_father_deceased
+    datatype: yesnomaybe
 ---
 id: bio father contact information
 sets:
@@ -494,6 +512,8 @@ question: |
 fields:
   - code: |
       bio_mother[0].name_fields()
+  - Is this person deceased?: bio_mother_deceased
+    datatype: yesnomaybe
 ---
 id: bio mother contact information
 sets:
@@ -572,9 +592,9 @@ fields:
   - How?: parental_rights_termination_reason
     datatype: radio
     choices:
-      - By a prior court order
-      - By a signed voluntary surrender
-      - By the parent's death
+      - By a prior court order: court_order
+      - By a signed voluntary surrender: voluntary_surrender
+      - By the parent's death: parent_death
     show if:
       variable: parental_rights_terminated
       is: True
@@ -582,16 +602,6 @@ fields:
     show if:
       variable: parental_rights_terminated
       is: True
-
-validation code: |
-  if parental_rights_termination_reason == "By a prior court order":
-    parental_rights_terminated_by_court_order = True
-
-  if parental_rights_termination_reason == "By a signed voluntary surrender":
-    parental_rights_terminated_by_voluntary_surrender = True
-
-  if parental_rights_termination_reason == "By the parent's death":
-    parental_rights_terminated_by_death = True
 ---
 id: parents unavailable to exercise parental rights
 question: |
@@ -779,19 +789,6 @@ fields:
   - no label: requested_guardians.there_is_another
     datatype: yesnoradio
 ---
-id: relatives there_are_any
-question: |
-  % if who_is_making_petition == "minor":
-  Aside from your parents, can you provide information about any other relatives that can be found?
-  % else:
-  Aside form ${ children[0].name }'s parents, can you provide information about any of ${ children[0].name }'s other relatives that can be found?
-  % endif
-subquestion: |
-  You will be able to add up to two people. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
-fields:
-  - no label: relatives.there_are_any
-    datatype: yesnoradio
----
 id: requested guardian priority for appointment
 question: |
   Does ${ requested_guardians[i].name } have priority for appointment?
@@ -807,6 +804,56 @@ question: |
   Do you want to add a second guardian to the petition?
 fields:
   - no label: requested_guardians.there_is_another
+    datatype: yesnoradio
+---
+id: relatives there_are_any
+question: |
+  % if who_is_making_petition == "minor":
+  Aside from your parents, can you provide information about any other relatives that can be found?
+  % else:
+  Aside form ${ children[0].name }'s parents, can you provide information about any of ${ children[0].name }'s other relatives that can be found?
+  % endif
+subquestion: |
+  You will be able to add up to two people. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
+fields:
+  - no label: relatives.there_are_any
+    datatype: yesnoradio
+---
+id: relatives information
+sets:
+  - relatives[i].name.first
+  - relatives[i].name.last
+  - relatives[i].name.middle
+  - relatives[i].name.suffix
+  - relatives[i].address.address
+  - relatives[i].address.unit
+  - relatives[i].address.city
+  - relatives[i].address.state
+  - relatives[i].address.zip
+  - relatives[i].address.country
+  - relatives[i].phone_number
+question: |
+  % if who_is_making_petition == "minor":
+  Tell us about your relative
+  % else:
+  Tell us about ${ children[0].name }'s relative
+  % endif
+fields:
+  - code: |
+      relatives[i].name_fields()
+  - code: |
+      relatives[i].address_fields()
+  - Primary phone number: relatives[i].phone_number
+  - Relationship to ${ children[0].name }: relatives[i].relationship_to_minor
+validation code: |
+  if len(relatives.complete_elements()) > 0:
+    relatives.there_is_another = False
+---
+id: relatives there_is_another
+question: |
+  Do you want to add another relative to the petition?
+fields:
+  - no label: relatives.there_is_another
     datatype: yesnoradio
 ---
 id: current guardian
@@ -854,7 +901,11 @@ fields:
 ---
 id: has conservatorship case or petition
 question: |
+  % if who_is_making_petition == "minor":
   Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
+  % else:
+  Does ${ children[0].name } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
+  % endif
 fields:
   - no label: has_conservator_case_or_petition
     datatype: yesnoradio
@@ -871,6 +922,11 @@ subquestion: |
 fields:
   - no label: assets.there_are_any
     datatype: yesnoradio
+validation code: |
+  if assets.there_are_any:
+    minor_has_assets_yes = True
+  else:
+    minor_has_assets_no = True
 ---
 id: minor asset information
 sets:
@@ -1048,18 +1104,6 @@ review:
     button: |
       **Parental rights terminated**:
       ${ word(yesno(parental_rights_terminated)) }
-  - Edit: parental_rights_terminated_by_court_order
-    button: |
-      **Parental rights terminated by court order**:
-      ${ word(yesno(parental_rights_terminated_by_court_order)) }
-  - Edit: parental_rights_terminated_by_voluntary_surrender
-    button: |
-      **Parental rights terminated by voluntary surrender**:
-      ${ word(yesno(parental_rights_terminated_by_voluntary_surrender)) }
-  - Edit: parental_rights_terminated_by_death
-    button: |
-      **Parental rights terminated by death**:
-      ${ word(yesno(parental_rights_terminated_by_death)) }
   - Edit: parents_unavailable_to_exercise_parental_rights
     button: |
       **Parents unavailable to exercise parental rights**:
