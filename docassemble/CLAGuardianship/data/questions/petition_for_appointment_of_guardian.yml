@@ -241,6 +241,8 @@ code: |
     users[0].address.state = children[0].address.state
     users[0].address.zip = children[0].address.zip
     users[0].relationship_to_minor = "Self"
+    users.auto_gather = False
+    users.gathered = True
   set_user_to_minor = True
 ---
 code: |
@@ -251,13 +253,13 @@ code: |
   addresses_to_search = [children[0].address]
 ---
 code: |
-  if (users[0].relationship_to_minor == "biological mother") or (users[1].relationship_to_minor == "biological mother"):
+  if (users[0].relationship_to_minor == "biological mother") or (users.item(1).relationship_to_minor == "biological mother"):
     bio_mother_collected = True
   else:
     bio_mother_collected = False
 ---
 code: |
-  if (users[0].relationship_to_minor == "biological father") or (users[1].relationship_to_minor == "biological father"):
+  if (users[0].relationship_to_minor == "biological father") or (users.item(1).relationship_to_minor == "biological father"):
     bio_father_collected = True
   else:
     bio_father_collected = False
@@ -313,9 +315,6 @@ fields:
   - code: |
       users[i].address_fields()
   - Primary phone number: users[i].phone_number
-validation code: |
-  if len(users.complete_elements()) > 0:
-    users.there_is_another = False
 ---
 #################### Override Blocks End #####################
 ---
@@ -339,7 +338,7 @@ subquestion: |
   **When you are finished**, you will need to:
 
   1. Attach any relevant documents to this Petition. As you complete this interview, the questions will let you know which documents you will need to gather.
-  
+
   2. File this Petition in the relevant court.  
 
   Most people take about 20 minutes to finish this interview.
@@ -360,7 +359,7 @@ validation code: |
     petitioner_is_minor = True
 ---
 if: |
-  len(all_matches) and all_courts.filter_courts(allowed_courts) 
+  len(all_matches) and all_courts.filter_courts(allowed_courts)
 id: choose a court (courts matching provided address were found)
 question: |
   % if al_form_type == 'starts_case':
@@ -383,7 +382,7 @@ subquestion: |
   % else:
   ${addresses_to_search.on_one_line()}
   % endif
-  
+
   ${map_of(combined_locations(all_matches))}
   % endif
 fields:
@@ -391,7 +390,7 @@ fields:
     datatype: object
     object labeler: court_short_label
     choices: all_courts.filter_courts(allowed_courts)
-    default: | 
+    default: |
       next(iter(all_matches), None)
   - Why did you choose this court?: court_choice_reason
     datatype: checkboxes
@@ -400,7 +399,7 @@ fields:
     label above field: True
     choices:
       - It's in the county the minor lives in: minors_county
-      - The minor's parent(s) died and the guardian was nominated in a will that was probated in this county: will_county    
+      - The minor's parent(s) died and the guardian was nominated in a will that was probated in this county: will_county
 ---
 id: bio_mother there_are_any
 question: |
@@ -682,7 +681,7 @@ subquestion: |
   **What is a surety bond?**
 
   In order to be appointed as a guardian, a person must promise the court to faithfully carry out the legal duties of a guardian. This promise is called a **bond**.
-  
+
   A **surety** is a person who also signs the bond, and is also responsible to the court for the guardian carrying out their duties.
 
   The court can decide that a surety is not required. 
@@ -1033,14 +1032,10 @@ continue button field: petition_for_appointment_of_guardian_preview_question
 #   signature_fields = ['users[0].signature', 'users1_signature']
 ---
 # code: |
-#   signature_fields = ['users[1].signature', 'users2_signature']
+#   signature_fields = ['users.item(1).signature', 'users2_signature']
 ---
 code: |
-  signature_fields = ['users[0].signature']
----
-question: |
-  ${ users[0].name }'s signature, sign below
-signature: users[0].signature
+  signature_fields = [user.attr_name('signature') for user in users]
 ---
 #################### Review Blocks Start #####################
 ---
@@ -1083,10 +1078,6 @@ review:
     button: |
       **Users1 relationship to minor**:
       ${ users[0].relationship_to_minor }
-  - Edit: users[1].relationship_to_minor
-    button: |
-      **Users2 relationship to minor**:
-      ${ users[1].relationship_to_minor }
   - Edit: bio_mother_deceased
     button: |
       **Bio parents1 is deceased**:
@@ -1556,3 +1547,4 @@ subquestion: |
 
 progress: 100
 ---
+

@@ -629,15 +629,15 @@ attachment:
     - "users1_address_zip": ${ users[0].address.zip }
     - "users1_address_city": ${ users[0].address.city }
     - "users1_phone": ${ users[0].phone_number }
-    - "users2_name_middle_initial": ${ users[1].name.middle_initial() }
-    - "users2_name_last": ${ users[1].name.last }
-    - "users2_name_first": ${ users[1].name.first }
-    - "users2_address_address": ${ users[1].address.address }
-    - "users2_address_unit": ${ users[1].address.unit }
-    - "users2_address_state": ${ users[1].address.state }
-    - "users2_address_zip": ${ users[1].address.zip }
-    - "users2_address_city": ${ users[1].address.city }
-    - "users2_phone": ${ users[1].phone_number }
+    - "users2_name_middle_initial": ${ users.item(1).name.middle_initial() }
+    - "users2_name_last": ${ users.item(1).name.last }
+    - "users2_name_first": ${ users.item(1).name.first }
+    - "users2_address_address": ${ users.item(1).address.address }
+    - "users2_address_unit": ${ users.item(1).address.unit }
+    - "users2_address_state": ${ users.item(1).address.state }
+    - "users2_address_zip": ${ users.item(1).address.zip }
+    - "users2_address_city": ${ users.item(1).address.city }
+    - "users2_phone": ${ users.item(1).phone_number }
     - "petitioner_is_parent": ${ petitioner_is_parent }
     - "petitioner_is_mother": ${ petitioner_is_mother }
     - "petitioner_is_father": ${ petitioner_is_father }

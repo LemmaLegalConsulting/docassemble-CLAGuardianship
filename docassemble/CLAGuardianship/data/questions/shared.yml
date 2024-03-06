@@ -5,10 +5,10 @@ include:
   # - docassemble.MassAccess:massaccess.yml
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
-  - children: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
-  - guardians: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
-  - attorneys: ALPeopleList.using(maximum_number=1, complete_attribute="complete")
+  - users: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
+  - guardians: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - attorneys: ALPeopleList.using(complete_attribute="complete")
 ---
 #################### Object Blocks Start #####################
 ---
@@ -90,16 +90,16 @@ attachment:
     - "users1_address_unit": ${ users[0].address.unit }
     - "users1_phone": ${ users[0].phone_number }
     - "users1_relationship_to_minor": ${ users[0].relationship_to_minor }
-    - "users2_name_first": ${ users[1].name.first }
-    - "users2_name_middle_initial": ${ users[1].name.middle_initial() }
-    - "users2_name_last": ${ users[1].name.last }
-    - "users2_address_address": ${ users[1].address.address }
-    - "users2_address_state": ${ users[1].address.state }
-    - "users2_address_zip": ${ users[1].address.zip }
-    - "users2_address_city": ${ users[1].address.city }
-    - "users2_address_unit": ${ users[1].address.unit }
-    - "users2_phone": ${ users[1].phone_number }
-    - "users2_relationship_to_minor": ${ users[1].relationship_to_minor }
+    - "users2_name_first": ${ users.item(1).name.first }
+    - "users2_name_middle_initial": ${ users.item(1).name.middle_initial() }
+    - "users2_name_last": ${ users.item(1).name.last }
+    - "users2_address_address": ${ users.item(1).address.address }
+    - "users2_address_state": ${ users.item(1).address.state }
+    - "users2_address_zip": ${ users.item(1).address.zip }
+    - "users2_address_city": ${ users.item(1).address.city }
+    - "users2_address_unit": ${ users.item(1).address.unit }
+    - "users2_phone": ${ users.item(1).phone_number }
+    - "users2_relationship_to_minor": ${ users.item(1).relationship_to_minor }
     - "bio_mother_is_deceased": ${ bio_mother_deceased }
     - "bio_mother_name_first": ${ bio_mother[0].name.first }
     - "bio_mother_name_last": ${ bio_mother[0].name.last }
@@ -219,9 +219,12 @@ attachment:
     - "minor_assets_total_value": ${ currency(minor_assets_total_value) }
     # It's a signature: test which file version this is; leave empty unless it's the final version)
     - "users1_signature": ${ users[0].signature if i == "final" else '' }
-    - "users1_signature_date": ${ users[0].signature_date.format() }
-    - "users2_signature": ${ users[1].signature_if_final(i) }
-    - "users2_signature_date": ${ users[1].signature_date.format() }
+    - "users1_signature_date": ${ today() }
+    - "users2_signature": ${ users.item(1).signature_if_final(i) }
+    - "users2_signature_date": | 
+        % if len(users.complete_elements()) > 1:
+        ${ today() }
+        % endif
     - "attorneys1_name": ${ attorneys[0] }
     - "attorneys1_address_address": ${ attorneys[0].address.address }
     - "attorneys1_address_unit": ${ attorneys[0].address.unit }
@@ -238,3 +241,4 @@ attachment:
 ---
 #################### Attachment Blocks End #####################
 ---
+
