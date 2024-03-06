@@ -48,12 +48,10 @@ objects:
 ---
 sections:
   - review_case_information: About the case
-  - review_petitioner_information: About the Petitioner(s)
+  - review_petitioner_information: About the petitioner(s)
   - review_bio_parents_information: Minor's biological parents
   - review_requests: Your requests to the Court
-  - review_other_custodians_information: Primary care or custody during last 60 days
-  - review_relatives_information: Minor's other relatives
-  - review_guardian_information: Guardian or conservator
+  - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
   - review_attorney_information: Your attorney
   - review_petition_for_appointment_of_guardian: Review your answers
@@ -69,10 +67,8 @@ code: |
   nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
-
   who_is_making_petition
   children.gather()
-
   docket_number
   trial_court
 
@@ -99,29 +95,28 @@ code: |
 
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
-
   if not minor_married:
     parents_consent_to_guardian_appointment
     parental_rights_terminated
     parents_unavailable_to_exercise_parental_rights
     parents_unfit_to_exercise_parental_rights
     previous_third_party_guardian_death_or_incapacitation
-
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
-
   wants_sureties_waiver
+  wants_additional_request
 
-  nav.set_section("review_other_custodians_information")
+  nav.set_section("review_minors_guardianship")
   if other_custodians.there_are_any:
     other_custodians.gather()
-
-  nav.set_section("review_relatives_information")
-  if (bio_father.there_are_any and bio_father_deceased) and (bio_mother.there_are_any and bio_mother_deceased):
-    if relatives.there_are_any:
-      relatives.gather()
-
-  nav.set_section("review_guardian_information")
+  if who_is_making_petition == "interested_party":
+    if bio_father_deceased and bio_mother_deceased:
+      if relatives.there_are_any:
+        relatives.gather()
+  else:
+    if (bio_father.there_are_any and bio_father_deceased) and (bio_mother.there_are_any and bio_mother_deceased):
+      if relatives.there_are_any:
+        relatives.gather()
   if current_acting_guardian:
     guardians.gather()
 
@@ -131,7 +126,8 @@ code: |
     minor_assets_total_value
 
   nav.set_section("review_attorney_information")
-  attorneys.gather()
+  if attorneys.there_are_any:
+    attorneys.gather()
 
   interview_order_petition_for_appointment_of_guardian = True
 ---
@@ -143,10 +139,8 @@ mandatory: True
 code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
-  signature_date
   petition_for_appointment_of_guardian_preview_question
-  basic_questions_signature_flow    
-  users[0].signature
+  basic_questions_signature_flow
   petition_for_appointment_of_guardian_download
 ---
 #################### Object/Code Blocks Start #####################
@@ -199,6 +193,11 @@ code: |
   assets[i].complete = True
 ---
 code: |
+  attorneys[i].name.first
+  attorneys[i].address.address
+  attorneys[i].complete = True
+---
+code: |
   children.there_is_another = False
 ---
 code: |
@@ -218,6 +217,9 @@ code: |
 ---
 code: |
   guardians.there_is_another = False
+---
+code: |
+  attorneys.there_is_another = False
 ---
 code: |
   if len(assets.complete_elements()) > 1:
@@ -324,20 +326,23 @@ continue button field: petition_for_appointment_of_guardian_intro
 question: |
   Petition for Appointment of Guardian of Minor (MPC 140)
 subquestion: |
-  This interview will help you get a Petition for appointment of guardian of a minor.
+  This interview will help you fill out a petition for the appointment of a guardian for a minor.
 
-  Before you get started, please gather:
+  **Before you get started**, please gather:
 
-  1. 
-  1. 
-  1. 
+  1. Any official court documents or orders related to the minor's custody or guardianship.
 
-  When you are finished, you will need to:
+  2. Details about any persons relevant to the minor's guardianship, such as parents, guardians, and the minor's living relatives.
 
-  1. 
-  1. 
+  3. Details about the minor's guardianship history, such as the dates they were under the care and custody of others who were not the minor's parents, and any assets the minor has.
 
-  Most people take about _______ minutes to finish this interview.
+  **When you are finished**, you will need to:
+
+  1. Attach any relevant documents to this Petition. As you complete this interview, the questions will let you know which documents you will need to gather.
+  
+  2. File this Petition in the relevant court.  
+
+  Most people take about 20 minutes to finish this interview.
 ---
 id: who is making petition
 question: |
@@ -410,7 +415,7 @@ fields:
 ---
 id: users there_is_another
 question: |
-  Is anyone else making this petition with you?
+  Is anyone else making this Petition with you?
 fields:
   - no label: users.there_is_another
     datatype: yesnoradio
@@ -647,7 +652,7 @@ question: |
   Was guardianship granted to someone (not one of ${ children[0].name }'s parents) that is now deceased or incapacitated and does not have an successor?
   % endif
 subquestion: |
-  Provide a brief description below and **attach any relevant documents** to this Petition.
+  If you select **Yes**, you must **attach any relevant documents** to this Petition.
 fields:
   - no label: previous_third_party_guardian_death_or_incapacitation
     datatype: yesnoradio
@@ -662,7 +667,7 @@ id: petitioner requesting guardianship
 question: |
   Do you want to ask the court to appoint you as a guardian for ${ children[0].name }?
 subquestion: |
-  **Do not** select 'Yes' if you are currently being investigated or have charges pending for:
+  **DO NOT** select **Yes** if you are currently being investigated or have charges pending for:
 
   * Assault resulting in bodily injury to ${ children[0].name }
   * Neglect to ${ children[0].name }
@@ -674,7 +679,15 @@ id: sureties waiver
 question: |
   Do you want to ask the court to waive sureties required on the bond?
 subquestion: |
-  Here goes a brief explanation of sureties required on the bond.
+  **What is a surety bond?**
+
+  In order to be appointed as a guardian, a person must promise the court to faithfully carry out the legal duties of a guardian. This promise is called a **bond**.
+  
+  A **surety** is a person who also signs the bond, and is also responsible to the court for the guardian carrying out their duties.
+
+  The court can decide that a surety is not required. 
+
+  You can find more information about surety bonds [here](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment).
 fields:
   - no label: wants_sureties_waiver
     datatype: yesnoradio
@@ -684,7 +697,7 @@ question: |
   % if who_is_making_petition == "minor":
   Has anyone else had primary care and custody of you during the last 60 days?
   % else:
-  Has anyone else (other than yourself) had primary care and custody of ${ children[0].name } during the last 60 days?
+  Has anyone else had primary care and custody of ${ children[0].name } during the last 60 days?
   % endif
 fields:
   - no label: other_custodians.there_are_any
@@ -719,7 +732,7 @@ question: |
   % endif
 subquestion: |
   % if len(other_custodians.complete_elements()) < 1:
-  You can name up to two people in this Petition. Start by telling us bout the first one.
+  You can name **up to two people** in this Petition. Start by telling us bout the first one.
   % endif
 fields:
   - code: |
@@ -774,7 +787,7 @@ question: |
   % endif
 subquestion: |
   % if len(requested_guardians.complete_elements()) < 1:
-  You can request up to two guardians in this petition. Start by telling us bout the first guardian you want to request.
+  You can request **up to two guardians** in this Petition. Start by telling us bout the first guardian you want to request.
   % endif
 fields:
   - code: |
@@ -800,13 +813,13 @@ question: |
 subquestion: |
   In order to have priority for appointment as a guardian, a person must have been nominated by the minor **and** the minor must be at least 14 years old.
 
-  If you select 'Yes', you must attach a copy of the minor's nomination to this petition.
+  If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
 fields:
   - no label: requested_guardians[i].has_priority_appointment
 ---
 id: requested_guardians there_is_another
 question: |
-  Do you want to add a second guardian to the petition?
+  Do you want to request a second guardian in this Petition?
 fields:
   - no label: requested_guardians.there_is_another
     datatype: yesnoradio
@@ -819,7 +832,7 @@ question: |
   Aside form ${ children[0].name }'s parents, can you provide information about any of ${ children[0].name }'s other relatives that can be found?
   % endif
 subquestion: |
-  You will be able to add up to two people. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
+  You will be able to add **up to two people**. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
 fields:
   - no label: relatives.there_are_any
     datatype: yesnoradio
@@ -958,6 +971,48 @@ fields:
   - no label: assets.there_is_another
     datatype: yesnoradio
 ---
+id: additional request
+question: |
+  Do you want to add an additional request for the Court?
+fields:
+  - no label: wants_additional_request
+    datatype: yesnoradio
+  - Please give a brief explanation: additional_request_exp
+    input type: area
+    maxlength: 310
+    show if:
+      variable: wants_additional_request
+      is: True
+---
+id: attorneys there_are_any
+question: |
+  Do you have an attorney representing you in this matter?
+fields:
+  - no label: attorneys.there_are_any
+    datatype: yesnoradio
+---
+id: attorney information
+sets:
+  - attorneys[i].name.first
+  - attorneys[i].name.last
+  - attorneys[i].name.middle
+  - attorneys[i].name.suffix
+  - attorneys[i].address.address
+  - attorneys[i].address.unit
+  - attorneys[i].address.city
+  - attorneys[i].address.state
+  - attorneys[i].address.zip
+  - attorneys[i].phone_number
+question: |
+  Tell us about your attorney
+fields:
+  - code: |
+      attorneys[i].name_fields()
+  - code: |
+      attorneys[i].address_fields()
+  - Primary phone number: attorneys[i].phone_number
+  - BBO number: attorneys[i].bbo
+---
 id: preview petition_for_appointment_of_guardian
 question: |
   Preview your form before you sign it
@@ -974,11 +1029,17 @@ subquestion: |
   Remember to come back to this window to continue and sign your form.
 continue button field: petition_for_appointment_of_guardian_preview_question
 ---
+# code: |
+#   signature_fields = ['users[0].signature', 'users1_signature']
+---
+# code: |
+#   signature_fields = ['users[1].signature', 'users2_signature']
+---
 code: |
-  signature_fields = ['users[0].signature', 'users1_signature']
+  signature_fields = ['users[0].signature']
 ---
 question: |
-  Users1 signature, sign below
+  ${ users[0].name }'s signature, sign below
 signature: users[0].signature
 ---
 #################### Review Blocks Start #####################
@@ -1368,18 +1429,6 @@ review:
     button: |
       **Minor assets total value**:
       ${ currency(minor_assets_total_value) }
-  - Edit: users[0].signature
-    button: |
-      **users1_signature**:
-      ${ users[0].signature }
-  - Edit: users[0].signature_date
-    button: |
-      **Date of users1 signature**:
-      ${ users[0].signature_date }
-  - Edit: users[1].signature_date
-    button: |
-      **Date of users2 signature**:
-      ${ users[1].signature_date }
   - Edit: attorneys.revisit
     button: |
       **Attorneys**
@@ -1493,7 +1542,7 @@ event: petition_for_appointment_of_guardian_download
 question: |
   All done
 subquestion: |
-  Thank you ${users}. Your form is ready to download and deliver.
+  Your form is ready to download and deliver.
 
   View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
 

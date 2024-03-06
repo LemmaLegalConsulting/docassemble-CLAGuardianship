@@ -61,6 +61,7 @@ attachment:
   skip undefined: True
   pdf template file: petition_for_appointment_of_guardian.pdf
   fields:
+    - "additional_request_exp": ${ additional_request_exp }
     - "docket_number": ${ docket_number }
     - "trial_court_division": ${ trial_court.division }
     - "children1_name_middle__1": ${ children[0].name.middle }
