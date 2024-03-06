@@ -129,8 +129,8 @@ attachment:
     - "previous_third_party_guardian_death_or_incapacitation_exp": ${ previous_third_party_guardian_death_or_incapacitation_exp }
     - "petitioner_requesting_guardianship": ${ petitioner_requesting_guardianship }
     - "wants_sureties_waiver": ${ wants_sureties_waiver }
-    - "other_primary_care_or_custody_yes": ${ other_primary_care_or_custody }
-    - "other_primary_care_or_custody_no": ${ not other_primary_care_or_custody }
+    - "other_primary_care_or_custody_yes": ${ other_primary_care_or_custody_yes }
+    - "other_primary_care_or_custody_no": ${ other_primary_care_or_custody_no }
     - "other_custodian1_name_first": ${ other_custodians[0].name.first }
     - "other_custodian1_name_middle_initial": ${ other_custodians[0].name.middle_initial() }
     - "other_custodian1_name_last": ${ other_custodians[0].name.last }

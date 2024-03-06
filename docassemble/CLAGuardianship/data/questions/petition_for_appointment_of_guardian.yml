@@ -86,10 +86,16 @@ code: |
     set_user_to_minor
 
   nav.set_section("review_bio_parents_information")
-  if not bio_mother_collected:
-    bio_mother.gather()
-  if not bio_father_collected:
-    bio_father.gather()
+  if who_is_making_petition == "interested_party":
+    if (bio_mother_collected != True) and bio_mother.there_are_any:  
+      bio_mother.gather()
+    if (bio_father_collected != True) and bio_father.there_are_any:
+      bio_father.gather()
+  else:
+    if bio_mother.there_are_any:
+      bio_mother.gather()
+    if bio_father.there_are_any:
+      bio_father.gather()
 
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
@@ -107,11 +113,11 @@ code: |
   wants_sureties_waiver
 
   nav.set_section("review_other_custodians_information")
-  if other_primary_care_or_custody:
+  if other_custodians.there_are_any:
     other_custodians.gather()
 
   nav.set_section("review_relatives_information")
-  if bio_father_deceased and bio_mother_deceased:
+  if (bio_father.there_are_any and bio_father_deceased) and (bio_mother.there_are_any and bio_mother_deceased):
     if relatives.there_are_any:
       relatives.gather()
 
@@ -143,7 +149,7 @@ code: |
   users[0].signature
   petition_for_appointment_of_guardian_download
 ---
-#################### Object Blocks Start #####################
+#################### Object/Code Blocks Start #####################
 ---
 code: |
   children[i].name.first
@@ -198,8 +204,6 @@ code: |
 code: |
   if who_is_making_petition == "minor":
     users.there_is_another = False
-    other_primary_care_or_custody_yes = True
-    other_custodians.there_are_any = True
     petitioner_is_minor = True
 ---
 code: |
@@ -245,20 +249,18 @@ code: |
   addresses_to_search = [children[0].address]
 ---
 code: |
-  if (users[i].is_bio_parent == True) and (users[i].relationship_to_minor == "biological father"):
-    bio_father_collected = True
-    bio_father_deceased = False
-  else:
-    bio_father_collected = False
----
-code: |
-  if (users[i].is_bio_parent == True) and (users[i].relationship_to_minor == "biological mother"):
+  if (users[0].relationship_to_minor == "biological mother") or (users[1].relationship_to_minor == "biological mother"):
     bio_mother_collected = True
-    bio_mother_deceased = False
   else:
     bio_mother_collected = False
 ---
-#################### Object Blocks End #####################
+code: |
+  if (users[0].relationship_to_minor == "biological father") or (users[1].relationship_to_minor == "biological father"):
+    bio_father_collected = True
+  else:
+    bio_father_collected = False
+---
+#################### Object/Code Blocks End #####################
 ---
 #################### Override Blocks Start #####################
 ---
@@ -445,7 +447,7 @@ validation code: |
   if users[i].is_bio_parent:
     if users[i].relationship_to_minor == "biological mother":
       bio_mother_deceased = False
-    if users[i].relationship_to_minor == "biological father":
+    elif users[i].relationship_to_minor == "biological father":
       bio_father_deceased = False
 ---
 id: petitioner relationship to minor
@@ -615,6 +617,7 @@ fields:
     datatype: yesnoradio
   - Please give a brief explanation: parents_unavailable_to_exercise_parental_rights_exp
     input type: area
+    maxlength: 310
     show if:
       variable: parents_unavailable_to_exercise_parental_rights
       is: True
@@ -631,6 +634,7 @@ fields:
     datatype: yesnoradio
   - Please give a brief explanation: parents_unfit_to_exercise_parental_rights_exp
     input type: area
+    maxlength: 310
     show if:
       variable: parents_unfit_to_exercise_parental_rights
       is: True
@@ -649,6 +653,7 @@ fields:
     datatype: yesnoradio
   - Please give a brief explanation: previous_third_party_guardian_death_or_incapacitation_exp
     input type: area
+    maxlength: 310
     show if:
       variable: previous_third_party_guardian_death_or_incapacitation
       is: True
@@ -682,10 +687,10 @@ question: |
   Has anyone else (other than yourself) had primary care and custody of ${ children[0].name } during the last 60 days?
   % endif
 fields:
-  - no label: other_primary_care_or_custody
+  - no label: other_custodians.there_are_any
     datatype: yesnoradio
 validation code: |
-  if other_primary_care_or_custody:
+  if other_custodians.there_are_any:
     other_primary_care_or_custody_yes = True
   else:
     other_primary_care_or_custody_no = True
@@ -937,6 +942,7 @@ question: |
 fields:
   - Provide a brief description: assets[i].description
     input type: area
+    maxlength: 85
   - What is the asset's total value?: assets[i].value
     datatype: currency
     min: 0
@@ -1146,10 +1152,6 @@ review:
     button: |
       **Guardians2 has priority appointment**:
       ${ word(yesno(guardians[1].has_priority_appointment)) }
-  - Edit: other_primary_care_or_custody
-    button: |
-      **Other primary care or custody**:
-      ${ word(yesno(other_primary_care_or_custody)) }
   - Edit: other_custodians[0].name.first
     button: |
       **Other custodian1 name first**:
