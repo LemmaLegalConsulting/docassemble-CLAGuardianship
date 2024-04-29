@@ -1,0 +1,286 @@
+include:
+  - docassemble.mlhframework:mlh_interview_framework.yml
+---
+objects:
+  - person_with_interest: Individual
+  - fiduciary: ALPeopleList.using(auto_gather=True, complete_attribute="complete", target_number=1)
+  - personal_surety: ALPeopleList.using(auto_gather=True, complete_attribute="complete", target_number=1)
+---
+metadata:
+  title: Bond MPC 801
+  short title: Bond
+  subtitle: Bond
+  description: |
+    The Bond is used to establish a bond for individuals appointed as fiduciaries—such as personal representatives or trustees—of an estate.
+  tags:
+    - "Family"
+    - "Domicile"
+  authors:
+    - Pratibha Bharti
+---
+features:
+  labels above fields: True
+---
+id: interview_order_for_bond
+mandatory: True
+code: |
+  bond_type
+  docket_numbers
+  county_choice
+  in_the_interest_of
+  real_estate_value
+  fiduciary.gather()
+  appointment_title
+  if bond_type == "With personal sureties":
+    personal_surety.gather()
+  bond_download
+
+---
+code: |
+  fiduciary.there_are_any = True
+  personal_surety.there_are_any = True
+  fiduciary.target_number = 2
+---
+id: type_of_bond
+question: |
+  What is the type of Bond?
+fields:
+  - no label: bond_type
+    choices:
+      - Without sureties
+      - With personal sureties
+      - With corporate surety bond
+  - Corporate Bond number: corporate_bond_number
+    show if:
+      variable: bond_type
+      is: With corporate surety bond
+  - Corporate Corporate Surety (name): corporate_surety_name
+    show if:
+      variable: bond_type
+      is: With corporate surety bond
+  - Stand bound as surety in the aforesaid penal sum: stand_bound_surety_sum
+    datatype: number
+    show if:
+      variable: bond_type
+      is: With corporate surety bond
+  - Address of the Coporate body: corporate_body_address
+    show if:
+      variable: bond_type
+      is: With corporate surety bond
+  - State of the Coporate body: corporate_body_state
+    code: |
+      states_list()
+    show if:
+      variable: bond_type
+      is: With corporate surety bond
+---
+code: |
+  if bond_type == "With personal sureties":
+    Withsureties_yes = True
+    withoutsureties_yes = False
+    CorporateBond_yes = False
+  elif bond_type == "Without sureties":
+    Withsureties_yes = False
+    withoutsureties_yes = True
+    CorporateBond_yes = False
+  else:
+    Withsureties_yes = False
+    withoutsureties_yes = False
+    CorporateBond_yes = True
+---
+id: docket number
+question: |
+  What is your Case number and Court name?
+fields:
+  - Case number: docket_numbers
+    maxlength: 25
+  - Court Name: court_name
+
+---
+id: Choose a county
+question: |
+  In which county division?
+subquestion: |
+fields:
+  - County: county_choice
+    code: court_list._load_courts()["address_county"].unique()
+---
+id: In the interestes of
+question: |
+  In the interestes of
+subquestion: |
+  Incapacitated Person/Protected Person/Ward/Decedent/Trust
+fields:
+  - First: person_with_interest.name.first
+  - Midlle: person_with_interest.name.middle
+    required: False
+  - Last: person_with_interest.name.last
+continue button field: in_the_interest_of
+---
+id: Bond vlaues
+question: |
+  Bond values
+fields:
+  - Estimated Value of Real Estate: real_estate_value
+    datatype: number
+  - Estimated Value of Personal Estate: personal_estate_value
+    datatype: number
+  - Penal Sum of Bond (if applicable): penal_sum_bond
+    datatype: number
+    required: False
+---
+# NOTE: for Fiduciary and other_parties
+generic object: ALIndividual
+code: |
+  x.name.first
+  x.address.address
+  x.phone_number
+  x.complete = True
+---
+id: fuduciary contact information
+sets:
+  - fiduciary[i].address.address
+  - fiduciary[i].address.unit
+  - fiduciary[i].address.city
+  - fiduciary[i].address.state
+  - fiduciary[i].address.zip
+  - fiduciary[i].address.country
+  - fiduciary[i].phone_number
+question: |
+  ${ordinal(i)} Fiduciary contact information
+fields:
+  - Phone number: fiduciary[i].phone_number
+  - code: |
+      fiduciary[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=True)
+---
+question: |
+  The undersigned fiduciary accepts appointment as and stand(s) personally bound to the First Justice of said Court and his or her successors as obligee for the benefit of the persons interested in the estate and declare(s) the above estimates to be true and accurate to the best of his/her knowledge and belief.
+
+fields:
+  - Appointment Title: appointment_title
+---
+id: Personal Surety contact information
+sets:
+  - personal_surety[i].address.address
+  - personal_surety[i].address.unit
+  - personal_surety[i].address.city
+  - personal_surety[i].address.zip
+  - personal_surety[i].phone_number
+question: |
+  ${ordinal(i)} Personal Surety contact information
+fields:
+  - Phone number: personal_surety[i].phone_number
+  - code: |
+      personal_surety[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=True)
+---
+
+---
+code: |
+  personal_surety_count = 0
+  fiduciary_count = 0
+  for i in fiduciary:
+    fiduciary_count+=1
+  if bond_type == "With personal sureties":
+    for i in personal_surety:
+      personal_surety_count+=1
+---
+objects:
+  - rmrcd_main: ALDocument.using(title="Bond MPC 801", filename="mpc_801_bond.pdf", enabled=True, has_addendum=False, default_overflow_message=" (Continued in Attachment)")
+---
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[rmrcd_main], filename="mpc_801_bond.pdf", title="All forms to download for your records", enabled=True)
+---
+id: download screen
+event: bond_download
+question: |
+  Thank you  Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_form'), label='Edit answers', color='info') }
+
+  ${ al_user_bundle.download_list_html() }
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+---
+attachments:
+  name: foc_116
+  filename: foc_116
+  variable name: rmrcd_main[i]
+  editable: False
+  pdf template file: mpc_801_bond.pdf
+  fields:
+    - "withoutsureties_yes": ${withoutsureties_yes}
+    - "Withsureties_yes": ${Withsureties_yes}
+    - "CorporateBond_yes": ${CorporateBond_yes}
+    - "CorporateBond_number": ${ corporate_bond_number if CorporateBond_yes else ''}
+    - "Docket No": ${docket_numbers}
+    - "Commonwealth of Massachusetts The Trial Court Probate and Family Court": ${court_name}
+    - "Respondent_first_name": ${person_with_interest.name.first}
+    - "Respondent_middle_name": ${person_with_interest.name.middle}
+    - "Respondent_last_name": ${person_with_interest.name.last}
+    - "County": ${county_choice}
+    - "RealEstate_value": ${real_estate_value}
+    - "PersonalEstate_value": ${personal_estate_value}
+    - "PenalSum_bond": ${penal_sum_bond}
+    - "Fiduciary1_name_MI": ${fiduciary[0].name.first if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_name_first": ${fiduciary[0].name.first if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_name_last": ${fiduciary[0].name.last if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_address_street": ${fiduciary[0].address.address if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_address_state": ${fiduciary[0].address.state if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_address_unit": ${fiduciary[0].address.unit if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_address_city": ${fiduciary[0].address.city if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_address_zip": ${fiduciary[0].address.zip if (fiduciary_count>=1) else ''}
+    - "Fiduciary1_phone": ${fiduciary[0].phone_number if (fiduciary_count>=1) else ''}
+    - "Fiduciary2_name_first": ${fiduciary[1].name.first if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_name_MI": ${fiduciary[1].name.middle if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_name_last": ${fiduciary[1].name.last if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_address_street": ${fiduciary[1].address.address if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_address_state": ${fiduciary[1].address.state if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_address_unit": ${fiduciary[1].address.unit if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_address_city": ${fiduciary[1].address.city if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_address_zip": ${fiduciary[1].address.zip if (fiduciary_count>=2) else ''}
+    - "Fiduciary2_phone": ${fiduciary[1].phone_number if (fiduciary_count>=2) else ''}
+    - "Appointment_title": ${appointment_title}
+    - "Date": ${ today(format='M/d/YYYY')  if (fiduciary_count>=1) else ''}
+    - "Signature of Fiduciary 1": |
+        ${f"/s/ {fiduciary[0]}"  if (fiduciary_count>=1) else ''}
+    - "Date_2": ${ today(format='M/d/YYYY') if (fiduciary_count>=2) else ''}
+    - "Signature of Fiduciary 2": |
+        ${f"/s/ {fiduciary[1]}" if (fiduciary_count>=2) else ''}
+    - "Respondent_first_name2": ${person_with_interest.name.first}
+    - "Respondent_middle_name2": ${person_with_interest.name.middle}
+    - "Respondent_last_name2": ${person_with_interest.name.last}
+    - "Docket No_2": ${docket_numbers}
+    - "personal_surety_name_middle": ${personal_surety[0].name.middle if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_name_last": ${personal_surety[0].name.last if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_name_first": ${personal_surety[0].name.first if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_address_address": ${personal_surety[0].address.address if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_address_unit": ${personal_surety[0].address.unit if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_address_city": ${personal_surety[0].address.city if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_address_zip": ${personal_surety[0].address.zip if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_phone": ${personal_surety[0].phone_number if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "Signature": |
+        ${f"/s/ {personal_surety[0]}" if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "Date_3": ${ today(format='M/d/YYYY') if (Withsureties_yes and personal_surety_count>=1) else ''}
+    - "personal_surety_name2_last": ${personal_surety[1].name.last if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_name2_middle": ${personal_surety[1].name.middle if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_name2_first": ${personal_surety[1].name.first if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_address2_address": ${personal_surety[1].address.address if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_address2_unit": ${personal_surety[1].address.unit if (Withsureties_yes and personal_surety_count>=2) else ''} else ''
+    - "personal_surety_address2_city": ${personal_surety[1].address.city if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_address2_zip": ${personal_surety[1].address.zip if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "personal_surety_phone2": ${personal_surety[1].phone_number if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "Date_4": ${ today(format='M/d/YYYY') if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "Signature_2": |
+        ${f"/s/ {personal_surety[1]}" if (Withsureties_yes and personal_surety_count>=2) else ''}
+    - "CorporateBond_number2": ${corporate_bond_number if CorporateBond_yes else ''}
+    - "PenalSum_bond2": ${penal_sum_bond if CorporateBond_yes else ''}
+    - "state_incorporated": ${corporate_body_state if CorporateBond_yes else ''}
+    - "business_location_address": ${corporate_body_address if CorporateBond_yes else ''}
+    - "stand bound as surety in the aforesaid penal sum": ${stand_bound_surety_sum if CorporateBond_yes else ''}
+    - "Signature and Title": |
+        ${f"/s/ {corporate_surety_name}" if CorporateBond_yes else ''}
+    - "Corporate_name": ${corporate_surety_name if CorporateBond_yes else ''}
+---
+
