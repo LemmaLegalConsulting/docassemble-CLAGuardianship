@@ -96,7 +96,8 @@ continue button field: caregiver_authorization_affidavit_intro
 question: |
   Caregiver authorization affidavit
 subquestion: |
-  This interview will help you give permission to someone to take care of your child.
+  This interview will help you give permission to someone to take care of your child (someone under
+  18).
   At the end of the interview, you will be able to download and print your **affidavit**,
   which confirms that you are giving permission to someone to take care of your child.
 
@@ -159,10 +160,34 @@ fields:
 id: children
 question: |
   How many children do you want to name in this affidavit?
+subquestion: |
+  Only count children who you have legal responsibility for and
+  who are younger than **18**.
 fields:
   - How many children?: children.target_number
     datatype: integer
     min: 1
+---
+id: children names without birthdate
+sets:
+  - children[i].name.first
+  - children[i].name.last
+  - children[i].name.middle
+  - children[i].name.suffix
+question: |
+  % if hasattr(children, 'ask_number') and children.ask_number and children.target_number == 1 and i == 0:
+  Child's name
+  % else:
+  Name of ${ ordinal(i) } child
+  % endif
+fields:
+  - code: |
+      children[i].name_fields()
+  - Birthdate: children[i].birthdate
+    datatype: ThreePartsDate
+    required: False
+    alMin: ${ today().plus(years=-18).format('MM/dd/yyyy') }
+    alMax: ${ today().format('MM/dd/yyyy') }
 ---
 id: Information about the caregiver
 question: |
@@ -174,6 +199,13 @@ fields:
       - Parent: parent
       - Guardian: legal guardian
       - Custodian: legal custodian
+  - note: |
+      **Because you are the legal guardian or custodian**
+
+      When you print this document, attach a copy of the court order that gives **you**
+      the right to make decisions about the children.
+    js show if: |
+      val("relationship_to_child") == "legal guardian" || val("relationship_to_child") == "legal custodian"
 ---
 id: What are the limits of your permission
 question: |
