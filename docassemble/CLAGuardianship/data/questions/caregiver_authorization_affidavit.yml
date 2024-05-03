@@ -1,0 +1,379 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.MassAccess:massaccess.yml
+---
+metadata:
+  title: >-
+    Caregiver authorization affidavit
+  short title: >-
+    Caregiver authorization
+  description: |-
+    This interview helps someone in Massachusetts give permission to someone to 
+    take care of their child.
+  tags:
+    - "ES-03-00-00-00"
+    - "FA-00-00-00-00"
+    - "FA-16-00-00-00"
+  authors:
+    - Quinten Steenhuis
+  original_form:
+    - https://www.mass.gov/how-to/name-a-caregiver-for-your-child
+  allowed_courts: []
+  typical_role: "plaintiff"
+  al_weaver_version: "1.10.3"
+  generated_on: "2024-04-29"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name =  'docassemble-CaregiverAuthorizationAffidavit'
+---
+code: |
+  interview_short_title = "Give permission to someone to take care of your child"
+---
+code: |
+  al_form_type = "other_form" 
+---
+objects:
+  - children: ALPeopleList.using(ask_number=True, minimum_number=1)
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - authorized_persons: ALPeopleList.using(ask_number=True,target_number=1)
+---
+sections:
+  - review_caregiver_authorization_affidavit: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_caregiver_authorization_affidavit
+code: |
+  # Set the allowed courts for this interview
+  nav.set_section("review_caregiver_authorization_affidavit")
+  user_role = "plaintiff"
+  user_ask_role = "plaintiff"
+  users.gather()
+  relationship_to_child 
+  authorized_persons.gather()
+  set_parts(subtitle=str(users))
+  caregiver_relationship_to_child
+  set_progress(25)
+  expiration_of_authorization
+  children.gather()
+  users[0].phone_number
+  set_progress(50)
+  users[0].address.address
+  interview_order_caregiver_authorization_affidavit = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  al_intro_screen
+  caregiver_authorization_affidavit_intro
+  interview_order_caregiver_authorization_affidavit
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  caregiver_authorization_affidavit_download
+---
+id: Caregiver_authorization_affidavit
+continue button field: caregiver_authorization_affidavit_intro
+question: |
+  Caregiver authorization affidavit
+subquestion: |
+  This interview will help you give permission to someone to take care of your child (someone under
+  18).
+  At the end of the interview, you will be able to download and print your **affidavit**,
+  which confirms that you are giving permission to someone to take care of your child.
+
+  The permission include decisions about:
+
+  1. Health care, and
+  1. Education
+  
+  You need the name, phone number, and address of the person you are authorizing to 
+  finish this interview.
+  
+  When you are finished, you will need to:
+  
+  1. Get the authorized person to sign
+  1. Find 2 witnesses
+  1. Sign in front of the 2 witnesses and a notary
+  
+  Most people take about 10 minutes to finish this interview.
+---
+sets:
+  - users[0].name.first
+  - users[0].address.address
+id: your name and number
+question: |
+  Your name and contact information
+fields:
+  - code: |
+      users[0].name_fields()
+  - Phone number: users[0].phone_number
+    datatype: al_international_phone
+  - code: |
+      users[0].address_fields(default_state="MA")
+---
+sets:
+  - authorized_persons[0].name.first
+id: What best describes you
+question: |
+  Who do you want to give permission to?
+fields:
+  - code: |
+      authorized_persons[0].name_fields()
+  - "Relationship to child": caregiver_relationship_to_child
+    input type: radio
+    choices:
+      - Aunt: aunt
+      - Uncle: uncle
+      - Parent's sibling: parent's sibling
+      - Grandparent: grandparent
+      - Sibling: sibling
+      - Cousin: cousin
+      - Parent's friend: parent's friend
+      - Other: other
+  - Other: caregiver_relationship_to_child
+    show if:
+      variable: caregiver_relationship_to_child
+      is: other
+  - Phone number: authorized_persons[0].phone_number
+    datatype: al_international_phone
+---
+id: children
+question: |
+  How many children do you want to name in this affidavit?
+subquestion: |
+  Only count children who you have legal responsibility for and
+  who are younger than **18**.
+fields:
+  - How many children?: children.target_number
+    datatype: integer
+    min: 1
+---
+id: children names without birthdate
+sets:
+  - children[i].name.first
+  - children[i].name.last
+  - children[i].name.middle
+  - children[i].name.suffix
+question: |
+  % if hasattr(children, 'ask_number') and children.ask_number and children.target_number == 1 and i == 0:
+  Child's name
+  % else:
+  Name of ${ ordinal(i) } child
+  % endif
+fields:
+  - code: |
+      children[i].name_fields()
+  - Birthdate: children[i].birthdate
+    datatype: ThreePartsDate
+    required: False
+    alMin: ${ today().plus(years=-18).format('MM/dd/yyyy') }
+    alMax: ${ today().format('MM/dd/yyyy') }
+---
+id: Information about the caregiver
+question: |
+  What best describes you?
+fields:
+  - I am the children's: relationship_to_child
+    input type: radio
+    choices:
+      - Parent: parent
+      - Guardian: legal guardian
+      - Custodian: legal custodian
+  - note: |
+      **Because you are the legal guardian or custodian**
+
+      When you print this document, attach a copy of the court order that gives **you**
+      the right to make decisions about the children.
+    js show if: |
+      val("relationship_to_child") == "legal guardian" || val("relationship_to_child") == "legal custodian"
+---
+id: What are the limits of your permission
+question: |
+  What are the limits of your permission?
+subquestion: |
+  You can limit both:
+
+  1. Length of the permission, and
+  2. The powers of the caregiver
+
+  You must choose an ending date for the permission. You can choose any date up to **2 years** from today.
+  Limiting the powers is optional. If you do not write a limit, the caregiver
+  will have permission to make all decisions about healthcare and education for the length
+  of the permission.
+fields:
+  - "When does your permission end?": expiration_of_authorization
+    datatype: date
+    min: ${ today().plus(days=1).format("yyyy-MM-dd") }
+    max: ${ today().plus(years=2).format("yyyy-MM-dd") }
+    validation messages:
+      max: |
+        You must choose a day that is no more than 2 years from today.
+      min: |
+        You cannot choose a day that is today or in the past.
+  - note: |
+      **Limiting the caregiver's powers**
+
+      You can give permission for the caregiver to do anything you can do. You can also 
+      **limit** what the caregiver can do. For example, you can stop the caregiver from making
+      some medical decisions.
+
+      What are the limits of your permission?
+  - "The caregiver is not permitted to do the following: (optional)": excluded_powers
+    input type: area
+    required: False
+---
+code: |
+  signature_fields = []
+---
+id: caregiver authorization affidavit review screen
+event: review_caregiver_authorization_affidavit
+question: |
+  Review your answers
+review:
+  - Edit: children.revisit
+    button: |
+      **Children**
+
+      % for item in children:
+        * ${ item }
+      % endfor
+  - Edit: caregiver_relationship_to_child
+    button: |
+      **Caregiver relationship to child**:
+      ${ caregiver_relationship_to_child }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: authorized_persons[0].phone_number
+    button: |
+      **Authorized persons[0].phone number**:
+      ${ authorized_persons[0].phone_number }
+  - Edit: expiration_of_authorization
+    button: |
+      **Expiration of authorization**:
+      ${ expiration_of_authorization }
+  - Edit: relationship_to_child
+    button: |
+      **Relationship to child**:
+      ${ relationship_to_child }
+  - Edit: excluded_powers
+    button: |
+      **The caregiver is not permitted to do the following:**:
+      > ${ single_paragraph(excluded_powers) }
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.address") else ""
+edit:
+  - phone_number
+  - name.first
+  - address.address
+confirm: True
+
+---
+id: download caregiver_authorization_affidavit
+event: caregiver_authorization_affidavit_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_caregiver_authorization_affidavit'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=True) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - caregiver_authorization_affidavit_Post_interview_instructions: ALDocument.using(title="Instructions", filename="caregiver_authorization_affidavit_next_steps.docx", enabled=True, has_addendum=False)
+  - caregiver_authorization_affidavit_attachment: ALDocument.using(title="Caregiver authorization affidavit", filename="caregiver_authorization_affidavit", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_Post_interview_instructions, caregiver_authorization_affidavit_attachment], filename="caregiver_authorization_affidavit", title="All forms to download for your records", enabled=True)
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_attachment],  filename="caregiver_authorization_affidavit", title="All forms to file", enabled=True)
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
+# used for "preview" and "final" keys, and logic in the template checks the value of 
+# `i` to show or hide the user's signature
+attachment:
+  name: Post-interview-Instructions
+  filename: caregiver_authorization_affidavit_next_steps
+  docx template file: caregiver_authorization_affidavit_next_steps.docx
+  variable name: caregiver_authorization_affidavit_Post_interview_instructions[i]
+  skip undefined: True
+  tagged pdf: True
+---
+attachment:
+  name: caregiver authorization affidavit
+  filename: caregiver_authorization_affidavit
+  variable name: caregiver_authorization_affidavit_attachment[i]
+  skip undefined: True
+  docx template file: caregiver_authorization_affidavit.docx
+  tagged pdf: True
+
+
+
