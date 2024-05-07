@@ -82,3 +82,23 @@ fields:
       <h2 class="h4">Name of protected person (the child)</h2>
   - code: |
       children[0].name_fields()
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(
+      elements=[
+          notice_of_appearance_and_objection_Post_interview_instructions, 
+          notice_of_appearance_and_objection_attachment,
+          notice_of_appearance_and_objection_affidavit_attachment,
+        ], 
+        filename="notice_of_appearance_and_objection", 
+        title="All forms to download for your records", enabled=True
+      )
+  - al_court_bundle: ALDocumentBundle.using(
+      elements=[
+          notice_of_appearance_and_objection_attachment,
+          notice_of_appearance_and_objection_affidavit_attachment,
+        ], 
+        filename="notice_of_appearance_and_objection", 
+        title="All forms to download for the court", enabled=True
+      )

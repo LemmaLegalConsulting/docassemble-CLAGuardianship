@@ -444,26 +444,6 @@ objects:
 code: |
   notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
 ---
-# Bundles group the ALDocuments into separate downloads, such as for court and for the user
-objects:
-  - al_user_bundle: ALDocumentBundle.using(
-      elements=[
-          notice_of_appearance_and_objection_Post_interview_instructions, 
-          notice_of_appearance_and_objection_attachment,
-          notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
-        filename="notice_of_appearance_and_objection", 
-        title="All forms to download for your records", enabled=True
-      )
-  - al_court_bundle: ALDocumentBundle.using(
-      elements=[
-          notice_of_appearance_and_objection_attachment,
-          notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
-        filename="notice_of_appearance_and_objection", 
-        title="All forms to download for the court", enabled=True
-      )
----
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
 # used for "preview" and "final" keys, and logic in the template checks the value of
 # `i` to show or hide the user's signature
