@@ -1,0 +1,11 @@
+---
+comment: |
+  Will place screens that are customized from a standalone
+  interview in here, for the most part
+---
+########### Customizations for notice of appearance and objection ##########
+---
+code: |
+  docket_number = ""
+  file_date = today()
+  is_objection = False

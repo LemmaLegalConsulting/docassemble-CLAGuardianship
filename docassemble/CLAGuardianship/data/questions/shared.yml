@@ -38,8 +38,23 @@ objects:
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[petition_for_appointment_of_guardian_post_interview_instructions, petition_for_appointment_of_guardian_attachment], filename="petition_for_appointment_of_guardian", title="All forms to download for your records", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[petition_for_appointment_of_guardian_attachment],  filename="petition_for_appointment_of_guardian", title="All forms to deliver to court", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[
+          petition_for_appointment_of_guardian_post_interview_instructions, 
+          petition_for_appointment_of_guardian_attachment,
+          notice_of_appearance_and_objection_attachment,
+        ], 
+        filename="petition_for_appointment_of_guardian", 
+        title="All forms to download for your records", 
+        enabled=True
+      )
+  - al_court_bundle: ALDocumentBundle.using(elements=[
+          petition_for_appointment_of_guardian_attachment,
+          notice_of_appearance_and_objection_attachment,
+        ], 
+        filename="petition_for_appointment_of_guardian", 
+        title="All forms to file in court",
+        enabled=True
+      )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
 # used for "preview" and "final" keys, and logic in the template checks the value of

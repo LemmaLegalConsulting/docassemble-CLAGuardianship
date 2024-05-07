@@ -1,0 +1,526 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.MassAccess:massaccess.yml
+---
+objects:
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
+---
+#################### Interview order #####################
+id: interview_order_notice_of_appearance_and_objection
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ["Probate and Family Court"]
+  nav.set_section("review_notice_of_appearance_and_objection")
+
+  appearance_as_attorney
+  users.gather()
+  users[0].address.address
+  users[0].phone_number
+  if appearance_as_attorney:
+    attorneys.gather()
+    attorneys[0].address.address
+    attorneys[0].phone_number
+    bbo
+  set_parts(subtitle=str(users))
+  children[0].name.first
+  case_name
+  trial_court.division
+  docket_number
+  file_date
+  is_objection
+  signature_date
+  basic_questions_signature_flow
+  set_progress(100)
+  interview_order_notice_of_appearance_and_objection = True
+---
+id: Notice_of_Appearance_and_Objection
+
+continue button field: notice_of_appearance_and_objection_intro
+
+question: |
+  Introduction
+
+subquestion: |
+  If someone has filed a case in court for the guardianship of your child, you can use this form to 
+  let the court know you wish to participate in the case. 
+
+  **Optional:** If you have any objections, you can also use this form to let the court know about them.
+
+  **DO NOT** continue this interview if:
+
+  * You know or think that CLA may already be representing you or the other side in your case. 
+    Call us on the telephone.
+
+  * You have already applied for help for this problem. Call us on the telephone.
+
+  * You are concerned that the computer you are using may not be secure, and there is a risk that 
+  someone else may find out you have contacted legal services for help. Be aware that not all computers 
+  are secure. If you use a computer shared by others, they may be able to find out that you have applied 
+  online for legal help. Instead, call us on the telephone.
+---
+id: User Name
+
+sets:
+  - users[0].name.first
+  - users[0].name.last
+  - users[0].name.middle
+  - users[0].name.suffix
+
+generic object: ALPeopleList
+
+question: |
+  % if appearance_as_attorney:
+  What is your client's name?
+  % else:
+  What is your name?
+  % endif
+
+fields:
+  - code: |
+      users[0].name_fields()
+---
+id: User Address
+
+sets:
+  - users[0].address.address
+  - users[0].address.unit
+  - users[0].address.city
+  - users[0].address.state
+  - users[0].address.zip
+
+generic object: ALPeopleList
+
+question: |
+  % if appearance_as_attorney == True:
+  What is your client's address?
+  % else:
+  What is your address?
+  % endif
+
+fields:
+  - code: |
+      users[0].address_fields()
+---
+id: User Primary Phone
+
+sets:
+  - users[0].phone_number
+
+generic object: ALPeopleList
+
+question: |
+  % if appearance_as_attorney == True:
+  What is your client's phone number?
+  % else:
+  What is your phone number?
+  % endif
+
+subquestion: |
+  % if appearance_as_attorney == True:
+  Enter your client's **primary phone number**, if able.
+  % else:
+  Enter your **primary phone number**, if able.
+  % endif
+
+fields:
+  - no label: users[0].phone_number
+    datatype: al_international_phone
+    required: False
+---
+id: Attorney Name
+
+sets:
+  - attorneys[0].name.first
+  - attorneys[0].name.last
+  - attorneys[0].name.middle
+  - attorneys[0].name.suffix
+
+generic object: ALPeopleList
+
+question: |
+  What is your name?
+
+fields:
+  - code: |
+      attorneys[0].name_fields()
+---
+id: Attorney Address
+
+sets:
+  - attorneys[0].address.address
+  - attorneys[0].address.unit
+  - attorneys[0].address.city
+  - attorneys[0].address.state
+  - attorneys[0].address.zip
+
+generic object: ALPeopleList
+
+question: |
+  What is your address?
+
+fields:
+  - code: |
+      attorneys[0].address_fields()
+---
+id: Attorney Contact Information
+
+generic object: ALIndividual
+
+question: |
+  What is your primary phone number?
+
+fields:
+  - Phone number: attorneys[0].phone_number
+    datatype: al_international_phone
+    required: False
+---
+id: Filing Date
+
+question: |
+  When was the petition for appointment of guardian filed?
+
+fields:
+  - "Date filed": file_date
+    datatype: date
+---
+depends on:
+  - children[0].name.first
+code: |
+  case_name = f"In the interests of { children[0].name_full() }"
+---
+id: Role
+
+question: |
+  Are you an attorney who is helping someone else file this document?
+
+fields: 
+  - I am: appearance_as_attorney
+    datatype: radio
+    choices:
+      - "Filing this document for myself": False
+      - "A lawyer and will be filing this document for my client": True
+---
+id: Objection
+
+question: |
+  Do you **object** (disagree) with the appointment of a guardian in this case?
+
+fields: 
+  - I disagree with the guardianship: is_objection
+    datatype: yesnoradio
+  - note: |
+      <h2 class="h4">Your explanation</h2>
+      If you are ready, you can explain **now** why you disagree with the guardianship petition in
+      the interests of ${ children[0].familiar() }. Your answer has to be based on facts that you know.
+
+      ${ collapse_template(objections_explanation_template) }
+
+      You must sign your objection under the pains and penalties of perjury. That means a judge
+      can punish you if you say something that you know is not true.
+
+      If you aren't ready for your explanation yet, you can still file this objection. You must file
+      your explanation with the court within 30 days of the return date.
+    show if: is_objection
+  - I will write my explanation: ready_to_make_affidavit
+    datatype: radio
+    choices:
+      - Now: True
+      - By filing an affidavit within 30 days of the return date": False
+    show if: is_objection
+  - label: |
+      Write your explanation below, one reason per line. Include enough facts that you personally know
+      to help the judge decide. Your answers will become your **affidavit** to the court.
+    label above field: True
+    field: objection_reasons
+    datatype: area
+    rows: 7
+    show if: 
+      variable: ready_to_make_affidavit
+      is: True
+---
+template: objections_explanation_template
+subject: |
+  What can I say?
+content: |
+  You can object to the guardianship for any reason that you believe is true.
+
+  For example, you may disagree because:
+
+  * ${ children[0].familiar() } does not need a guardian
+  * The person who wants to be the guardian is not the right person to take care of ${ children[0].familiar() }
+  * The person who wants to be the guardian has a conflict of interest or may not
+    manage ${ children[0].familiar() }'s money properly
+---
+id: What is your BBO number
+question: |
+  What is your BBO number?
+fields:
+  - "BBO": bbo
+    maxlength: 41
+---
+id: preview notice_of_appearance_and_objection
+question: |
+  Preview your form before you sign it
+subquestion: |
+  Here is a preview of the form you will sign on the next page.   
+
+  ${ al_court_bundle.as_pdf(key='preview') }
+
+  Click the image to open it in a new tab. Click the "Edit answers" button
+  to edit your answers.
+
+  ${ action_button_html(url_action('review_notice_of_appearance_and_objection'), label='Edit answers', color='info') }
+
+  Remember to come back to this window to continue and sign your form.
+continue button field: notice_of_appearance_and_objection_preview_question
+---
+code: |
+  signature_fields = ['users[0].signature']
+---
+id: persons signature
+
+question: |
+  % if appearance_as_attorney == True:
+  ${ attorneys[0].name }, please sign below
+  % else:
+  ${ users[0].name }, please sign below
+  % endif
+
+signature: users[0].signature
+under: |
+  % if appearance_as_attorney == True:
+  ${ attorneys[0].name }
+  % else:
+  ${ users[0].name }
+  % endif
+---
+code: |
+  # This is a placeholder for the addresses that will be searched
+  # for matching address to court. Edit if court venue is based on 
+  # a different address than the user's
+  [user.address.address for user in users.complete_elements()]
+  addresses_to_search = [user.address for user in users.complete_elements()]
+---
+id: notice of appearance and objection review screen
+event: review_notice_of_appearance_and_objection
+question: |
+  Review your answers
+review:
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+  - Edit: trial_court.division
+    button: |
+      **Division**:
+      ${ trial_court.division }
+  - Edit: case_name
+    button: |
+      **Case name**:
+      ${ case_name }
+  - Edit: petition
+    button: |
+      **Petition**:
+      ${ petition }
+  - Edit: file_date
+    button: |
+      **Date filed**:
+      ${ file_date }
+  - Edit: appearance_for_myself
+    button: |
+      **Appearance for myself**:
+      ${ word(yesno(appearance_for_myself)) }
+  - Edit: appearance_as_attorney
+    button: |
+      **Appearance as attorney**:
+      ${ word(yesno(appearance_as_attorney)) }
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: not_objection
+    button: |
+      **Not objection**:
+      ${ word(yesno(not_objection)) }
+  - Edit: objection
+    button: |
+      **Objection**:
+      ${ word(yesno(objection)) }
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: attorneys.revisit
+    button: |
+      **Attorneys**
+
+      % for item in attorneys:
+        * ${ item }
+      % endfor
+  - Edit: bbo
+    button: |
+      **Bbo**:
+      ${ bbo }
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Email: |
+      row_item.email if defined("row_item.email") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.last
+  - address.zip
+  - email
+  - phone_number
+  - signature
+confirm: True
+---
+continue button field: attorneys.revisit
+question: |
+  Edit attorneys
+subquestion: |
+  ${ attorneys.table }
+
+  ${ attorneys.add_action() }
+---
+table: attorneys.table
+rows: attorneys
+columns:
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - signature
+  - name.first
+confirm: True
+---
+id: download notice_of_appearance_and_objection
+event: notice_of_appearance_and_objection_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_notice_of_appearance_and_objection'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - notice_of_appearance_and_objection_Post_interview_instructions: ALDocument.using(title="Instructions", filename="notice_of_appearance_and_objection_next_steps.docx", enabled=True, has_addendum=False)
+  - notice_of_appearance_and_objection_attachment: ALDocument.using(title="Notice of Appearance and Objection", filename="notice_of_appearance_and_objection", enabled=True, has_addendum=False, )
+  - notice_of_appearance_and_objection_affidavit_attachment: ALDocument.using(title="Affidavit and Objection", filename="Affidavit and Objection of ${ users[0]}", has_addendum=False)
+---
+code: |
+  notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(
+      elements=[
+          notice_of_appearance_and_objection_Post_interview_instructions, 
+          notice_of_appearance_and_objection_attachment,
+          notice_of_appearance_and_objection_affidavit_attachment,
+        ], 
+        filename="notice_of_appearance_and_objection", 
+        title="All forms to download for your records", enabled=True
+      )
+  - al_court_bundle: ALDocumentBundle.using(
+      elements=[
+          notice_of_appearance_and_objection_attachment,
+          notice_of_appearance_and_objection_affidavit_attachment,
+        ], 
+        filename="notice_of_appearance_and_objection", 
+        title="All forms to download for the court", enabled=True
+      )
+---
+# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
+# used for "preview" and "final" keys, and logic in the template checks the value of
+# `i` to show or hide the user's signature
+attachment:
+  name: Post-interview-Instructions
+  filename: notice_of_appearance_and_objection_next_steps
+  docx template file: notice_of_appearance_and_objection_next_steps.docx
+  variable name: notice_of_appearance_and_objection_Post_interview_instructions[i]
+  skip undefined: True
+  tagged pdf: True
+---
+attachment:
+  name: notice of appearance and objection
+  filename: notice_of_appearance_and_objection
+  variable name: notice_of_appearance_and_objection_attachment[i]
+  skip undefined: True
+  pdf template file: notice_of_appearance_and_objection.pdf
+  fields:
+    - "docket_number": ${ docket_number }
+    - "division": ${ trial_court.division }
+    - "case_name": ${ case_name }
+    - "petition": Appointment of Guardian
+    - "file_date": ${ file_date.format() }
+    - "appearance_for_myself": ${ not appearance_as_attorney }
+    - "appearance_as_attorney": ${ appearance_as_attorney }
+    - "users1_name_first": ${ users[0].name.first }
+    - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
+    - "users1_name_last": ${ users[0].name.last }
+    - "users1_address_unit": ${ users[0].address.unit }
+    - "users1_address_city": ${ users[0].address.city }
+    - "users1_address_address": ${ users[0].address.address }
+    - "users1_address_state": ${ users[0].address.state }
+    - "users1_address_zip": ${ users[0].address.zip }
+    - "users1_phone_number": ${ users[0].phone_number }
+    - "attorneys1_name_first": ${ attorneys[0].name.first }
+    - "attorneys1_name_middle_initial": ${ attorneys[0].name.middle_initial() }
+    - "attorneys1_name_last": ${ attorneys[0].name.last }
+    - "attorneys1_address_unit": ${ attorneys[0].address.unit }
+    - "attorneys1_address_city": ${ attorneys[0].address.city }
+    - "attorneys1_address_address": ${ attorneys[0].address.address }
+    - "attorneys1_address_state": ${ attorneys[0].address.state }
+    - "attorneys1_address_zip": ${ attorneys[0].address.zip }
+    - "attorneys1_phone_number": ${ attorneys[0].phone_number }
+    - "not_objection": ${ not is_objection }
+    - "objection": ${ is_objection }
+    - "is_objection": ${ is_objection }
+    - "filed_with_appearance": ${ ready_to_file }
+    - "filed_within_30": ${ not ready_to_file }
+    - "signature_date": ${ signature_date }
+    - "users1_signature": ${ users[0].signature_if_final(i) }
+    - "attorneys1_name": ${ attorneys[0] }
+    - "bbo": ${ bbo }
+---
+attachment:
+  name: Affidavit and Objection of ${ users[0] }
+  filename: Affidavit and Objection of ${ users[0] }
+  variable name: notice_of_appearance_and_objection_affidavit_attachment[i]
+  docx template file: notice_of_appearance_and_objection_affidavit.docx
+  skip undefined: True
+  tagged pdf: True
