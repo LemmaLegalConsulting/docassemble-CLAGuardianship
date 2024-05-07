@@ -6,14 +6,22 @@ include:
 ---
 metadata:
   title: >-
-    Application for appointment
+    Application for appointment of counsel in a guardianship case
   short title: >-
-    Application for appointment
+    Application for appointment of counsel
   description: |-
-    Application for appointment
+    If you are the **parent** of a child who is part of a guardianship case,
+    you can use this interview to ask the court to give you a lawyer.
+
+    This interview will ask you questions about the child, the court case,
+    and your contact information.
+
+    There is a fee of $150 to get a lawyer in a guardianship case, but 
+    if you cannot afford it, you can ask the court to waive the fee.    
   tags: []
   authors:
     - Stavros Constantinou
+    - Quinten Steenhuis
   allowed_courts: []
   typical_role: "unknown"
   al_weaver_version: "1.10.2"
@@ -62,3 +70,11 @@ code: |
       },
   )
   Application_for_appointment_download
+---
+code: |
+  Application_for_appointment_attachment.enabled = True
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[Application_for_appointment_Post_interview_instructions, Application_for_appointment_attachment], filename="Application_for_appointment", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[Application_for_appointment_attachment],  filename="Application_for_appointment", title="All forms to deliver to court", enabled=True)

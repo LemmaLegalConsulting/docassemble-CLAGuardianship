@@ -44,6 +44,7 @@ objects:
           petition_for_appointment_of_guardian_post_interview_instructions, 
           petition_for_appointment_of_guardian_attachment,
           notice_of_appearance_and_objection_attachment,
+          Application_for_appointment_attachment,
         ], 
         filename="petition_for_appointment_of_guardian", 
         title="All forms to download for your records", 
@@ -52,6 +53,7 @@ objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[
           petition_for_appointment_of_guardian_attachment,
           notice_of_appearance_and_objection_attachment,
+          Application_for_appointment_attachment,
         ], 
         filename="petition_for_appointment_of_guardian", 
         title="All forms to file in court",
@@ -256,4 +258,3 @@ attachment:
 ---
 #################### Attachment Blocks End #####################
 ---
-

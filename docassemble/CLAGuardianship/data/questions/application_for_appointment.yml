@@ -11,9 +11,8 @@ code: |
   users.gather()
   children.gather()
   children[0].name
-  set_parts(subtitle=str(users))
-  Division
-  want_counself_for_mother
+  trial_court.division
+  want_counsel_for_mother
   docket_number
   waiver_fee
   trial_court
@@ -24,26 +23,23 @@ code: |
   basic_questions_signature_flow
   interview_order_Application_for_appointment = True
 ---
-comment: |
-  This question is used to introduce your interview. Please customize
 id: Application_for_appointment
 continue button field: Application_for_appointment_intro
 question: |
-  Application for appointment
+  Application for appointment of counsel in a guardianship case
 subquestion: |
-  Before you get started, you need to...
----
-id: Division
-question: |
-  Division
-fields:
-  - "Division": Division
-    maxlength: 27
-    
+  If you are the **parent** of a child who is part of a guardianship case,
+  you can use this interview to ask the court to give you a lawyer.
+
+  This interview will ask you questions about the child, the court case,
+  and your contact information.
+
+  There is a fee of $150 to get a lawyer in a guardianship case, but 
+  if you cannot afford it, you can ask the court to waive the fee.
 ---
 id: Who is this for
 question: |
-  Who are you filling out the application for?
+  What is the name of the child who is part of the guardianship case?
 fields:
   - First Name: children[0].name.first
     required: True
@@ -56,17 +52,29 @@ fields:
 ---
 id: waiver fee
 question: |
-  Do you wish to request an exemption from the $150.00 counsel fee?
-yesno: waiver_fee
+  Do you want the court to pay for the full lawyer cost?
+subquestion: |
+  Normally, there is a fee of $150 to get a lawyer in a guardianship
+  case. You can ask the court to waive the fee if you cannot afford it.  
+fields: 
+  - I ask for permission not to pay the counsel fee: waiver_fee
+    datatype: yesnoradio
 ---
 id: Mother
 question: |
- Do you want the Court to appoint an attorney to act as the legal representative for the mother or father of the child?
+ What best describes your relationship to ${ children[0] }?
+subquestion: |
+  I am ${ children[0].familiar() }'s
 fields:
-  - "Mother": want_counself_for_mother
+  - "Mother": want_counsel_for_mother
     datatype: yesno
-  - "Father": want_counself_for_father
+  - "Father": want_counsel_for_father
     datatype: yesno
+validation code: |
+  if not (want_counsel_for_mother or want_counsel_for_father):
+    validation_error("Please select at least one option.")
+  elif (want_counsel_for_mother and want_counsel_for_father):
+    validation_error("Please select only one option.")
 ---
 id: preview Application_for_appointment
 question: |
@@ -194,12 +202,7 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - Application_for_appointment_Post_interview_instructions: ALDocument.using(title="Instructions", filename="Application_for_appointment_next_steps.docx", enabled=True, has_addendum=False)
-  - Application_for_appointment_attachment: ALDocument.using(title="Application for appointment", filename="Application_for_appointment", enabled=True, has_addendum=False, )
----
-# Bundles group the ALDocuments into separate downloads, such as for court and for the user
-objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[Application_for_appointment_Post_interview_instructions, Application_for_appointment_attachment], filename="Application_for_appointment", title="All forms to download for your records", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[Application_for_appointment_attachment],  filename="Application_for_appointment", title="All forms to deliver to court", enabled=True)
+  - Application_for_appointment_attachment: ALDocument.using(title="Application for appointment", filename="Application_for_appointment", has_addendum=False, )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
 # used for "preview" and "final" keys, and logic in the template checks the value of 
@@ -233,8 +236,8 @@ attachment:
       - "users1_address_zip": ${ users[0].address.zip }
       - "users1_email": ${ users[0].email }
       - "users1_phone_number": ${ users[0].phone_number }
-      - "mother": ${ want_counself_for_mother }
-      - "father": ${ want_counself_for_father }
+      - "mother": ${ want_counsel_for_mother }
+      - "father": ${ want_counsel_for_father }
       - "waiver_fee": ${ waiver_fee }
       - "signature_date": ${ signature_date.format() }
       - "users1_signature": ${ users[0].signature_if_final(i) }

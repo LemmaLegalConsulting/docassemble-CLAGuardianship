@@ -1,9 +1,10 @@
 ---
 include:
-  - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
+  - docassemble.AssemblyLine:assembly_line.yml
   - notice_of_appearance_and_objection.yml
-  - customized_screens.yml # Must come last
+  - application_for_appointment.yml
+  - customized_screens.yml # Must come after the other includes
 ---
 metadata:
   title: >-
@@ -11,7 +12,12 @@ metadata:
   short title: >-
     MPC 140
   description: |-
-    This interview helps someone in Massachusetts file a petition for the appointment of a guardian for a minor.
+    If you are or if you know a child who needs a responsible adult to make decisions
+    for them other than their parent or their current guardian, you can use this interview 
+    to ask the court to appoint a guardian.
+
+    The guardian can make decisions about the child's health, education, finances, and
+    general welfare.
   tags:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
@@ -19,7 +25,7 @@ metadata:
     - Court Forms Online
   allowed_courts:
     - "Probate and Family Court"
-  typical_role: "unknown"
+  typical_role: "plaintiff"
   al_weaver_version: "1.10.3"
   generated_on: "2024-02-20"
 ---
@@ -32,7 +38,7 @@ code: |
   AL_DEFAULT_STATE = "MA"
 ---
 code: |
-  github_repo_name =  'docassemble-PetitionForAppointmentOfGuardianOfMinor'
+  github_repo_name =  'docassemble-CLAGuardianship'
 ---
 code: |
   interview_short_title = "File a petition for the appointment of a guardian of a minor"
@@ -49,13 +55,12 @@ objects:
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
 sections:
-  - review_case_information: About the case
+  - review_case_information: About the case  
   - review_petitioner_information: About the petitioner(s)
   - review_bio_parents_information: Minor's biological parents
   - review_requests: Your requests to the Court
   - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
-  - review_attorney_information: Your attorney
   - review_petition_for_appointment_of_guardian: Review your answers
 ---
 #################### Interview order #####################
@@ -75,13 +80,18 @@ code: |
   trial_court
 
   nav.set_section("review_petitioner_information")
-  if who_is_making_petition == "interested_party": 
+  if who_is_making_petition == "attorney":
+    attorneys.gather()
+  if who_is_making_petition == "interested_party":    
     users.gather()
     for user in users:
       if not user.is_bio_parent:
         user.relationship_to_minor
   else:
     set_user_to_minor
+  if not who_is_making_petition == "attorney":
+    if any((user.is_bio_parent for user in users)):
+      parent_wants_lawyer
 
   nav.set_section("review_bio_parents_information")
   if who_is_making_petition == "interested_party":
@@ -126,10 +136,6 @@ code: |
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
     assets.gather()
     minor_assets_total_value
-
-  nav.set_section("review_attorney_information")
-  if attorneys.there_are_any:
-    attorneys.gather()
 
   interview_order_petition_for_appointment_of_guardian = True
 ---
@@ -355,11 +361,33 @@ fields:
     choices:
       - I am the minor: minor
       - I am someone interested in the minor's welfare: interested_party
+      - I am an attorney: attorney
 validation code: |
   if who_is_making_petition == "interested_party":
     petitioner_is_interested_party = True
   elif who_is_making_petition == "minor":
     petitioner_is_minor = True
+  else:
+    petitioner_is_interested_party = True
+---
+code: |    
+  attorneys.there_are_any = who_is_making_petition == "attorney"
+---
+id: wants attorney
+question: |
+  Do you want the court to pay for a lawyer for you?
+subquestion: |
+  Because you are ${ children[0] }'s parent, you can ask 
+  the court to give you a lawyer.
+
+  It usually costs $150 to get a lawyer. But if you cannot afford it,
+  you can ask the court to waive the fee.
+
+  If you answer yes, we will make an "Application for Appointment
+  of Counsel" document as part of this interview.
+fields:
+  - I want a lawyer: parent_wants_lawyer
+    datatype: yesnoradio
 ---
 if: |
   len(all_matches) and all_courts.filter_courts(allowed_courts)
@@ -611,15 +639,6 @@ fields:
     show if:
       variable: parental_rights_terminated
       is: True
-validation code: |
-  if parental_rights_termination_reason['By a prior court order']:
-    parental_rights_terminated_by_court_order = True
-
-  if parental_rights_termination_reason['By a signed voluntary surrender']:
-    parental_rights_terminated_by_voluntary_surrender = True
-  
-  if parental_rights_termination_reason["By the parent's death"]:
-    parental_rights_terminated_by_death = True
 ---
 id: parents unavailable to exercise parental rights
 question: |
