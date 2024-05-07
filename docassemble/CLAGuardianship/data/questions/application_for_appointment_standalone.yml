@@ -1,0 +1,64 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.MassAccess:massaccess.yml
+  - application_for_appointment.yml
+---
+metadata:
+  title: >-
+    Application for appointment
+  short title: >-
+    Application for appointment
+  description: |-
+    Application for appointment
+  tags: []
+  authors:
+    - Stavros Constantinou
+  allowed_courts: []
+  typical_role: "unknown"
+  al_weaver_version: "1.10.2"
+  generated_on: "2024-01-08"
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = ""
+---
+code: |
+  github_repo_name =  'docassemble-ApplicationForAppointment'
+---
+code: |
+  interview_short_title = "Get a Application for appointment"
+---
+code: |
+  al_form_type = "other" 
+---
+objects:
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - children: ALPeopleList.using(ask_number=True,target_number=1)
+---
+sections:
+  - review_Application_for_appointment: Review your answers
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  al_intro_screen
+  Application_for_appointment_intro
+  interview_order_Application_for_appointment
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  Application_for_appointment_download
