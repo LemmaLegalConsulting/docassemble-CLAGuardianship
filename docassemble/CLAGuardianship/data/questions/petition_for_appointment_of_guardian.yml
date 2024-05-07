@@ -2,6 +2,8 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
+  - notice_of_appearance_and_objection.yml
+  - customized_screens.yml # Must come last
 ---
 metadata:
   title: >-
@@ -608,6 +610,15 @@ fields:
     show if:
       variable: parental_rights_terminated
       is: True
+validation code: |
+  if parental_rights_termination_reason['By a prior court order']:
+    parental_rights_terminated_by_court_order = True
+
+  if parental_rights_termination_reason['By a signed voluntary surrender']:
+    parental_rights_terminated_by_voluntary_surrender = True
+  
+  if parental_rights_termination_reason["By the parent's death"]:
+    parental_rights_terminated_by_death = True
 ---
 id: parents unavailable to exercise parental rights
 question: |
