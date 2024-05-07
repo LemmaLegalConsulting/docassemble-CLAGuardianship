@@ -9,3 +9,6 @@ code: |
   docket_number = ""
   file_date = today()
   is_objection = False
+---
+code: |
+  appearance_as_attorney = attorneys.there_are_any
