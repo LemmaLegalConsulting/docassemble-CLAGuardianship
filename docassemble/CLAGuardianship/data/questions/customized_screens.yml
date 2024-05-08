@@ -12,3 +12,14 @@ code: |
 ---
 code: |
   appearance_as_attorney = attorneys.there_are_any
+---
+########### Application for appointment of counsel ##########
+---
+code: |
+  Application_for_appointment_attachment.enabled = parent_wants_lawyer
+---
+code: |
+  if any((user.is_bio_parent and user.relationship_to_minor == "biological mother" for user in users)):
+    want_counsel_for_mother = True
+  if any((user.is_bio_parent and user.relationship_to_minor == "biological father" for user in users)):
+    want_counsel_for_father = True
