@@ -320,22 +320,10 @@ review:
     button: |
       **Case name**:
       ${ case_name }
-  - Edit: petition
-    button: |
-      **Petition**:
-      ${ petition }
   - Edit: file_date
     button: |
       **Date filed**:
       ${ file_date }
-  - Edit: appearance_for_myself
-    button: |
-      **Appearance for myself**:
-      ${ word(yesno(appearance_for_myself)) }
-  - Edit: appearance_as_attorney
-    button: |
-      **Appearance as attorney**:
-      ${ word(yesno(appearance_as_attorney)) }
   - Edit: users.revisit
     button: |
       **Users**
@@ -343,14 +331,6 @@ review:
       % for item in users:
         * ${ item }
       % endfor
-  - Edit: not_objection
-    button: |
-      **Not objection**:
-      ${ word(yesno(not_objection)) }
-  - Edit: objection
-    button: |
-      **Objection**:
-      ${ word(yesno(objection)) }
   - Edit: signature_date
     button: |
       **Date of signature**:
@@ -490,8 +470,8 @@ attachment:
     - "not_objection": ${ not is_objection }
     - "objection": ${ is_objection }
     - "is_objection": ${ is_objection }
-    - "filed_with_appearance": ${ ready_to_file }
-    - "filed_within_30": ${ not ready_to_file }
+    - "filed_with_appearance": ${ ready_to_make_affidavit }
+    - "filed_within_30": ${ not ready_to_make_affidavit }
     - "signature_date": ${ signature_date }
     - "users1_signature": ${ users[0].signature_if_final(i) }
     - "attorneys1_name": ${ attorneys[0] }

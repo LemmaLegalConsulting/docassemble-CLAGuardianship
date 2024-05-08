@@ -118,10 +118,6 @@ review:
       % if defined("trial_court.name.first"):
       * name: ${ trial_court.name.full() }
       % endif
-  - Edit: Division
-    button: |
-      **Division**:
-      ${ Division }
   - Edit: children[0].name
     button: |
       **Child name**:
@@ -133,14 +129,6 @@ review:
       % for item in users:
         * ${ item }
       % endfor
-  - Edit: mother
-    button: |
-      **Mother**:
-      ${ word(yesno(mother)) }
-  - Edit: father
-    button: |
-      **Father**:
-      ${ word(yesno(father)) }
   - Edit: waiver_fee
     button: |
       **Waiver fee**:
