@@ -320,22 +320,10 @@ review:
     button: |
       **Case name**:
       ${ case_name }
-  - Edit: petition
-    button: |
-      **Petition**:
-      ${ petition }
   - Edit: file_date
     button: |
       **Date filed**:
       ${ file_date }
-  - Edit: appearance_for_myself
-    button: |
-      **Appearance for myself**:
-      ${ word(yesno(appearance_for_myself)) }
-  - Edit: appearance_as_attorney
-    button: |
-      **Appearance as attorney**:
-      ${ word(yesno(appearance_as_attorney)) }
   - Edit: users.revisit
     button: |
       **Users**
@@ -343,14 +331,6 @@ review:
       % for item in users:
         * ${ item }
       % endfor
-  - Edit: not_objection
-    button: |
-      **Not objection**:
-      ${ word(yesno(not_objection)) }
-  - Edit: objection
-    button: |
-      **Objection**:
-      ${ word(yesno(objection)) }
   - Edit: signature_date
     button: |
       **Date of signature**:
@@ -444,26 +424,6 @@ objects:
 code: |
   notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
 ---
-# Bundles group the ALDocuments into separate downloads, such as for court and for the user
-objects:
-  - al_user_bundle: ALDocumentBundle.using(
-      elements=[
-          notice_of_appearance_and_objection_Post_interview_instructions, 
-          notice_of_appearance_and_objection_attachment,
-          notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
-        filename="notice_of_appearance_and_objection", 
-        title="All forms to download for your records", enabled=True
-      )
-  - al_court_bundle: ALDocumentBundle.using(
-      elements=[
-          notice_of_appearance_and_objection_attachment,
-          notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
-        filename="notice_of_appearance_and_objection", 
-        title="All forms to download for the court", enabled=True
-      )
----
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
 # used for "preview" and "final" keys, and logic in the template checks the value of
 # `i` to show or hide the user's signature
@@ -510,8 +470,8 @@ attachment:
     - "not_objection": ${ not is_objection }
     - "objection": ${ is_objection }
     - "is_objection": ${ is_objection }
-    - "filed_with_appearance": ${ ready_to_file }
-    - "filed_within_30": ${ not ready_to_file }
+    - "filed_with_appearance": ${ ready_to_make_affidavit }
+    - "filed_within_30": ${ not ready_to_make_affidavit }
     - "signature_date": ${ signature_date }
     - "users1_signature": ${ users[0].signature_if_final(i) }
     - "attorneys1_name": ${ attorneys[0] }
