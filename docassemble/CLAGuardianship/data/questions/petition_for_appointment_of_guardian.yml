@@ -2,6 +2,8 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
+  - notice_of_appearance_and_objection.yml
+  - customized_screens.yml # Must come last
 ---
 metadata:
   title: >-

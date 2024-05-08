@@ -1,0 +1,84 @@
+---
+include:
+  - notice_of_appearance_and_objection.yml
+---
+metadata:
+  title: >-
+    Notice of Appearance and Objection
+  short title: >-
+    Appearance & Objection
+  description: |-
+    This interview helps someone in Massachusetts file a Notice of Appearance and Objection.
+  tags:
+    - "FA-04-00-00-00"
+  authors:
+    - Rami Lorca
+    - Quinten Steenhuis
+  allowed_courts:
+    - "Probate and Family Court"
+  typical_role: "unknown"
+  al_weaver_version: "1.10.2"
+  generated_on: "2024-01-09"
+---
+objects:
+  - children: ALPeopleList.using(ask_number=True,target_number=1)
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name =  'docassemble-NoticeOfAppearanceAndObjection'
+---
+code: |
+  interview_short_title = "Complete a Notice of Appearance and Objection"
+---
+code: |
+  al_form_type = "other"
+---
+sections:
+  - review_notice_of_appearance_and_objection: Review your answers
+---
+###################### Main order ######################
+mandatory: True
+code: |
+  al_intro_screen
+  notice_of_appearance_and_objection_intro
+  interview_order_notice_of_appearance_and_objection
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  notice_of_appearance_and_objection_download
+---
+code: |
+  al_form_requires_digital_signature = False  
+---
+sets:
+  - children[0].name.first
+id: Filing Date
+
+question: |
+  About the guardianship case
+
+fields:
+  - "Date petition filed": file_date
+    datatype: date
+  - Docket (case) number: docket_number
+    required: False
+    help: |
+      The docket number is written on the court papers you saw. If you
+      do not have it, you can leave this blank.
+  - note: |
+      <h2 class="h4">Name of protected person (the child)</h2>
+  - code: |
+      children[0].name_fields()
