@@ -1,6 +1,9 @@
+---
 include:
+  - docassemble.ALToolbox:al_income.yml
+  - docassemble.AssemblyLine:al_package.yml
   - docassemble.AssemblyLine:assembly_line.yml
-  - docassemble.mlhframework:mlh_interview_framework.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
 ---
 metadata:
   title: Affidavit of Indigency
@@ -15,28 +18,42 @@ metadata:
     - Pratibha Bharti
 ---
 objects:
+  - hh_income: ALJob
   - users: ALPeopleList.using(auto_gather=True, complete_attribute="complete", target_number=1)
----
-features:
-  labels above fields: True
 ---
 sections:
   - review_intro: "Introduction"
 ---
-id: interview_order_ Affidavit_of_Indigency
+#################### Interview order #####################
+id: interview_order_affidavit_of_indigency
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+  nav.set_section("review_intro")
+  docket_number
+  user_started_case
+  users.gather()
+  other_parties.gather()
+  case_name
+  public_assistance_kinds
+  if public_assistance_kinds.all_false():
+    has_household_members
+    can_afford
+  else:
+    qualify_interstitial
+
+  trial_court
+  interview_order_affidavit_of_indigency = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
 mandatory: True
 code: |
-  nav.set_section("review_intro")
-  trial_court
-  case_name
-  users.gather()
-  if type_of_indegency == 'Receiving Public Assistance':
-    public_assistance
-  elif type_of_indegency == 'Income Below Court System’s Poverty Level':
-    income_after_taxes
-  normal_fees_and_costs
-  extra_fees_and_costs
-  affidavit_of_indegency_download
+  affidavit_of_indigency_intro
+  interview_order_affidavit_of_indigency
+  affidavit_of_indigency_download
 ---
 # NOTE: for users and other_parties
 generic object: ALIndividual
@@ -49,21 +66,49 @@ code: |
 # NOTE: ensures there is only 1 party on both sides
 code: |
   users.there_is_another = False
+
 ---
-id : court details
+id: affidavit_of_indigency_intro
+continue button field: affidavit_of_indigency_intro
 question: |
-  What is the specific name of the court handling your case?
+  Affidavit of Indigency
+subquestion: |
+  This interview will help you fill out an affidavit of indigency.
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+---
+id: choose a court
+question: |
+  What court do you want to file in?
 fields:
   - no label: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
 ---
-id : case details
-question: |
-  Please enter the Case name and Case number of the court case, if known
-fields:
-  - Case Name: case_name
-    required: False
-  - Case Number: case_number
-    required: False
+code: |
+  if len(other_parties):
+    case_name = str(plaintiffs) + ' v. ' + str(defendants)
+  else:
+    case_name = "In re " + str(users)
 ---
 id: your contact information
 sets:
@@ -81,15 +126,21 @@ fields:
   - code: |
       users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=True)
 ---
-id: type of indegency
+id: user benefits
 question: |
-  What is the type of Indengency?
+  Do you get any of these benefits?
+subquestion: |
+  Check any that apply
 fields:
-  - no label: type_of_indegency
+  - no label: public_assistance_kinds
+    datatype: checkboxes
     choices:
-      - Receiving Public Assistance
-      - Income Below Court System’s Poverty Level
-      - General Financial Hardship
+      - Transitional Aid to Families with Dependent Children (TAFDC): TAFDC
+      - Medicaid (MassHealth): Medicaid
+      - Emergency Aid to Elderly, Disabled or Children (EAEDC): EAEDC
+      - Massachusetts Veterans Benefits Programs: VA Benefits
+      - Supplemental Security Income (SSI): SSI
+    required: False
 ---
 id: receiving public assistance
 question: |
@@ -106,6 +157,132 @@ fields:
       - Medicaid (MassHealth)
       - Supplemental Security Income (SSI)
     none of the above: False
+---
+id: qualify on face
+continue button field: qualify_interstitial
+question: |
+  % if need_supplement:
+  You need to submit a supplemental affidavit to learn if you qualify
+  % else:
+  Based on your answers, it looks like you qualify for a fee waiver
+  % endif
+subquestion: |
+  % if public_assistance_kinds.any_true():
+  Based on the information you gave us so far, you should qualify for a fee
+  waiver. Learn more at [MassLegalHelp.org](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-).
+
+  You receive these public benefits: ${public_assistance_kinds.true_values()}
+  % elif household_income_qualifies:
+  Based on the information you gave us so far, you should qualify for a fee
+  waiver. Learn more at [MassLegalHelp.org](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-).
+
+  **You earn less than the income limit.**
+
+  You said that your ${times_per_year(times_per_year_list, hh_income.times_per_year).lower()} income
+  is ${currency(hh_income.total(times_per_year=hh_income.times_per_year))}.
+
+  The limit for a household of ${nice_number(household_size)} is 125% of
+  the poverty level, or ${currency(household_income_limit/hh_income.times_per_year)}.
+
+  % elif not can_afford:
+  You told us that you can't afford to pay the fees and pay for the necessities
+  of life. A judge will take a closer look at your income and expenses and decide
+  if you qualify for sure.
+
+  % endif
+
+  ${ collapse_template(fee_waiver_help_template) }
+
+  % if public_assistance_kinds.any_true() or household_income_qualifies:
+  On the next screen, we'll ask you about the specific fees you want waived.
+  % else:
+  Next, you will complete the supplemental affidavit. This will ask for more
+  details about your finances, which the court needs to determine if you qualify.
+  % endif
+---
+template: fee_waiver_help_template
+subject: |
+  What are the rules for a fee waiver?
+content: |
+  If you get certain public benefits, or if you earn less than 125% of 
+  the federal poverty level${ "," if need_income else ""}
+  % if need_income:
+  (${ currency(household_income_limit)} a year for a household of ${ nice_number(household_size) }),
+  % endif
+  the law says that you qualify for a fee waiver.
+  If you earn more than that but still cannot afford to pay the costs
+  of going to court, you need to give the court more information. If the 
+  court agrees, they may waive your court costs. It is up to a judge to 
+  decide.
+
+  * [What if the clerk does not approve my affidavit right away?](https://www.masslegalhelp.org/what-if-the-clerk-does-not-approve-my-affidavit-of-indigency-right-away-)
+  * [What if the clerk denies my affidavit?](https://www.masslegalhelp.org/what-if-the-clerk-denies-my-affidavit-of-indigency-)
+---
+depends on:
+  - public_assistance_kinds
+  - household_income_qualifies
+  - can_afford
+code: |
+  is_indigent = public_assistance_kinds.any_true() or household_income_qualifies or not can_afford
+---
+depends on:
+  - public_assistance_kinds
+  - household_income_qualifies
+  - can_afford
+code: |
+  need_supplement = not public_assistance_kinds.any_true() and not household_income_qualifies and not can_afford
+---
+depends on:
+  - public_assistance_kinds
+code: |
+  need_income = public_assistance_kinds.all_false()
+---
+id: user income and household size
+question: |
+  About your income and household
+subquestion: |
+  Tell us about **how much** and **how often** you and your
+  household are paid.
+fields:
+  - Does anyone else live with you as part of your household?: has_household_members
+    datatype: yesnoradio
+    help: |
+      For example, count your children, spouse, or other family member
+      you take care of or who helps take care of you.
+  - How many people? Don't count yourself.: household_additional_size
+    datatype: integer
+    show if: has_household_members
+  - What is the total (after tax) income for your household?: hh_income.value
+    # step: 1
+    datatype: currency
+    validation messages:
+      number: |
+        Enter a number. Do not include commas.
+    help: |
+      Put in the amount you earn after taxes. This is
+      also called your "net" income.
+  - How often do you earn that amount?: hh_income.times_per_year
+    input type: radio
+    code: times_per_year_list
+    datatype: integer
+---
+depends on:
+  - public_assistance_kinds
+code: |
+  if public_assistance_kinds.any_true():
+    hh_income = DAEmpty()
+    household_additional_size = DAEmpty()
+---
+id: user ability to pay
+question: |
+  Can you afford to pay the court costs?
+subquestion: |
+  Answer yes if you can afford the costs. Answer no if you either can't afford the costs, or can't
+  afford to do so without depriving yourself
+  or your dependents of the necessities of life, including food, shelter and clothing
+fields:
+  - I can afford the costs: can_afford
+    datatype: yesnoradio
 ---
 id: income below court system’s poverty level
 question: |
@@ -124,7 +301,6 @@ fields:
   - Please list any additional household income available during the specified period. Include all sources not previously mentioned: other_income
     datatype: number
 ---
-
 id: Normal Fees and Costs
 field: normal_fees_and_costs
 question: |
@@ -147,14 +323,14 @@ fields:
   - Amount of Fees or costs for serving court summons, witness subpoenas, or other court papers: fee_service_amount
     datatype: integer
     show if: fee_service
-  - Other fees or costs : fee_other
+  - Other fees or costs: fee_other
     datatype: yesnoradio
   - Amount of Other fees or costs: fee_other_amount
     datatype: integer
     show if: fee_other
   - Other fee descripton: fee_other_description
     show if: fee_other
-  - Are there any services or documents for which you request a substitution at no cost or a lower cost? : fee_substitution
+  - Are there any services or documents for which you request a substitution at no cost or a lower cost?: fee_substitution
     datatype: yesnoradio
   - Please specify what substitutions are being requested: fee_substitution_description
     show if: fee_substitution
@@ -162,7 +338,7 @@ fields:
 id: Extra Fees and Costs
 field: extra_fees_and_costs
 question: |
-  Please select the extra court fees and other costs you would like to request to be waived or paid by the state. 
+  Please select the extra court fees and other costs you would like to request to be waived or paid by the state.
 subquestion: |
   Enter the estimated cost if known
 fields:
@@ -173,7 +349,7 @@ fields:
     show if: fee_expert
   - Description of expert services: fee_expert_description
     show if: fee_expert
-  - Will you need to take and/or transcribe a deposition? : fee_deposition
+  - Will you need to take and/or transcribe a deposition?: fee_deposition
     datatype: yesnoradio
   - Amount of fee deposition: fee_deposition_amount
     datatype: integer
@@ -189,20 +365,20 @@ fields:
   - Amount of fee transcript: fee_transcript_amount
     datatype: integer
     show if: fee_transcript
-  - Other fees or costs : cost_other
+  - Other fees or costs: cost_other
     datatype: yesnoradio
   - Amount of Other fees or costs: cost_other_amount
     datatype: integer
     show if: cost_other
   - Other fee descripton: cost_other_description
     show if: cost_other
-  - Are there any services or documents for which you request a substitution at no cost or a lower cost? : cost_substitution
+  - Are there any services or documents for which you request a substitution at no cost or a lower cost?: cost_substitution
     datatype: yesnoradio
   - Please specify what substitutions are being requested: cost_substitution_description
     show if: cost_substitution
 ---
 id: download screen
-event: affidavit_of_indegency_download
+event: affidavit_of_indigency_download
 question: |
   All done!
 subquestion: |
@@ -217,69 +393,68 @@ subquestion: |
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 ---
 objects:
-  - rmrcd_main: ALDocument.using(title="Affidavit of Indegency", filename="affidavit_of_indigency.pdf", enabled=True, has_addendum=False, default_overflow_message=" (Continued in Attachment)")
+  - affidavit_of_indigency_first_form: ALDocument.using(title="Affidavit of indigency", filename="affidavit_of_indigency.pdf", enabled=True, has_addendum=False, default_overflow_message=" (Continued in Attachment)")
 ---
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[rmrcd_main], filename="affidavit_of_indigency.pdf", title="All forms to download for your records", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[affidavit_of_indigency_first_form], filename="affidavit_of_indigency.pdf", title="All forms to download for your records", enabled=True)
 ---
-attachments:
-  name: foc_116
-  filename: foc_116
-  variable name: rmrcd_main[i]
-  editable: False
-  pdf template file: affidavit_of_indigency.pdf
-  fields:
+attachment:
+  - name: Affidavit of Indigency
+    variable name: affidavit_of_indigency_first_form[i]
+    filename: affidavitofindigency
+    pdf template file: affidavit_of_indigency.pdf
+    editable: False
+    skip undefined: True
+    fields:
       - "": No
-      - "court": ${trial_court}
-      - "docket_number": ${case_name+" and "+case_number}
-      - "user_name_full": ${users[0].name}
+      - "court": ${ trial_court }
+      - "docket_number": |
+          ${case_name } 
+          % if defined("docket_numbers"):
+          ;  ${ docket_numbers[0] }
+          % elif defined("docket_number"):
+          ;  ${ docket_number }
+          % endif
+      - "user_name_full": ${users[0]}
       - "user_address_on_one_line": ${users[0].address.on_one_line()}
-      - "gets_public_benefits": ${True if (type_of_indegency == 'Receiving Public Assistance') else False}
-      - "Medicaid": ${True if (type_of_indegency == 'Receiving Public Assistance' and 'Medicaid (MassHealth)' in public_assistance.true_values()) else False}
-      - "TAFDC": ${True if (type_of_indegency == 'Receiving Public Assistance' and 'Transitional Aid to Families with Dependent Children (TAFDC)' in public_assistance.true_values()) else False}
-      - "SSI": ${True if (type_of_indegency == 'Receiving Public Assistance' and 'Supplemental Security Income (SSI)' in public_assistance.true_values()) else False}
-      - "EAEDC": ${True if (type_of_indegency == 'Receiving Public Assistance' and 'Emergency Aid to Elderly, Disabled, or Children (EAEDC)' in public_assistance.true_values()) else False}
-      - "VA": ${True if (type_of_indegency == 'Receiving Public Assistance' and 'Massachusetts Veterans Benefits Programs' in public_assistance.true_values()) else False}
-      - "below_poverty_level": ${True if (type_of_indegency == 'Income Below Court System’s Poverty Level') else False}
-      - "weekly": ${True if (type_of_indegency == 'Income Below Court System’s Poverty Level' and income_duration == 'Week') else False}
-      - "biweekly": ${True if (type_of_indegency == 'Income Below Court System’s Poverty Level' and income_duration == 'Biweekly') else False}
-      - "monthly": ${True if (type_of_indegency == 'Income Below Court System’s Poverty Level' and income_duration == 'Month') else False}
-      - "annually": ${True if (type_of_indegency == 'Income Below Court System’s Poverty Level' and income_duration == 'Year') else False}
-      - "income_amount": ${income_after_taxes if (type_of_indegency == 'Income Below Court System’s Poverty Level') else ''}
-      - "household_additional_size": ${total_no_of_household-1 if (type_of_indegency == 'Income Below Court System’s Poverty Level') else ''}
-      - "household_size": ${total_no_of_household if (type_of_indegency == 'Income Below Court System’s Poverty Level') else ''}
-      - "other_income": ${other_income if (type_of_indegency == 'Income Below Court System’s Poverty Level') else ''}
-      - "unable_to_pay": ${True if (type_of_indegency == 'General Financial Hardship') else False}
-      - "fee_filing": ${filing_fee_and_any_surcharge}
-      - "fee_filing_amount": ${fee_filing_amount if filing_fee_and_any_surcharge else ''}
-      - "fee_appeal": ${filing_fee_and_any_surcharge_for_appeal}
-      - "fee_appeal_amount": ${fee_appeal_amount if filing_fee_and_any_surcharge_for_appeal else ''}
-      - "fee_service": ${fee_service}
-      - "fee_service_amount": ${fee_service_amount if fee_service else ''}
-      - "fee_other": ${fee_other}
-      - "fee_other_amount": ${fee_other_amount if fee_other else ''}
-      - "fee_other_description": ${fee_other_description if fee_other else ''}
-      - "fee_other_description_more": ''
-      - "fee_substitution": ${fee_substitution}
-      - "fee_substitution_description": ${fee_substitution_description if fee_substitution else ''}
-      - "fee_substitution_description_more": ''
-      - "fee_expert": ${fee_expert}
-      - "fee_expert_amount": ${fee_expert_amount if fee_expert else ''}
-      - "fee_expert_description": ${fee_expert_description if fee_expert else ''}
-      - "fee_deposition": ${fee_deposition}
-      - "fee_deposition_amount": ${fee_deposition_amount if fee_deposition else ''}
-      - "fee_deposition_description": ${fee_deposition_description if fee_deposition else ''}
-      - "fee_recording": ${fee_recording}
-      - "fee_appeal_bond": ${fee_appeal_bond}
-      - "fee_transcript": ${fee_transcript}
-      - "fee_transcript_amount": ${fee_transcript_amount if fee_transcript else ''}
-      - "cost_other": ${cost_other}
-      - "cost_other_description": ${cost_other_description if cost_other else ''}
-      - "cost_other_amount":  ${cost_other_amount if cost_other else ''}
-      - "cost_other_description_more": ''
-      - "substitution": ${cost_substitution}
-      - "substitution_description": ${cost_substitution_description if cost_substitution else ''}
-      - "user_signature":  ${f"/s/ {users[0]}"}
-      - "date_signed": ${ format_date(today(format='M/d/YYYY'), format='long')}
----
-    
+      - "gets_public_benefits": ${yesno(public_assistance_kinds.any_true())}
+      - "Medicaid": ${yesno(public_assistance_kinds['Medicaid'])}
+      - "TAFDC": ${yesno(public_assistance_kinds['TAFDC'])}
+      - "SSI": ${yesno(public_assistance_kinds['SSI'])}
+      - "EAEDC": ${yesno(public_assistance_kinds['EAEDC'])}
+      - "VA": ${yesno(public_assistance_kinds['VA Benefits'])}
+      - "below_poverty_level": ${yesno(household_income_qualifies) if need_income else "No"}
+      - "weekly": ${'Yes' if need_income and hh_income.times_per_year == 52 else 'No'}
+      - "biweekly": ${'Yes' if need_income and hh_income.times_per_year == 26 else 'No'}
+      - "monthly": ${'Yes' if need_income and hh_income.times_per_year not in [52, 26, 1] else 'No'}
+      - "annually": ${'Yes' if need_income and hh_income.times_per_year == 1 else 'No'}
+      - "income_amount": ${thousands(hh_income.total(times_per_year=12) if hh_income.times_per_year not in [52, 26, 1] else hh_income.total(times_per_year=hh_income.times_per_year), show_decimals=True)}
+      - "household_additional_size": ${household_additional_size if need_income and has_household_members else (0 if need_income else '')}
+      - "household_size": ${household_size if need_income else ''}
+      - "other_income": ${'Included above' if need_income else ''}
+      - "unable_to_pay": ${yesno(need_supplement)}
+      - "fee_filing": ${fees['Filing fee'].waive}
+      - "fee_filing_amount": ${thousands(fees['Filing fee'].amount, show_decimals=True) if fees['Filing fee'].amount else ''}
+      - "fee_appeal": ${yesno(fees['Appeal cost'].waive)}
+      - "fee_appeal_amount": ${thousands(fees['Appeal cost'].amount, show_decimals=True) if fees['Appeal cost'].waive and fees['Appeal cost'].amount else ''}
+      - "fee_service": ${yesno(fees['Service'].waive)}
+      - "fee_service_amount": ${thousands(fees['Service'].amount, show_decimals=True) if fees['Service'].waive and fees['Service'].amount else ""}
+      - "fee_other": ${yesno(fees['Other'].waive)}
+      - "fee_other_amount": ${thousands(fees['Other'].amount, show_decimals=True) if fees['Other'].waive and fees['Other'].amount else ""}
+      - "fee_other_description": ${showifdef("fees['Other'].description")}
+      - "fee_expert": ${yesno(fees['Costs of an expert witness'].waive)}
+      - "fee_expert_amount": ${thousands(fees['Costs of an expert witness'].amount, show_decimals=True) if (fees['Costs of an expert witness'].waive and fees['Costs of an expert witness'].amount) else ''}
+      - "fee_expert_description": ${showifdef("fees['Costs of an expert witness'].description")}
+      - "fee_deposition": ${yesno(fees['Depositions'].waive)}
+      - "fee_deposition_amount": ${thousands(fees['Depositions'].amount, show_decimals=True) if (fees['Depositions'].waive and fees['Depositions'].amount) else ''}
+      - "fee_deposition_description": ${showifdef("fees['Depositions'].description")}
+      - "fee_recording": ${yesno(fees['recordings'].waive)}
+      - "fee_appeal_bond": ${yesno(fees['Appeal bond'].waive)}
+      - "fee_transcript": ${yesno(fees['transcript'].waive)}
+      - "fee_transcript_amount": ${thousands(fees['transcript'].amount, show_decimals=True) if (fees['transcript'].waive and fees['transcript'].amount) else ''}
+      - "cost_other": ${yesno(fees['Other cost'].waive)}
+      - "cost_other_description": ${showifdef("fees['Other cost'].description")}
+      - "cost_other_amount": ${thousands(fees['Other cost'].amount, show_decimals=True) if fees['Other cost'].waive and fees['Other cost'].amount  else ''}
+      - "user_signature": |
+          ${ users[0].signature if i=='final' else '' }
+      - "date_signed": ${format_date(today())}
