@@ -4,6 +4,7 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
+  - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - customized_screens.yml # Must come after the other includes
 ---
 metadata:
@@ -55,7 +56,7 @@ objects:
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
 sections:
-  - review_case_information: About the case  
+  - review_case_information: About the case
   - review_petitioner_information: About the petitioner(s)
   - review_bio_parents_information: Minor's biological parents
   - review_requests: Your requests to the Court
@@ -149,6 +150,8 @@ code: |
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
   petition_for_appointment_of_guardian_preview_question
+  if wants_fee_waiver:
+    ask_affidavit_questions
   basic_questions_signature_flow
   petition_for_appointment_of_guardian_download
 ---
@@ -273,6 +276,14 @@ code: |
   else:
     bio_father_collected = False
 ---
+code: |
+  fees['Filing fee'].waive = True
+  fees['Filing fee'].amount = 240
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
+---
 #################### Object/Code Blocks End #####################
 ---
 #################### Override Blocks Start #####################
@@ -325,6 +336,15 @@ fields:
       users[i].address_fields()
   - Primary phone number: users[i].phone_number
 ---
+id: waiving_cost
+question: |
+  You may qualify for a fee waiver
+subquestion: |
+  It usually costs $240 to get a guardianship. But some people qualify to file for free.
+fields:
+  - Do you want to find out if you qualify to file for free?: wants_fee_waiver
+    datatype: yesnoradio
+---
 #################### Override Blocks End #####################
 ---
 #################### Question Blocks Start #####################
@@ -370,7 +390,7 @@ validation code: |
   else:
     petitioner_is_interested_party = True
 ---
-code: |    
+code: |
   attorneys.there_are_any = who_is_making_petition == "attorney"
 ---
 id: wants attorney
@@ -1588,23 +1608,25 @@ objects:
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[
-          petition_for_appointment_of_guardian_post_interview_instructions, 
-          petition_for_appointment_of_guardian_attachment,
-          notice_of_appearance_and_objection_attachment,
-          Application_for_appointment_attachment,
-        ], 
-        filename="petition_for_appointment_of_guardian", 
-        title="All forms to download for your records", 
-        enabled=True
+      petition_for_appointment_of_guardian_post_interview_instructions,
+      petition_for_appointment_of_guardian_attachment,
+      notice_of_appearance_and_objection_attachment,
+      Application_for_appointment_attachment,
+      affidavitofindigency_attachment,
+      ],
+      filename="petition_for_appointment_of_guardian",
+      title="All forms to download for your records",
+      enabled=True
       )
   - al_court_bundle: ALDocumentBundle.using(elements=[
-          petition_for_appointment_of_guardian_attachment,
-          notice_of_appearance_and_objection_attachment,
-          Application_for_appointment_attachment,
-        ], 
-        filename="petition_for_appointment_of_guardian", 
-        title="All forms to file in court",
-        enabled=True
+      petition_for_appointment_of_guardian_attachment,
+      notice_of_appearance_and_objection_attachment,
+      Application_for_appointment_attachment,
+      affidavitofindigency_attachment,
+      ],
+      filename="petition_for_appointment_of_guardian",
+      title="All forms to file in court",
+      enabled=True
       )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
@@ -1785,7 +1807,7 @@ attachment:
     - "users1_signature": ${ users[0].signature if i == "final" else '' }
     - "users1_signature_date": ${ today() }
     - "users2_signature": ${ users.item(1).signature_if_final(i) }
-    - "users2_signature_date": | 
+    - "users2_signature_date": |
         % if len(users.complete_elements()) > 1:
         ${ today() }
         % endif
@@ -1805,3 +1827,4 @@ attachment:
 ---
 #################### Attachment Blocks End #####################
 ---
+
