@@ -8,6 +8,7 @@ objects:
   - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
   - guardians: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
   - attorneys: ALPeopleList.using(complete_attribute="complete")
+  - other_parties: ALPeopleList.using(there_are_any=False)
 ---
 #################### Object Blocks Start #####################
 ---
@@ -32,3 +33,6 @@ fields:
 #################### Question Blocks End #####################
 ---
 #################### Attachment Blocks Start #####################
+---
+code: |
+  users[0].mobile_number = DAEmpty()

@@ -31,7 +31,6 @@ code: |
   file_date
   is_objection
   signature_date
-  basic_questions_signature_flow
   set_progress(100)
   interview_order_notice_of_appearance_and_objection = True
 ---
