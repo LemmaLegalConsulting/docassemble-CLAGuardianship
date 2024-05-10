@@ -11,15 +11,32 @@ code: |
   is_objection = False
 ---
 code: |
-  appearance_as_attorney = attorneys.there_are_any
+  appearance_as_attorney = form_filled_by_attorney
 ---
 ########### Application for appointment of counsel ##########
 ---
+# TODO: need to add back in questions about the parent
 code: |
-  Application_for_appointment_attachment.enabled = parent_wants_lawyer
+  Application_for_appointment_attachment.enabled = False # parent_wants_lawyer
 ---
 code: |
   if any((user.is_bio_parent and user.relationship_to_minor == "biological mother" for user in users)):
     want_counsel_for_mother = True
   if any((user.is_bio_parent and user.relationship_to_minor == "biological father" for user in users)):
     want_counsel_for_father = True
+---
+id: wants attorney
+question: |
+  Do you want the court to pay for a lawyer for you?
+subquestion: |
+  Because you are ${ children[0] }'s parent, you have the right
+  to have the court give you a lawyer.
+
+  Normally, there is a fee of $150 to get a lawyer in a guardianship
+  case. You can ask the court to waive the fee if you cannot afford it.  
+fields: 
+  - Do you want a lawyer: parent_wants_lawyer
+    datatype: yesnoradio
+  - I ask for permission not to pay the counsel fee: waiver_fee
+    datatype: yesnoradio
+    show if: parent_wants_lawyer
