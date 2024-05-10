@@ -49,6 +49,7 @@ code: |
   al_intro_screen
   notice_of_appearance_and_objection_intro
   interview_order_notice_of_appearance_and_objection
+  basic_questions_signature_flow  
   signature_date
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(

@@ -1,7 +1,8 @@
 ---
 include:
-  - shared.yml
+  - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
+  - shared.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - customized_screens.yml # Must come after the other includes
@@ -144,6 +145,9 @@ code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
+  if wants_fee_waiver:
+    set_fee_waiver_defaults
+    ask_affidavit_questions
   petition_for_appointment_of_guardian_preview_question
   if esign:
     signature_date
@@ -257,6 +261,24 @@ code: |
     parents_deceased = False
   
   set_parents_deceased = True
+---
+code: |
+  fees['Filing fee'].waive = True
+  fees['Filing fee'].amount = 240
+  fees['Costs of an expert witness'].waive = False
+  
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
+---
+code: |
+  fees['Filing fee'].waive = True
+  fees['Filing fee'].amount = 240
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
 ---
 #################### Object/Code Blocks End #####################
 ---
@@ -372,6 +394,15 @@ fields:
 validation code: |
   if len(users.complete_elements()) > 0:
     users.there_is_another = False
+---
+id: waiving_cost
+question: |
+  You may qualify for a fee waiver
+subquestion: |
+  It usually costs $240 to get a guardianship. But some people qualify to file for free.
+fields:
+  - Do you want to find out if you qualify to file for free?: wants_fee_waiver
+    datatype: yesnoradio
 ---
 #################### Override Blocks End #####################
 ---
@@ -1616,23 +1647,25 @@ objects:
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[
-          petition_for_appointment_of_guardian_post_interview_instructions, 
-          petition_for_appointment_of_guardian_attachment,
-          notice_of_appearance_and_objection_attachment,
-          Application_for_appointment_attachment,
-        ], 
-        filename="petition_for_appointment_of_guardian", 
-        title="All forms to download for your records", 
-        enabled=True
+      petition_for_appointment_of_guardian_post_interview_instructions,
+      petition_for_appointment_of_guardian_attachment,
+      notice_of_appearance_and_objection_attachment,
+      Application_for_appointment_attachment,
+      affidavitofindigency_attachment,
+      ],
+      filename="petition_for_appointment_of_guardian",
+      title="All forms to download for your records",
+      enabled=True
       )
   - al_court_bundle: ALDocumentBundle.using(elements=[
-          petition_for_appointment_of_guardian_attachment,
-          notice_of_appearance_and_objection_attachment,
-          Application_for_appointment_attachment,
-        ], 
-        filename="petition_for_appointment_of_guardian", 
-        title="All forms to file in court",
-        enabled=True
+      petition_for_appointment_of_guardian_attachment,
+      notice_of_appearance_and_objection_attachment,
+      Application_for_appointment_attachment,
+      affidavitofindigency_attachment,
+      ],
+      filename="petition_for_appointment_of_guardian",
+      title="All forms to file in court",
+      enabled=True
       )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
@@ -1835,3 +1868,5 @@ attachment:
 ---
 #################### Attachment Blocks End #####################
 ---
+code: |
+  user_ask_role = "plaintiff"
