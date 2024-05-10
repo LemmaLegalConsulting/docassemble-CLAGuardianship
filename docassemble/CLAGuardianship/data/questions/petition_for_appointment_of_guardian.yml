@@ -3,8 +3,8 @@ include:
   - shared.yml
   - docassemble.AssemblyLine:assembly_line.yml
   - notice_of_appearance_and_objection.yml
-  # - application_for_appointment.yml
-  # - customized_screens.yml # Must come after the other includes
+  - application_for_appointment.yml
+  - customized_screens.yml # Must come after the other includes
 ---
 metadata:
   title: >-
@@ -74,9 +74,7 @@ code: |
   nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
-  if attorneys.there_are_any:
-    attorneys.gather()
-  check_if_attorney
+  form_filled_by_attorney
 
   who_is_making_petition
   children.gather()
@@ -91,6 +89,9 @@ code: |
   nav.set_section("review_parents_information")
   parents.gather()
   set_parents_deceased
+  # if not form_filled_by_attorney:
+  #   if any((user.is_bio_parent for user in users)):
+  #     parent_wants_lawyer    
 
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
@@ -150,13 +151,8 @@ code: |
 ---
 #################### Object/Code Blocks Start #####################
 ---
-code: |
-  if attorneys.there_are_any:
-    form_filled_by_attorney = True
-  else:
-    form_filled_by_attorney = False
-
-  check_if_attorney = True
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))
 ---
 code: |
   children[i].name.first
@@ -213,11 +209,6 @@ code: |
 code: |
   if who_is_making_petition == "minor":
     users.there_is_another = False
-    petitioner_is_minor = True
----
-code: |
-  if who_is_making_petition == "interested_party":
-    petitioner_is_interested_party = True
 ---
 code: |
   guardians.there_is_another = False
@@ -416,48 +407,73 @@ subquestion: |
 id: who is making petition
 question: |
   % if form_filled_by_attorney:
-  What is your client's role?
+  What best describes your client?
   % else:
-  What is your role?
+  What best describes you?
   % endif
 fields:
-  - no label: who_is_making_petition
+  - I am: who_is_making_petition
     datatype: radio
     choices:
-      - the minor: minor
-      - someone interested in the minor's welfare: interested_party
-validation code: |
-  if who_is_making_petition == "interested_party":
-    petitioner_is_interested_party = True
-  elif who_is_making_petition == "minor":
-    petitioner_is_minor = True
+      - The minor: minor
+      - Someone interested in the minor's welfare: interested_party
 ---
 id: choose a court
 question: |
-  Select the court where the petition will be filed
+  What court will you file in?
 subquestion: |
-  The petition for guardianship should be filed in the probate and family court that serves the location where the minor is currently residing or, if the parent(s) are deceased and the parent(s) nominated a guardian in a will, in the probate and family court where the will is being probated (less common).  
 
   % if len(all_matches) and all_courts.filter_courts(allowed_courts):
-  Below is a map that shows you the name and location of the court where you told us the minor was living. Confirm that this is the correct court by answering the question that appears under the map.
-
-  ${map_of(combined_locations(all_matches))}
+  % if who_is_making_petition == "minor":
+  Because you live in ${ children[0].address.city }, we think your court
+  is ${ court_short_label(all_matches[0]) }.
+  % else:
+  Because ${ children[0].familiar() } lives in ${ children[0].address.city }, 
+  we think the court is ${ court_short_label(all_matches[0]) }.
   % endif
+
+  ${ map_of(combined_locations(all_matches)) }
+
+  % endif
+
 fields:
-  - no label: trial_court
+  - I will file in: trial_court
     datatype: object
     object labeler: court_short_label
     choices: all_courts.filter_courts(allowed_courts)
     default: |
       next(iter(all_matches), None)
-  - Why did you choose this court? Select all that apply: court_choice_reason
+    under text: |
+        Make sure the court is either:
+
+        % if who_is_making_petition == "minor":
+        1. The county you live in right now, or
+        1. If your parents died, the court serving the county where your parent's estate was **probated** (decided)
+        % else:
+        1. The county the child lives in right now, or
+        1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
+        % endif
+
+  - Why is this the right court?: court_choice_reason
     datatype: checkboxes
     minlength: 1
     none of the above: False
     label above field: True
     choices:
-      - It's in the county the minor lives in: minors_county
-      - The minor's parent(s) died and the guardian was nominated in a will that was probated in this county: will_county
+      - label: |
+          % if who_is_making_petition == "minor":
+          It is the court serving the county where I live
+          % else:
+          It is the court serving the county where the child lives
+          % endif
+        key: minors_county
+      - label: |
+          % if who_is_making_petition == "minor":
+          My parent or parents died and this is the court serving the county where their estate was probated
+          % else:
+          The child's parent or parents died and this is the court serving the county where their estate was probated
+          % endif
+        key: will_county
 ---
 id: users there_is_another
 question: |
@@ -740,7 +756,7 @@ question: |
   % endif
 subquestion: |
   % if len(other_custodians.complete_elements()) < 1:
-  You can name **up to two people** in this Petition. Start by telling us bout the first one.
+  You can name **up to two people** in this Petition. Start by telling us about the first one.
   % endif
 fields:
   - code: |
@@ -1009,12 +1025,22 @@ fields:
 ---
 id: attorneys there_are_any
 question: |
-  Are you an attorney representing the person making this petition?
+  Are you the attorney for the person making this petition?
 subquestion: |
-  Only select 'Yes' if **you are an attorney** and **are representing the person making this petition**. If you are the person making this petition and already have an attorney representing you, you should stop using this tool and speak with your attorney first.
+  
+  <div class="alert alert-info">
+    <p>
+      <i class="fas fa-info-circle"></i> If you are the person asking for the petition
+       and you already have an attorney, <strong>stop now.</strong> 
+       Your attorney should make the petition for you.
+    </p>
+  </div>
 fields:
-  - no label: attorneys.there_are_any
-    datatype: yesnoradio
+  - Are you the attorney?: attorneys.there_are_any
+    datatype: radio
+    choices:
+      - Yes, I am the attorney: True
+      - No, I am the person making the petition: False
 ---
 id: attorney information
 sets:
@@ -1103,14 +1129,6 @@ review:
       % for item in children:
         * ${ item }
       % endfor
-  - Edit: petitioner_is_interested_party
-    button: |
-      **Petitioner is interested party**:
-      ${ word(yesno(petitioner_is_interested_party)) }
-  - Edit: petitioner_is_minor
-    button: |
-      **Petitioner is minor**:
-      ${ word(yesno(petitioner_is_minor)) }
   - Edit: users.revisit
     button: |
       **Users**
@@ -1652,8 +1670,8 @@ attachment:
     - "children1_address_state": ${ children[0].address.state }
     - "children1_address_zip": ${ children[0].address.zip }
     - "children1_address_county": ${ children[0].address.county }
-    - "petitioner_is_interested_party": ${ petitioner_is_interested_party }
-    - "petitioner_is_minor": ${ petitioner_is_minor }
+    - "petitioner_is_interested_party": ${ who_is_making_petition == "interested_party" }
+    - "petitioner_is_minor": ${ who_is_making_petition == "minor" }
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }
