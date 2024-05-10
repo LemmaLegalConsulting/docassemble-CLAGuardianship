@@ -2,7 +2,6 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.ALMassachusetts:al_massachusetts.yml
-  # - docassemble.MassAccess:massaccess.yml
 ---
 objects:
   - users: ALPeopleList.using(there_are_any=True, complete_attribute="complete")

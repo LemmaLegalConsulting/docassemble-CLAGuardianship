@@ -5,7 +5,7 @@ include:
 ---
 objects:
   - users: ALPeopleList.using(ask_number=True,target_number=1)
-  - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
+  # - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
 ---
 #################### Interview order #####################
 id: interview_order_notice_of_appearance_and_objection

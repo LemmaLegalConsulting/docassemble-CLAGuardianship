@@ -38,7 +38,7 @@ code: |
   AL_DEFAULT_STATE = "MA"
 ---
 code: |
-  github_repo_name =  'docassemble-CLAGuardianship'
+  github_repo_name = 'docassemble-CLAGuardianship'
 ---
 code: |
   interview_short_title = "File a petition for the appointment of a guardian of a minor"
@@ -47,20 +47,20 @@ code: |
   al_form_type = "other"
 ---
 objects:
-  - bio_mother: ALPeopleList.using(complete_attribute="complete")
-  - bio_father: ALPeopleList.using(complete_attribute="complete")
+  - parents: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - other_custodians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
 sections:
-  - review_case_information: About the case  
-  - review_petitioner_information: About the petitioner(s)
-  - review_bio_parents_information: Minor's biological parents
+  - review_case_information: About the case
+  - review_petitioner_information: Petitioner(s)
+  - review_parents_information: Minor's parents
   - review_requests: Your requests to the Court
   - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
+  - review_additional_requests: Additional Requests
   - review_petition_for_appointment_of_guardian: Review your answers
 ---
 #################### Interview order #####################
@@ -74,68 +74,64 @@ code: |
   nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
+  form_filled_by_attorney
+
   who_is_making_petition
   children.gather()
-  docket_number
   trial_court
 
   nav.set_section("review_petitioner_information")
-  if who_is_making_petition == "attorney":
-    attorneys.gather()
-  if who_is_making_petition == "interested_party":    
+  if who_is_making_petition == "interested_party": 
     users.gather()
-    for user in users:
-      if not user.is_bio_parent:
-        user.relationship_to_minor
   else:
     set_user_to_minor
-  if not who_is_making_petition == "attorney":
-    if any((user.is_bio_parent for user in users)):
-      parent_wants_lawyer
 
-  nav.set_section("review_bio_parents_information")
-  if who_is_making_petition == "interested_party":
-    if (bio_mother_collected != True) and bio_mother.there_are_any:  
-      bio_mother.gather()
-    if (bio_father_collected != True) and bio_father.there_are_any:
-      bio_father.gather()
-  else:
-    if bio_mother.there_are_any:
-      bio_mother.gather()
-    if bio_father.there_are_any:
-      bio_father.gather()
+  nav.set_section("review_parents_information")
+  parents.gather()
+  set_parents_deceased
+  # if not form_filled_by_attorney:
+  #   if any((user.is_bio_parent for user in users)):
+  #     parent_wants_lawyer    
 
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
-  if not minor_married:
-    parents_consent_to_guardian_appointment
-    parental_rights_terminated
-    parents_unavailable_to_exercise_parental_rights
-    parents_unfit_to_exercise_parental_rights
-    previous_third_party_guardian_death_or_incapacitation
+  
+  reason_seeking_guardianship
+  if reason_seeking_guardianship['parents_rights_terminated']:
+    parental_rights_termination_reason
+  if reason_seeking_guardianship['parents_unavailable']:
+    parents_unavailable_to_exercise_parental_rights_exp
+  if reason_seeking_guardianship['parents_unfit']:
+    parents_unfit_to_exercise_parental_rights_exp
+  if reason_seeking_guardianship['previous_guardian']:
+    previous_third_party_guardian_death_or_incapacitation_exp
+
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
   wants_sureties_waiver
-  wants_additional_request
 
   nav.set_section("review_minors_guardianship")
   if other_custodians.there_are_any:
     other_custodians.gather()
   if who_is_making_petition == "interested_party":
-    if bio_father_deceased and bio_mother_deceased:
+    if parents_deceased:
       if relatives.there_are_any:
         relatives.gather()
   else:
-    if (bio_father.there_are_any and bio_father_deceased) and (bio_mother.there_are_any and bio_mother_deceased):
+    if parents_deceased:
       if relatives.there_are_any:
         relatives.gather()
+
   if current_acting_guardian:
-    guardians.gather()
+    existing_guardians_or_conservators_kickout
 
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
     assets.gather()
     minor_assets_total_value
+  
+  nav.set_section("review_additional_requests")
+  wants_additional_request
 
   interview_order_petition_for_appointment_of_guardian = True
 ---
@@ -149,32 +145,33 @@ code: |
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
   petition_for_appointment_of_guardian_preview_question
-  basic_questions_signature_flow
+  if esign:
+    signature_date
   petition_for_appointment_of_guardian_download
 ---
 #################### Object/Code Blocks Start #####################
 ---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))
+---
 code: |
   children[i].name.first
   children[i].birthdate
+  if who_is_making_petition == "minor":
+    children[i].phone_number
   children[i].complete = True
 ---
 code: |
   users[i].name.first
   users[i].address.address
+  users[i].relationship_to_minor
   users[i].complete = True
 ---
 code: |
-  bio_mother[i].name.first
-  if bio_mother_deceased == False:
-    bio_mother[i].address.address
-  bio_mother[i].complete = True
----
-code: |
-  bio_father[i].name.first
-  if bio_father_deceased == False:
-    bio_father[i].address.address
-  bio_father[i].complete = True
+  parents[i].name.first
+  if parents[i].is_deceased != True:
+    parents[i].address.address
+  parents[i].complete = True
 ---
 code: |
   requested_guardians[i].name.first
@@ -212,17 +209,6 @@ code: |
 code: |
   if who_is_making_petition == "minor":
     users.there_is_another = False
-    petitioner_is_minor = True
----
-code: |
-  if who_is_making_petition == "interested_party":
-    petitioner_is_interested_party = True
----
-code: |
-  bio_mother.there_is_another = False
----
-code: |
-  bio_father.there_is_another = False
 ---
 code: |
   guardians.there_is_another = False
@@ -249,6 +235,7 @@ code: |
     users[0].address.city = children[0].address.city
     users[0].address.state = children[0].address.state
     users[0].address.zip = children[0].address.zip
+    users[0].phone_number = children[0].phone_number
     users[0].relationship_to_minor = "Self"
     users.auto_gather = False
     users.gathered = True
@@ -262,16 +249,14 @@ code: |
   addresses_to_search = [children[0].address]
 ---
 code: |
-  if (users[0].relationship_to_minor == "biological mother") or (users.item(1).relationship_to_minor == "biological mother"):
-    bio_mother_collected = True
+  if len(parents.complete_elements()) == 2 and (parents[0].is_deceased and parents[1].is_deceased):
+    parents_deceased = True
+  elif len(parents.complete_elements()) == 1 and parents[0].is_deceased:
+    parents_deceased = True
   else:
-    bio_mother_collected = False
----
-code: |
-  if (users[0].relationship_to_minor == "biological father") or (users.item(1).relationship_to_minor == "biological father"):
-    bio_father_collected = True
-  else:
-    bio_father_collected = False
+    parents_deceased = False
+  
+  set_parents_deceased = True
 ---
 #################### Object/Code Blocks End #####################
 ---
@@ -288,8 +273,9 @@ sets:
   - children[0].address.city
   - children[0].address.state
   - children[0].address.zip
+  - children[0].address.country
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Tell us about yourself
   % else:
   Who is the minor in this case?
@@ -298,7 +284,60 @@ fields:
   - code: |
       children[0].name_fields()
   - code: |
-      children[0].address_fields()
+      children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+id: minor birthdate
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  When were you born?
+  % else:
+  When was ${ children[0].name } born?
+  % endif
+fields:
+  - Birthdate: children[0].birthdate
+    datatype: date
+---
+id: minor phone number
+sets:
+  - children[0].phone_number
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  What is your phone number?
+  % else:
+  What is ${ children[0].name }'s phone number?
+  % endif
+fields:
+  - Primary phone number: children[0].phone_number
+    datatype: al_international_phone
+---
+id: petitioner information
+sets:
+  - users[0].name.first
+  - users[0].name.last
+  - users[0].name.middle
+  - users[0].name.suffix
+  - users[0].address.address
+  - users[0].address.unit
+  - users[0].address.city
+  - users[0].address.state
+  - users[0].address.zip
+  - users[0].address.country
+  - users[0].phone_number
+  - users[0].relationship_to_minor
+question: |
+  % if form_filled_by_attorney:
+  Tell us about the petitioner
+  % else:
+  Tell us about yourself
+  % endif
+fields:
+  - code: |
+      users[0].name_fields()
+  - code: |
+      users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+  - Primary phone number: users[0].phone_number
+    datatype: al_international_phone
+  - Relationship to ${ children[0].name }: users[0].relationship_to_minor
 ---
 id: petitioner information
 sets:
@@ -311,9 +350,13 @@ sets:
   - users[i].address.city
   - users[i].address.state
   - users[i].address.zip
+  - users[i].address.country
   - users[i].phone_number
+  - users[i].relationship_to_minor
 question: |
-  % if len(users.complete_elements()) < 1:
+  % if len(users.complete_elements()) < 1 and form_filled_by_attorney:
+  Tell us about the petitioner
+  % elif len(users.complete_elements()) < 1 and (not form_filled_by_attorney):
   Tell us about yourself
   % else:
   Tell us about the other petitioner
@@ -322,8 +365,13 @@ fields:
   - code: |
       users[i].name_fields()
   - code: |
-      users[i].address_fields()
+      users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[i].phone_number
+    datatype: al_international_phone
+  - Relationship to ${ children[0].name }: users[i].relationship_to_minor
+validation code: |
+  if len(users.complete_elements()) > 0:
+    users.there_is_another = False
 ---
 #################### Override Blocks End #####################
 ---
@@ -336,13 +384,17 @@ question: |
 subquestion: |
   This interview will help you fill out a petition for the appointment of a guardian for a minor.
 
+  You can use this tool if you are **either**:
+
+  * A minor who is 14 years of age or older; **or**
+
+  * Any person interested in the welfare of a minor.
+
   **Before you get started**, please gather:
 
-  1. Any official court documents or orders related to the minor's custody or guardianship.
+  1. Information about the minor's parents, including name, contact information, and whether they are still living. If both parents are deceased, include the names and contact information of any living relatives.
 
-  2. Details about any persons relevant to the minor's guardianship, such as parents, guardians, and the minor's living relatives.
-
-  3. Details about the minor's guardianship history, such as the dates they were under the care and custody of others who were not the minor's parents, and any assets the minor has.
+  2. Information about any assets the minor may have, such as bank accounts and property, as well as the value of each asset.
 
   **When you are finished**, you will need to:
 
@@ -354,235 +406,210 @@ subquestion: |
 ---
 id: who is making petition
 question: |
-  What is your role?
+  % if form_filled_by_attorney:
+  What best describes your client?
+  % else:
+  What best describes you?
+  % endif
 fields:
-  - no label: who_is_making_petition
+  - I am: who_is_making_petition
     datatype: radio
     choices:
-      - I am the minor: minor
-      - I am someone interested in the minor's welfare: interested_party
-      - I am an attorney: attorney
-validation code: |
-  if who_is_making_petition == "interested_party":
-    petitioner_is_interested_party = True
-  elif who_is_making_petition == "minor":
-    petitioner_is_minor = True
-  else:
-    petitioner_is_interested_party = True
+      - The minor: minor
+      - Someone interested in the minor's welfare: interested_party
 ---
-code: |    
-  attorneys.there_are_any = who_is_making_petition == "attorney"
----
-id: wants attorney
+id: choose a court
 question: |
-  Do you want the court to pay for a lawyer for you?
+  What court will you file in?
 subquestion: |
-  Because you are ${ children[0] }'s parent, you can ask 
-  the court to give you a lawyer.
 
-  It usually costs $150 to get a lawyer. But if you cannot afford it,
-  you can ask the court to waive the fee.
-
-  If you answer yes, we will make an "Application for Appointment
-  of Counsel" document as part of this interview.
-fields:
-  - I want a lawyer: parent_wants_lawyer
-    datatype: yesnoradio
----
-if: |
-  len(all_matches) and all_courts.filter_courts(allowed_courts)
-id: choose a court (courts matching provided address were found)
-question: |
-  % if al_form_type == 'starts_case':
-  What court do you want to file in?
-  % elif al_form_type == 'appeal':
-  What is the name of the trial court your case was originally filed in?
+  % if len(all_matches) and all_courts.filter_courts(allowed_courts):
+  % if who_is_making_petition == "minor":
+  Because you live in ${ children[0].address.city }, we think your court
+  is ${ court_short_label(all_matches[0]) }.
   % else:
-  What court is your case in?
-  % endif
-subquestion: |
-  % if not al_form_type == 'starts_case':
-  Look at your court paperwork. Match the name listed there.
+  Because ${ children[0].familiar() } lives in ${ children[0].address.city }, 
+  we think the court is ${ court_short_label(all_matches[0]) }.
   % endif
 
-  % if len(all_matches) > 0:
-  Below is a map of the court(s) that serve
-  the address you gave us, 
-  % if isinstance(addresses_to_search, Iterable):
-  ${comma_and_list([address.on_one_line() for address in addresses_to_search],comma_string='; ')}.
-  % else:
-  ${addresses_to_search.on_one_line()}
+  ${ map_of(combined_locations(all_matches)) }
+
   % endif
 
-  ${map_of(combined_locations(all_matches))}
-  % endif
 fields:
-  - no label: trial_court
+  - I will file in: trial_court
     datatype: object
     object labeler: court_short_label
     choices: all_courts.filter_courts(allowed_courts)
     default: |
       next(iter(all_matches), None)
-  - Why did you choose this court?: court_choice_reason
+    under text: |
+        Make sure the court is either:
+
+        % if who_is_making_petition == "minor":
+        1. The county you live in right now, or
+        1. If your parents died, the court serving the county where your parent's estate was **probated** (decided)
+        % else:
+        1. The county the child lives in right now, or
+        1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
+        % endif
+
+  - Why is this the right court?: court_choice_reason
     datatype: checkboxes
     minlength: 1
     none of the above: False
     label above field: True
     choices:
-      - It's in the county the minor lives in: minors_county
-      - The minor's parent(s) died and the guardian was nominated in a will that was probated in this county: will_county
----
-id: bio_mother there_are_any
-question: |
-  % if who_is_making_petition == "minor":
-  Can you provide any information about your biological mother?
-  % else:
-  Can you provide any information about ${ children[0].name }'s biological mother?
-  % endif
-fields:
-  - no label: bio_mother.there_are_any
-    datatype: yesnoradio
+      - label: |
+          % if who_is_making_petition == "minor":
+          It is the court serving the county where I live
+          % else:
+          It is the court serving the county where the child lives
+          % endif
+        key: minors_county
+      - label: |
+          % if who_is_making_petition == "minor":
+          My parent or parents died and this is the court serving the county where their estate was probated
+          % else:
+          The child's parent or parents died and this is the court serving the county where their estate was probated
+          % endif
+        key: will_county
 ---
 id: users there_is_another
 question: |
+  % if form_filled_by_attorney:
+  Is anyone else making this Petition with your client?
+  % else:
   Is anyone else making this Petition with you?
+  % endif
 fields:
   - no label: users.there_is_another
     datatype: yesnoradio
 ---
-id: bio_father there_are_any
+id: parent basic information
+sets:
+  - parents[i].name.first
+  - parents[i].name.last
+  - parents[i].name.middle
+  - parents[i].name.suffix
 question: |
-  % if who_is_making_petition == "minor":
-  Can you provide any information about your biological father?
-  % else:
-  Can you provide any information about ${ children[0].name }'s biological father?
+  % if (who_is_making_petition == "minor") and (len(parents.complete_elements()) < 1) and (not form_filled_by_attorney):
+  Tell us about either of your parents
+  % elif (who_is_making_petition == "minor") and (len(parents.complete_elements()) > 0) and (not form_filled_by_attorney):
+  Tell us about your other parent
+  % elif (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and form_filled_by_attorney)) and len(parents.complete_elements()) > 0:
+  Tell us about ${ children[0].name }'s other parent
+  % else: 
+  Tell us about either of ${ children[0].name }'s parents
+  % endif
+subquestion: |
+  % if len(parents.complete_elements()) < 1:
+  You must provide information for **at least one parent**. If there are two parents, you can start with either one. You will get the chance to add another parent later on.  
   % endif
 fields:
-  - no label: bio_father.there_are_any
-    datatype: yesnoradio
----
-id: are petitioners biological parents
-question: |
-  % if i == 0:
-  Are you one of the minor's biological parents?
-  % else:
-  Is ${ users[i] } one of the minor's biological parents?
-  % endif
-fields:
-  - no label: users[i].is_bio_parent
-    datatype: yesnoradio
-  - Please specify: users[i].relationship_to_minor
-    datatype: radio
-    choices:
-      - biological father
-      - biological mother
-    js show if: |
-      val('users[i].is_bio_parent') == true
+  - code: |
+      parents[i].name_fields()
+  - Is this person deceased?: parents[i].is_deceased
+    datatype: yesnomaybe
 validation code: |
-  if users[i].is_bio_parent:
-    if users[i].relationship_to_minor == "biological mother":
-      bio_mother_deceased = False
-    elif users[i].relationship_to_minor == "biological father":
-      bio_father_deceased = False
+  if len(parents.complete_elements()) > 0:
+    parents.there_is_another = False
 ---
-id: petitioner relationship to minor
+id: parent contact information
+sets:
+  - parents[i].address.address
+  - parents[i].address.unit
+  - parents[i].address.city
+  - parents[i].address.state
+  - parents[i].address.zip
+  - parents[i].address.country
+  - parents[i].phone_number
 question: |
-  % if i == 0:
-  What is your relationship to ${ children[0].name }?
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  If available, enter contact information for your parent, ${ parents[i].name }
+  % else: 
+  If available, enter contact information for ${ children[0].name }'s parent, ${ parents[i].name }
+  % endif
+fields:
+  - Street address: parents[i].address.address
+    required: False
+  - Apartment: parents[i].address.unit
+    required: False
+  - City: parents[i].address.city
+    required: False
+  - State: parents[i].address.state
+    required: False
+  - Zip or postal code: parents[i].address.zip
+    required: False
+  - Primary phone number: parents[i].phone_number
+    required: False
+validation code: |
+  if len(parents.complete_elements()) > 0:
+    parents.there_is_another = False
+---
+id: parents there_is_another
+question: |
+  Is there another parent you can tell us about?
+fields:
+  - no label: parents.there_is_another
+    datatype: yesnoradio
+---
+id: why seeking guardianship
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Why are you seeking guardianship for yourself?
+  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
+  Why is ${ children[0].name } seeking guardianship for themselves?
   % else:
-  What is ${ users[i] }'s relationship to ${ children[0].name }?
+  Why are you seeking guardianship for ${ children[0].name }?
   % endif
-fields:
-  - no label: users[i].relationship_to_minor
----
-id: bio father basic information
-sets:
-  - bio_father[0].name.first
-  - bio_father[0].name.last
-  - bio_father[0].name.middle
-  - bio_father[0].name.suffix
-question: |
+subquestion: |
   % if who_is_making_petition == "minor":
-  Tell us about your biological father
-  % else: 
-  Tell us about ${ children[0].name }'s' biological father
+  If you are seeking guardianship because of the death of your parent(s), you should select **Parent or parents had all their parental rights terminated**.
+  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
+  If ${ children[0].name } is seeking guardianship because of the death of their parent(s), you should select **Parent or parents had all their parental rights terminated**.
+  % else:
+  If you are seeking guardianship because of the death of ${ children[0].name }'s parent(s), you should select **Parent or parents had all their parental rights terminated**.
   % endif
 fields:
-  - code: |
-      bio_father[0].name_fields()
-  - Is this person deceased?: bio_father_deceased
-    datatype: yesnomaybe
----
-id: bio father contact information
-sets:
-  - bio_father[0].address.address
-  - bio_father[0].address.unit
-  - bio_father[0].address.city
-  - bio_father[0].address.state
-  - bio_father[0].address.zip
-  - bio_father[0].address.country
-  - bio_father[0].phone_number
-question: |
-  % if who_is_making_petition == "minor":
-  Enter your biological father's contact information
-  % else: 
-  Enter ${ children[0].name }'s biological father's contact information
-  % endif
-fields:
-  - code: |
-      bio_father[0].address_fields()
-  - Primary phone number: bio_father[0].phone_number
-    required: False
----
-id: bio mother basic information
-sets:
-  - bio_mother[0].name.first
-  - bio_mother[0].name.last
-  - bio_mother[0].name.middle
-  - bio_mother[0].name.suffix
-question: |
-  % if who_is_making_petition == "minor":
-  Tell us about your biological mother
-  % else: 
-  Tell us about ${ children[0].name }'s' biological mother
-  % endif
-fields:
-  - code: |
-      bio_mother[0].name_fields()
-  - Is this person deceased?: bio_mother_deceased
-    datatype: yesnomaybe
----
-id: bio mother contact information
-sets:
-  - bio_mother[0].address.address
-  - bio_mother[0].address.unit
-  - bio_mother[0].address.city
-  - bio_mother[0].address.state
-  - bio_mother[0].address.zip
-  - bio_mother[0].address.country
-  - bio_mother[0].phone_number
-question: |
-  % if who_is_making_petition == "minor":
-  Enter your biological mother's contact information
-  % else: 
-  Enter ${ children[0].name }'s biological mother's contact information
-  % endif
-fields:
-  - code: |
-      bio_mother[0].address_fields()
-  - Primary phone number: bio_mother[0].phone_number
-    required: False
+  - Select all that apply: reason_seeking_guardianship
+    datatype: checkboxes
+    none of the above: False
+    required: True
+    choices:
+      - Parent or parents consent to the appointment of a guardian: parents_consent
+      - Parent or parents had all their parental rights terminated: parents_rights_terminated
+      - Parent or parents are unavailable to exercise their parental rights: parents_unavailable
+      - Parent or parents are unfit to exercise their parental rights: parents_unfit
+      - Guardianship was granted to a third party that is now deceased or incapacitated, and did not appoint a successor by will or written instrument: previous_guardian
+
+validation code: |
+  if all(value == False for value in reason_seeking_guardianship.values()):
+    validation_error("You need to select at least one reason for seeking guardianship.")
+
+  if reason_seeking_guardianship['parents_consent']:
+    parents_consent_to_guardian_appointment = True
+
+  if reason_seeking_guardianship['parents_rights_terminated']:
+    parental_rights_terminated = True
+
+  if reason_seeking_guardianship['parents_unavailable']:
+    parents_unavailable_to_exercise_parental_rights = True
+
+  if reason_seeking_guardianship['parents_unfit']:
+    parents_unfit_to_exercise_parental_rights = True
+
+  if reason_seeking_guardianship['previous_guardian']:
+    previous_third_party_guardian_death_or_incapacitation = True
 ---
 id: nomination of guardian by signed writing
 question: |
-  % if who_is_making_petition == "minor":
-  Has a guardian been nominated for you?
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Has a guardian been nominated for you in a will or other written document, signed by a parent or existing guardian?
   % else:
-  Has a guardian been nominated for ${ children[0].name }?
+  Has a guardian been nominated for ${ children[0].name } in a will or other written document, signed by a parent or existing guardian?
   % endif
 subquestion: |
-  The guardian may have been nominated in a will or other written document, signed by a parent or existing guardian.
-
   If you select **Yes**, you will need to attach a copy of that signed document.
 fields:
   - no label: has_guardian_nomination_by_signed_doc
@@ -593,20 +620,9 @@ validation code: |
   else:
     has_guardian_nomination_by_signed_doc_no = True
 ---
-id: is minor married
-question: |
-  % if who_is_making_petition == "minor":
-  Are you married?
-  % else:
-  Is ${ children[0].name } married?
-  % endif
-fields:
-  - no label: minor_married
-    datatype: yesnoradio
----
 id: parents consent to appointment of guardian
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do your parents consent to the appointment of a guardian?
   % else:
   Do ${ children[0].name }'s parents consent to the appointment of a guardian?
@@ -617,90 +633,68 @@ fields:
 ---
 id: parental rights terminated
 question: |
-  % if who_is_making_petition == "minor":
-  Have the parental rights of your parents been terminated?
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  How were the parental rights of your parent(s) terminated?
   % else:
-  Have the parental rights of ${ children[0].name }'s parents been terminated?
+  How were the parental rights of ${ children[0].name }'s parent(s) terminated?
   % endif
-
+subquestion: |
+  Depending on which answer you select, **you must attach a copy of a corresponding document**—either a court order, a surrender, or a death certificate—to this Petition.
 fields:
-  - no label: parental_rights_terminated
-    datatype: yesnoradio
-  - How?: parental_rights_termination_reason
+  - Select one: parental_rights_termination_reason
     datatype: radio
     choices:
       - By a prior court order: court_order
       - By a signed voluntary surrender: voluntary_surrender
-      - By the parent's death: parent_death
-    show if:
-      variable: parental_rights_terminated
-      is: True
-  - note: If you select any of the answers above, **you must attach a copy of the corresponding document**—either a court order, a surrender, or a death certificate—to this Petition.
-    show if:
-      variable: parental_rights_terminated
-      is: True
+      - By the death of the parent(s): parent_death
 ---
 id: parents unavailable to exercise parental rights
 question: |
-  % if who_is_making_petition == "minor":
-  Are your parents unavailable to exercise their parental rights?
+  % if who_is_making_petition == "minor" and not (form_filled_by_attorney):
+  Tell us why your parent(s) are unavailable to exercise their parental rights
   % else:
-  Are ${ children[0].name }'s parents unavailable to exercise their parental rights?
+  Tell us why ${ children[0].name }'s parent(s) are unavailable to exercise their parental rights
   % endif
 fields:
-  - no label: parents_unavailable_to_exercise_parental_rights
-    datatype: yesnoradio
   - Please give a brief explanation: parents_unavailable_to_exercise_parental_rights_exp
     input type: area
     maxlength: 310
-    show if:
-      variable: parents_unavailable_to_exercise_parental_rights
-      is: True
 ---
 id: parents unfit to exercise parental rights
 question: |
-  % if who_is_making_petition == "minor":
-  Are your parents unfit to exercise their parental rights?
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Tell us why your parent(s) are unfit to exercise their parental rights
   % else:
-  Are ${ children[0].name }'s parents unfit to exercise their parental rights?
+  Tell us why ${ children[0].name }'s parent(s) are unfit to exercise their parental rights
   % endif
 fields:
-  - no label: parents_unfit_to_exercise_parental_rights
-    datatype: yesnoradio
   - Please give a brief explanation: parents_unfit_to_exercise_parental_rights_exp
     input type: area
     maxlength: 310
-    show if:
-      variable: parents_unfit_to_exercise_parental_rights
-      is: True
 ---
 id: deceased or incapacitated previous guardian
 question: |
-  % if who_is_making_petition == "minor":
-  Was guardianship granted to someone (not one of your parents) that is now deceased or incapacitated and does not have an successor?
-  % else:
-  Was guardianship granted to someone (not one of ${ children[0].name }'s parents) that is now deceased or incapacitated and does not have an successor?
-  % endif
+  Tell us about the guardian that is now deceased or incapacitated
 subquestion: |
-  If you select **Yes**, you must **attach any relevant documents** to this Petition.
+  You must **attach the order or any relevant documents** to this Petition. You will also need to briefly **describe each of them below**. 
 fields:
-  - no label: previous_third_party_guardian_death_or_incapacitation
-    datatype: yesnoradio
-  - Please give a brief explanation: previous_third_party_guardian_death_or_incapacitation_exp
+  - Write your description here: previous_third_party_guardian_death_or_incapacitation_exp
     input type: area
     maxlength: 310
-    show if:
-      variable: previous_third_party_guardian_death_or_incapacitation
-      is: True
 ---
 id: petitioner requesting guardianship
 question: |
+  % if form_filled_by_attorney:
+  Does the petitioner want to ask the court to appoint them as a guardian for ${ children[0].name }?
+  % else:
   Do you want to ask the court to appoint you as a guardian for ${ children[0].name }?
+  % endif
 subquestion: |
-  **DO NOT** select **Yes** if you are currently being investigated or have charges pending for:
-
-  * Assault resulting in bodily injury to ${ children[0].name }
-  * Neglect to ${ children[0].name }
+  % if form_filled_by_attorney:
+  **DO NOT** select **Yes** if the petitioner(s) are investigation or have any criminal record regarding the abuse or neglect of a child.
+  % else:
+  **DO NOT** select **Yes** if you are under investigation or have any criminal record regarding the abuse or neglect of a child.
+  % endif
 fields:
   - no label: petitioner_requesting_guardianship
     datatype: yesnoradio
@@ -724,7 +718,7 @@ fields:
 ---
 id: other custodian during past 60 days
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has anyone else had primary care and custody of you during the last 60 days?
   % else:
   Has anyone else had primary care and custody of ${ children[0].name } during the last 60 days?
@@ -751,18 +745,18 @@ sets:
   - other_custodians[i].address.zip
   - other_custodians[i].phone_number
 question: |
-  % if (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "minor"):
+  % if (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who had primary care and custody over you during the past 60 days? 
-  % elif (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "interested_party"):
+  % elif (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
   Who had primary care and custody over ${ children[0].name } during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "minor"):
+  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who else had primary care and custody over you during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "interested_party"):
+  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
   Who else had primary care and custody over ${ children[0].name } during the past 60 days?
   % endif
 subquestion: |
   % if len(other_custodians.complete_elements()) < 1:
-  You can name **up to two people** in this Petition. Start by telling us bout the first one.
+  You can name **up to two people** in this Petition. Start by telling us about the first one.
   % endif
 fields:
   - code: |
@@ -783,7 +777,7 @@ validation code: |
 ---
 id: other custodians there_is_another
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has anyone else had primary care and custody over you during the last 60 days?
   % else:
   Has anyone else had primary care and custody over ${ children[0].name } during the last 60 days?
@@ -806,12 +800,16 @@ sets:
   - requested_guardians[i].address.country
   - requested_guardians[i].phone_number
 question: |
-  % if (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor"):
+  % if (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who do you want the court to appoint as your guardian?
+  % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor" and form_filled_by_attorney):
+  Who does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "interested_party"):
   Who do you want the court to appoint as a guardian for ${ children[0].name }?
-  % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor"):
+  % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who else do you want the court to appoint as your guardian?
+  % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and form_filled_by_attorney):
+  Who else does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "interested_party"):
   Who else do you want the court to appoint as a guardian for ${ children[0].name }?
   % endif
@@ -853,6 +851,15 @@ question: |
 fields:
   - no label: requested_guardians.there_is_another
     datatype: yesnoradio
+---
+id: existing guardians or conservators kickout
+event: existing_guardians_or_conservators_kickout
+question: |
+  We're sorry, but you cannot use this tool to create a *Petition for Appointment of Guardian of Minor*
+subquestion: |
+  If there is already an existing guardianship for ${ children[0] }, you will need to ask for a change in the existing case instead of filing a new petition.
+
+  If you made a mistake, select **Undo** to go back and change your answer.
 ---
 id: relatives there_are_any
 question: |
@@ -907,9 +914,9 @@ fields:
 id: current guardian
 question: |
   % if who_is_making_petition == "minor":
-  Is anyone currently acting as your Guardian or Conservator?
+  Is anyone currently acting as your Guardian or Conservator in Massachusetts or elsewhere?
   % else:
-  Is anyone currently acting as ${ children[0].name }'s Guardian or Conservator?
+  Is anyone currently acting as ${ children[0].name }'s Guardian or Conservator in Massachusetts or elsewhere?
   % endif
 fields:
   - no label: current_acting_guardian
@@ -960,7 +967,7 @@ fields:
 ---
 id: minor assets there_are_any
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do you have any assets?
   % else:
   Does ${ children[0].name } have any assets?
@@ -982,6 +989,8 @@ sets:
   - assets[i].value
 question: |
   Tell us about the ${ ordinal(i) } asset you want to include in the petition.
+subquestion: |
+  **DO NOT** list bank account numbers or Social Security numbers.
 fields:
   - Provide a brief description: assets[i].description
     input type: area
@@ -1016,32 +1025,44 @@ fields:
 ---
 id: attorneys there_are_any
 question: |
-  Do you have an attorney representing you in this matter?
+  Are you the attorney for the person making this petition?
+subquestion: |
+  
+  <div class="alert alert-info">
+    <p>
+      <i class="fas fa-info-circle"></i> If you are the person asking for the petition
+       and you already have an attorney, <strong>stop now.</strong> 
+       Your attorney should make the petition for you.
+    </p>
+  </div>
 fields:
-  - no label: attorneys.there_are_any
-    datatype: yesnoradio
+  - Are you the attorney?: attorneys.there_are_any
+    datatype: radio
+    choices:
+      - Yes, I am the attorney: True
+      - No, I am the person making the petition: False
 ---
 id: attorney information
 sets:
-  - attorneys[i].name.first
-  - attorneys[i].name.last
-  - attorneys[i].name.middle
-  - attorneys[i].name.suffix
-  - attorneys[i].address.address
-  - attorneys[i].address.unit
-  - attorneys[i].address.city
-  - attorneys[i].address.state
-  - attorneys[i].address.zip
-  - attorneys[i].phone_number
+  - attorneys[0].name.first
+  - attorneys[0].name.last
+  - attorneys[0].name.middle
+  - attorneys[0].name.suffix
+  - attorneys[0].address.address
+  - attorneys[0].address.unit
+  - attorneys[0].address.city
+  - attorneys[0].address.state
+  - attorneys[0].address.zip
+  - attorneys[0].phone_number
 question: |
-  Tell us about your attorney
+  Tell us about yourself (the attorney)
 fields:
   - code: |
-      attorneys[i].name_fields()
+      attorneys[0].name_fields()
   - code: |
-      attorneys[i].address_fields()
-  - Primary phone number: attorneys[i].phone_number
-  - BBO number: attorneys[i].bbo
+      attorneys[0].address_fields()
+  - Primary phone number: attorneys[0].phone_number
+  - BBO number: attorneys[0].bbo
 ---
 id: preview petition_for_appointment_of_guardian
 question: |
@@ -1068,6 +1089,27 @@ continue button field: petition_for_appointment_of_guardian_preview_question
 code: |
   signature_fields = [user.attr_name('signature') for user in users]
 ---
+id: electronic signature question
+question: |
+  Electronic Signature
+subquestion: |
+  % if form_filled_by_attorney and (len(users.complete_elements()) > 1):
+  This tool can put "*/s/ ${ users[0] }*" and "*/s/ ${ users[1] }*" where the petitioners would sign their names so they do not have to sign the form by hand. The court will accept these as their signatures.
+
+  Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
+  % elif form_filled_by_attorney and (len(users.complete_elements()) < 2):
+  This tool can put "*/s/ ${ users[0] }*" and where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
+
+  Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
+  % else:
+  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
+
+  Otherwise, you will need to print your forms and sign them by hand.
+  % endif
+fields:
+  - Would you like to add your electronic signature to your form?: esign
+    datatype: yesnoradio
+---
 #################### Review Blocks Start #####################
 ---
 id: petition for appointment of guardian review screen
@@ -1075,10 +1117,6 @@ event: review_petition_for_appointment_of_guardian
 question: |
   Review your answers
 review:
-  - Edit: docket_number
-    button: |
-      **Docket number**:
-      ${ docket_number }
   - Edit: trial_court
     button: |
       **Trial court**
@@ -1091,14 +1129,6 @@ review:
       % for item in children:
         * ${ item }
       % endfor
-  - Edit: petitioner_is_interested_party
-    button: |
-      **Petitioner is interested party**:
-      ${ word(yesno(petitioner_is_interested_party)) }
-  - Edit: petitioner_is_minor
-    button: |
-      **Petitioner is minor**:
-      ${ word(yesno(petitioner_is_minor)) }
   - Edit: users.revisit
     button: |
       **Users**
@@ -1109,78 +1139,78 @@ review:
     button: |
       **Users1 relationship to minor**:
       ${ users[0].relationship_to_minor }
-  - Edit: bio_mother_deceased
-    button: |
-      **Bio parents1 is deceased**:
-      ${ word(yesno(bio_mother_deceased)) }
-  - Edit: bio_mother.name.first
+  - Edit: parents[0].name.first
     button: |
       **Bio parents1 name first**:
-      ${ bio_mother.name.first }
-  - Edit: bio_mother.name.last
+      ${ parents[0].name.first }
+  - Edit: parents[0].name.last
     button: |
       **Bio parents1 name last**:
-      ${ bio_mother.name.last }
-  - Edit: bio_mother.name.middle_initial
+      ${ parents[0].name.last }
+  - Edit: parents[0].name.middle_initial
     button: |
       **Bio parents1 name middle initial**:
-      ${ bio_mother.name.middle_initial }
-  - Edit: bio_mother.address.city
+      ${ parents[0].name.middle_initial }
+  - Edit: parents[0].address.city
     button: |
       **Bio parents1 address city**:
-      ${ bio_mother.address.city }
-  - Edit: bio_mother.address.address
+      ${ parents[0].address.city }
+  - Edit: parents[0].address.address
     button: |
       **Bio parents1 address address**:
-      ${ bio_mother.address.address }
-  - Edit: bio_mother.address.unit
+      ${ parents[0].address.address }
+  - Edit: parents[0].address.unit
     button: |
       **Bio parents1 address unit**:
-      ${ bio_mother.address.unit }
-  - Edit: bio_mother.address.state
+      ${ parents[0].address.unit }
+  - Edit: parents[0].address.state
     button: |
       **Bio parents1 address state**:
-      ${ bio_mother.address.state }
-  - Edit: bio_mother.address.zip
+      ${ parents[0].address.state }
+  - Edit: parents[0].address.zip
     button: |
       **Bio parents1 address zip**:
-      ${ bio_mother.address.zip }
-  - Edit: bio_father_deceased
+      ${ parents[0].address.zip }
+  - Edit: parents[0].is_deceased
     button: |
       **Bio parents2 is deceased**:
-      ${ word(yesno(bio_father_deceased)) }
-  - Edit: bio_father[0].name.first
+      ${ word(yesno(parents[0].is_deceased)) }
+  - Edit: parents[1].name.first
     button: |
       **Bio parents2 name first**:
-      ${ bio_father[0].name.first }
-  - Edit: bio_father[0].name.middle_initial
+      ${ parents[1].name.first }
+  - Edit: parents[1].name.middle_initial
     button: |
       **Bio parents2 name middle initial**:
-      ${ bio_father[0].name.middle_initial }
-  - Edit: bio_father[0].name.last
+      ${ parents[1].name.middle_initial }
+  - Edit: parents[1].name.last
     button: |
       **Bio parents2 name last**:
-      ${ bio_father[0].name.last }
-  - Edit: bio_father[0].address.city
+      ${ parents[1].name.last }
+  - Edit: parents[1].address.city
     button: |
       **Bio parents2 address city**:
-      ${ bio_father[0].address.city }
-  - Edit: bio_father[0].address.address
+      ${ parents[1].address.city }
+  - Edit: parents[1].address.address
     button: |
       **Bio parents2 address address**:
-      ${ bio_father[0].address.address }
-  - Edit: bio_father[0].address.unit
+      ${ parents[1].address.address }
+  - Edit: parents[1].address.unit
     button: |
       **Bio parents2 address unit**:
-      ${ bio_father[0].address.unit }
-  - Edit: bio_father[0].address.state
+      ${ parents[1].address.unit }
+  - Edit: parents[1].address.state
     button: |
       **Bio parents2 address state**:
-      ${ bio_father[0].address.state }
-  - Edit: bio_father[0].address.zip
+      ${ parents[1].address.state }
+  - Edit: parents[1].address.zip
     button: |
       **Bio parents2 address zip**:
-      ${ bio_father[0].address.zip }
+      ${ parents[1].address.zip }
+  - Edit: parents[1].is_deceased
+    button: |
+      **Bio parents2 is deceased**:
+      ${ word(yesno(parents[1].is_deceased)) }
   - Edit: has_guardian_nomination_by_signed_doc
     button: |
       **Has guardian nomination by signed doc**:
@@ -1578,8 +1608,6 @@ subquestion: |
 
 progress: 100
 ---
-
----
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
@@ -1642,8 +1670,8 @@ attachment:
     - "children1_address_state": ${ children[0].address.state }
     - "children1_address_zip": ${ children[0].address.zip }
     - "children1_address_county": ${ children[0].address.county }
-    - "petitioner_is_interested_party": ${ petitioner_is_interested_party }
-    - "petitioner_is_minor": ${ petitioner_is_minor }
+    - "petitioner_is_interested_party": ${ who_is_making_petition == "interested_party" }
+    - "petitioner_is_minor": ${ who_is_making_petition == "minor" }
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }
@@ -1652,7 +1680,7 @@ attachment:
     - "users1_address_zip": ${ users[0].address.zip }
     - "users1_address_city": ${ users[0].address.city }
     - "users1_address_unit": ${ users[0].address.unit }
-    - "users1_phone": ${ users[0].phone_number }
+    - "users1_phone": ${ phone_number_formatted(users[0].phone_number) }
     - "users1_relationship_to_minor": ${ users[0].relationship_to_minor }
     - "users2_name_first": ${ users.item(1).name.first }
     - "users2_name_middle_initial": ${ users.item(1).name.middle_initial() }
@@ -1662,26 +1690,26 @@ attachment:
     - "users2_address_zip": ${ users.item(1).address.zip }
     - "users2_address_city": ${ users.item(1).address.city }
     - "users2_address_unit": ${ users.item(1).address.unit }
-    - "users2_phone": ${ users.item(1).phone_number }
+    - "users2_phone": ${ phone_number_formatted(users.item(1).phone_number) }
     - "users2_relationship_to_minor": ${ users.item(1).relationship_to_minor }
-    - "bio_mother_is_deceased": ${ bio_mother_deceased }
-    - "bio_mother_name_first": ${ bio_mother[0].name.first }
-    - "bio_mother_name_last": ${ bio_mother[0].name.last }
-    - "bio_mother_name_middle_initial": ${ bio_mother[0].name.middle_initial() }
-    - "bio_mother_address_city": ${ bio_mother[0].address.city }
-    - "bio_mother_address_address": ${ bio_mother[0].address.address }
-    - "bio_mother_address_unit": ${ bio_mother[0].address.unit }
-    - "bio_mother_address_state": ${ bio_mother[0].address.state }
-    - "bio_mother_address_zip": ${ bio_mother[0].address.zip }
-    - "bio_father_is_deceased": ${ bio_father_deceased }
-    - "bio_father_name_first": ${ bio_father[0].name.first }
-    - "bio_father_name_middle_initial": ${ bio_father[0].name.middle_initial() }
-    - "bio_father_name_last": ${ bio_father[0].name.last }
-    - "bio_father_address_city": ${ bio_father[0].address.city }
-    - "bio_father_address_address": ${ bio_father[0].address.address }
-    - "bio_father_address_unit": ${ bio_father[0].address.unit }
-    - "bio_father_address_state": ${ bio_father[0].address.state }
-    - "bio_father_address_zip": ${ bio_father[0].address.zip }
+    - "parents1_is_deceased": ${ parents[0].is_deceased }
+    - "parents1_name_first": ${ parents[0].name.first }
+    - "parents1_name_last": ${ parents[0].name.last }
+    - "parents1_name_middle_initial": ${ parents[0].name.middle_initial() }
+    - "parents1_address_city": ${ parents[0].address.city }
+    - "parents1_address_address": ${ parents[0].address.address }
+    - "parents1_address_unit": ${ parents[0].address.unit }
+    - "parents1_address_state": ${ parents[0].address.state }
+    - "parents1_address_zip": ${ parents[0].address.zip }
+    - "parents2_is_deceased": ${ parents[1].is_deceased }
+    - "parents2_name_first": ${ parents[1].name.first }
+    - "parents2_name_middle_initial": ${ parents[1].name.middle_initial() }
+    - "parents2_name_last": ${ parents[1].name.last }
+    - "parents2_address_city": ${ parents[1].address.city }
+    - "parents2_address_address": ${ parents[1].address.address }
+    - "parents2_address_unit": ${ parents[1].address.unit }
+    - "parents2_address_state": ${ parents[1].address.state }
+    - "parents2_address_zip": ${ parents[1].address.zip }
     - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc_yes }
     - "has_guardian_nomination_by_signed_doc_no": ${ has_guardian_nomination_by_signed_doc_no }
     - "parents_consent_to_guardian_appointment": ${ parents_consent_to_guardian_appointment }
@@ -1704,7 +1732,7 @@ attachment:
     - "other_custodian1_address_zip": ${ other_custodians[0].address.zip }
     - "other_custodian1_address_city": ${ other_custodians[0].address.city }
     - "other_custodian1_address_unit": ${ other_custodians[0].address.unit }
-    - "other_custodian1_phone": ${ other_custodians[0].phone_number }
+    - "other_custodian1_phone": ${ phone_number_formatted(other_custodians[0].phone_number) }
     - "other_custodian1_relationship_to_minor": ${ other_custodians[0].relationship_to_minor }
     - "other_custodian1_start_date": ${ other_custodians[0].start_date }
     - "other_custodian1_end_date": ${ other_custodians[0].end_date }
@@ -1716,7 +1744,7 @@ attachment:
     - "other_custodian2_address_zip": ${ other_custodians[1].address.zip }
     - "other_custodian2_address_city": ${ other_custodians[1].address.city }
     - "other_custodian2_address_unit": ${ other_custodians[1].address.unit }
-    - "other_custodian2_phone": ${ other_custodians[1].phone_number }
+    - "other_custodian2_phone": ${ phone_number_formatted(other_custodians[1].phone_number) }
     - "other_custodian2_relationship_to_minor": ${ other_custodians[1].relationship_to_minor }
     - "other_custodian2_start_date": ${ other_custodians[1].start_date }
     - "other_custodian2_end_date": ${ other_custodians[1].end_date }
@@ -1728,7 +1756,7 @@ attachment:
     - "relatives1_address_zip": ${ relatives[0].address.zip }
     - "relatives1_address_city": ${ relatives[0].address.city }
     - "relatives1_address_unit": ${ relatives[0].address.unit }
-    - "relatives1_phone": ${ relatives[0].phone_number }
+    - "relatives1_phone": ${ phone_number_formatted(relatives[0].phone_number) }
     - "relatives1_relationship_to_minor": ${ relatives[0].relationship_to_minor }
     - "relatives2_name_first": ${ relatives[1].name.first }
     - "relatives2_name_middle_initial": ${ relatives[1].name.middle_initial() }
@@ -1738,7 +1766,7 @@ attachment:
     - "relatives2_address_zip": ${ relatives[1].address.zip }
     - "relatives2_address_city": ${ relatives[1].address.city }
     - "relatives2_address_unit": ${ relatives[1].address.unit }
-    - "relatives2_phone": ${ relatives[1].phone_number }
+    - "relatives2_phone": ${ phone_number_formatted(relatives[1].phone_number) }
     - "relatives2_relationship_to_minor": ${ relatives[1].relationship_to_minor }
     - "acting_guardian_or_conservator_yes": ${ acting_guardian_yes }
     - "acting_guardian_or_conservator_no": ${ acting_guardian_no }
@@ -1750,7 +1778,7 @@ attachment:
     - "requested_guardians1_address_zip": ${ requested_guardians[0].address.zip }
     - "requested_guardians1_address_city": ${ requested_guardians[0].address.city }
     - "requested_guardians1_address_unit": ${ requested_guardians[0].address.unit }
-    - "requested_guardians1_phone": ${ requested_guardians[0].phone_number }
+    - "requested_guardians1_phone": ${ phone_number_formatted(requested_guardians[0].phone_number) }
     - "requested_guardians1_relationship_to_minor": ${ requested_guardians[0].relationship_to_minor }
     - "requested_guardians1_has_priority_appointment": ${ requested_guardians[0].has_priority_appointment }
     - "requested_guardians2_has_priority_appointment": ${ requested_guardians[1].has_priority_appointment }
@@ -1762,7 +1790,7 @@ attachment:
     - "requested_guardians2_address_zip": ${ requested_guardians[1].address.zip }
     - "requested_guardians2_address_city": ${ requested_guardians[1].address.city }
     - "requested_guardians2_address_unit": ${ requested_guardians[1].address.unit }
-    - "requested_guardians2_phone": ${ requested_guardians[1].phone_number }
+    - "requested_guardians2_phone": ${ phone_number_formatted(requested_guardians[1].phone_number) }
     - "requested_guardians2_relationship_to_minor": ${ requested_guardians[1].relationship_to_minor }
     - "guardians1_name_first": ${ guardians[0].name.first }
     - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
@@ -1772,7 +1800,7 @@ attachment:
     - "guardians1_address_zip": ${ guardians[0].address.zip }
     - "guardians1_address_city": ${ guardians[0].address.city }
     - "guardians1_address_unit": ${ guardians[0].address.unit }
-    - "guardians1_phone": ${ guardians[0].phone_number }
+    - "guardians1_phone": ${ phone_number_formatted(guardians[0].phone_number) }
     - "guardians1_relationship_to_minor": ${ guardians[0].relationship_to_minor }
     - "children1_assets1_description": ${ assets[0].description }
     - "children1_assets1_value": ${ currency(assets[0].value) }
@@ -1782,9 +1810,11 @@ attachment:
     - "minor_has_assets_no": ${ minor_has_assets_no }
     - "minor_assets_total_value": ${ currency(minor_assets_total_value) }
     # It's a signature: test which file version this is; leave empty unless it's the final version)
-    - "users1_signature": ${ users[0].signature if i == "final" else '' }
+    - "signature_date": ${ signature_date if esign else "" }
+    - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
     - "users1_signature_date": ${ today() }
-    - "users2_signature": ${ users.item(1).signature_if_final(i) }
+    # - "users2_signature": ${ users.item(1).signature_if_final(i) }
+    - "users2_signature": ${ f"/s/ {users[1]}" if esign else "" }
     - "users2_signature_date": | 
         % if len(users.complete_elements()) > 1:
         ${ today() }
@@ -1795,7 +1825,7 @@ attachment:
     - "attorneys1_address_city": ${ attorneys[0].address.city }
     - "attorneys1_address_state": ${ attorneys[0].address.state }
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
-    - "attorneys1_phone": ${ attorneys[0].phone_number }
+    - "attorneys1_phone": ${ phone_number_formatted(attorneys[0].phone_number) }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - "minor_resides_in_court_county_division": ${ court_choice_reason["minors_county"] }
     - "guardian_nomination_probated_to_county_division": ${ court_choice_reason["will_county"] }
