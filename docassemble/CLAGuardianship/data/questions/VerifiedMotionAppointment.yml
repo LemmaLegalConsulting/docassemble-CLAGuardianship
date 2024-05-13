@@ -1,6 +1,5 @@
 ---
 include:
-  - docassemble.ALToolbox:al_income.yml
   - docassemble.AssemblyLine:al_package.yml
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.ALMassachusetts:al_massachusetts.yml
@@ -17,7 +16,6 @@ metadata:
   authors:
     - Pratibha Bharti
 ---
-
 objects:
   - users: ALPeopleList.using(ask_number=True,target_number=1)
   - children: ALPeopleList.using(ask_number=True,target_number=1)
@@ -34,14 +32,23 @@ code: |
   nav.set_section("review_intro")
   Verified_Motion_Appointment_intro
   users.gather()
+  if are_you_attorney:
+    users[0].address.address
+    users[0].phone_number
+    user_bbo
   children.gather()
   children[0].name
   Division
+  docket_number
   temporary_guardian_circumstances
   harm_avoided
   temporary_guardian_action
   requested_guardians.gather()
   guardian_Minor_serve_sureties
+  wants_specific_court_auth
+  wants_additional_request_to_court
+  signature_date
+  basic_questions_signature_flow
   verified_motion_appointment_download
 ---
 code: |
@@ -51,7 +58,7 @@ code: |
 id: Verified_Motion_Appointment_intro
 continue button field: Verified_Motion_Appointment_intro
 question: |
-  Affidavit of Indigency
+  Verified Motion for Appointment of Temporary Guardian (MPC 340)
 subquestion: |
   This interview will help you fill out an Verified Motion for Appointment of Temporary Guardian (MPC 340).
 
@@ -74,6 +81,20 @@ subquestion: |
   1. Sample language, to be filled later.
 
   2. Sample language, to be filled later.
+---
+id: are_you_attorney
+question: |
+  Are you the attorney for the person filing this?
+fields:
+  - no label: are_you_attorney
+    datatype: yesnoradio
+---
+id: BBO number
+question: |
+  If you are an attorney you need to give your BBO number.
+fields:
+  - "BBO number (if you are an attorney)": user_bbo
+    maxlength: 56
 ---
 id: Who is this for
 question: |
@@ -131,7 +152,26 @@ fields:
     show if:
       variable: reasons
       is: Other
-     
+---
+id: court authorization
+question: |
+  The moving party further seeks specific court authorization:
+fields:
+  - no label: wants_specific_court_auth
+    datatype: yesnoradio
+  - no label: specific_court_authorization
+    input type: area
+    show if: wants_specific_court_auth
+---
+id: additional request
+question: |
+  Do you have any additional request to the court?
+fields:
+  - no label: wants_additional_request_to_court
+    datatype: yesnoradio
+  - no label: additional_request_to_court
+    input type: area
+    show if: wants_additional_request_to_court
 ---
 id: download verified_motion_appointment
 event: verified_motion_appointment_download
@@ -139,14 +179,14 @@ question: |
   All done
 subquestion: |
   Thank you ${users}. Your form is ready to download and deliver.
-  
+
   View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
 
   ${ action_button_html(url_action('mpc_340_verified_motion_for_appointment_of_temporary_guardian'), label='Edit answers', color='info') }
-  
-  
+
+
   ${ al_user_bundle.download_list_html() }
-  
+
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 
@@ -162,7 +202,6 @@ objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[mpc_340_vmatg],  filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to deliver to court", enabled=True)
 
 ---
-
 attachment:
   - name: mpc_340_verified_motion_for_appointment_of_temporary_guardian
     variable name: mpc_340_vmatg[i]
@@ -175,7 +214,7 @@ attachment:
       - "children1_name_last": ${ children[0].name.last }
       - "children1_name_first": ${ children[0].name.first }
       - "children1_name_middle": ${ children[0].name.middle }
-      - "petition_filed": something
+      - "petition_filed": ${""}
       - "users1_name_middle_initial": ${ users[0].name.middle }
       - "users1_name_first": ${ users[0].name.first }
       - "users1_name_last": ${ users[0].name.last }
@@ -195,21 +234,22 @@ attachment:
       - "other_reason": ${True if reasons == "Other" else False}
       - "other_reason_explanation": ${other_reason_explanation if reasons == "Other" else ""}
       - "other_box": No
-      - "wants_specific_court_auth": No
+      - "wants_specific_court_auth": ${wants_specific_court_auth}
       - "moving_party": No
-      - "specific_court_authorization": something
-      - "wants_additional_request_to_court": No
+      - "specific_court_authorization": ${specific_court_authorization}
+      - "wants_additional_request_to_court": ${wants_additional_request_to_court}
       - "court": No
-      - "additional_request_to_court": something
+      - "additional_request_to_court": ${additional_request_to_court}
       - "`21": something
-      - "users1_signature": something
-      - "users1_singature_date": something
-      - "attorneys1_name": something
-      - "attorneys1_address_address": something
-      - "attorneys1_address_unit": something
-      - "attorneys1_address_city": something
-      - "attorneys1_address_state": something
-      - "attorneys1_address_zip": something
-      - "attorneys1_phone": something
-      - "attorneys1_bbo": something
+      - "users1_signature": ${ users[0].signature_if_final(i) }
+      - "users1_singature_date": ${ signature_date.format() }
+      - "attorneys1_name": ${users[0].name if are_you_attorney else ""}
+      - "attorneys1_address_address": ${users[0].address.address if are_you_attorney else ""}
+      - "attorneys1_address_unit": ${users[0].address.unit if are_you_attorney else ""}
+      - "attorneys1_address_city": ${users[0].address.city if are_you_attorney else ""}
+      - "attorneys1_address_state": ${users[0].address.state if are_you_attorney else ""}
+      - "attorneys1_address_zip": ${users[0].address.zip if are_you_attorney else ""}
+      - "attorneys1_phone": ${users[0].phone_number if are_you_attorney else ""}
+      - "attorneys1_bbo": ${user_bbo if are_you_attorney else ""}
 ---
+
