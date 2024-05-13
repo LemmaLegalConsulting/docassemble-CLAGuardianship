@@ -24,13 +24,11 @@ objects:
 sections:
   - review_intro: "Introduction"
 ---
-mandatory: True
 id: interview_order_Application_for_appointment
 code: |
   # Set the allowed courts for this interview
   allowed_courts = []
   nav.set_section("review_intro")
-  Verified_Motion_Appointment_intro
   users.gather()
   if are_you_attorney:
     users[0].address.address
@@ -49,6 +47,27 @@ code: |
   wants_additional_request_to_court
   signature_date
   basic_questions_signature_flow
+  verified_motion_appointment_download
+
+  interview_order_verified_motion_appointment = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  Verified_Motion_Appointment_intro
+  interview_order_verified_motion_appointment
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
   verified_motion_appointment_download
 ---
 code: |
