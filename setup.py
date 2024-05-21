@@ -7,8 +7,6 @@ from distutils.util import convert_path
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
 standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG-INFO', '*.egg-info')
 
-__all__ = ['filter_letters']
-
 def find_package_data(where='.', package='', exclude=standard_exclude, exclude_directories=standard_exclude_directories):
     out = {}
     stack = [(convert_path(where), '', package)]
@@ -44,23 +42,6 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
                     continue
                 out.setdefault(package, []).append(prefix+name)
     return out
-
-def filter_letters(letter_strings):
-  """Used to take a list of letters like ["A","ABC","AB"] and filter out any duplicate letters."""
-  # There is probably a cute one liner, but this is easy to follow and
-  # probably same speed
-  unique_letters = set()
-  if isinstance(letter_strings, str):
-    letter_strings = [letter_strings]
-  for string in letter_strings:
-    if string: # Catch possible None values
-      for letter in string:
-        unique_letters.add(letter)
-  try:
-    retval = ''.join(sorted(unique_letters))
-  except:
-    retval = ''
-  return retval
 
 setup(name='docassemble.CLAGuardianship',
       version='1.1.1',

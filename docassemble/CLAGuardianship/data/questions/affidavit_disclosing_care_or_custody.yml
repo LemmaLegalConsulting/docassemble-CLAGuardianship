@@ -3,6 +3,9 @@ include:
   - shared.yml
   - docassemble.AssemblyLine:assembly_line.yml
 ---
+modules:
+  - .care_and_custody
+---
 metadata:
   title: >-
     Affidavit Disclosing Care or Custody Proceeding (OCAJ-1)
@@ -34,6 +37,9 @@ code: |
 code: |
   al_form_type = "other"
 ---
+code: |
+  children_of_both = children
+---
 objects:
   - other_care_custody_proceedings: OtherProceedingList
   - signing_attorney: ALIndividual
@@ -48,14 +54,11 @@ code: |
 
   defendants.there_are_any = True  
   case_name
-  # children.there_are_any = True
-  # children.gather()
+  children.there_are_any = True
+  children.gather()
   assigned_letters # Give each "children_of_both" a letter from A-Z
   # explain_addresses_of_children  # Take out for standalone
 
-  for child in children_of_both: # Enable this for standalone
-    child.child_complete
-  # child1_name_last_first
   confidential_address
   # for child in children_of_both:
   #   child.address.on_one_line(include_unit=True)  
@@ -89,17 +92,16 @@ code: |
 
   # uncomment for standalone
   need_past_address_appendix
-  need_children_appendix
+  # need_children_appendix
   need_other_parties_appendix
 
   # uncomment for standalone
   str(users[0])
   users[0].address.on_one_line(include_unit=True)
-  courts.gather()
+  # courts.gather()
   fill_in_court_name  
-  mark_unfilled_fields_empty(interview_metadata["affidavit_disclosing_care_or_custody"])
   docket_numbers[0]  # Enable this if a standalone form
-  affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
+  # affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
   basic_questions_signature_flow
   users[0].signature
 
@@ -113,7 +115,6 @@ mandatory: True
 code: |
   affidavit_disclosing_care_or_custody_intro
   interview_order_affidavit_disclosing_care_or_custody
-  affidavit_disclosing_care_or_custody_preview_question
   if esign:
     signature_date
   affidavit_disclosing_care_or_custody_download
@@ -124,24 +125,6 @@ code: |
   DCF.address_for_form = DAEmpty()
   DCF.name.first = "Department of Children and Families"
 
-
-# ---
-# sets: DCF.child_letters
-# code: |
-#   for case in other_care_custody_proceedings:
-#     if hasattr(case, 'other_parties') and case.other_parties and DCF in case.other_parties.complete_elements():
-#       if not hasattr(DCF, 'child_letters'):
-#         DCF.child_letters = case.child_letters()
-#       else:
-#         DCF.child_letters = filter_letters([case.child_letters(), DCF.child_letters])
-#     else:
-#       DCF.child_letters = ''
-# ---
-# code: |
-#   # children_of_both should have objects pointing to the master children list
-#   children[i].address.address
-#   children[i].previous_addresses.gather()
-#   children[i].child_complete = True
 ---
 comment: |
   Post MVP I think we can skip subquestion here, it seems a bit wordy, unnecesary?
@@ -575,7 +558,7 @@ subquestion: |
 fields:
   - What is the best description of this case? You do not need the exact name.: other_care_custody_proceedings[i].case_status
     choices:
-      - A different 209A restraining order: different 209A restraining order
+      - A 209A restraining order: a 209A restraining order
       - Adoption: adoption
       - Annulment: annulment
       - Care and protection: care and protection
@@ -1051,22 +1034,24 @@ objects:
 ---
 objects:
   - affidavit_of_care_or_custody_attachment:
-      ALDocument.using(filename="care_or_custody",
-      title="Affidavit of Care or Custody",
-      has_addendum=True)
+        ALDocument.using(filename="care_or_custody",
+        title="Affidavit of Care or Custody",
+        has_addendum=True,
+        enabled=True
+      )
 ---
 code: |
   affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].label = "Children (continued)"
 
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both.item(0).previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both.item(1).previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both.item(2).previous_addresses'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[0].previous_addresses'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[1].previous_addresses'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[2].previous_addresses'].overflow_trigger = 2
 
   affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings.item(0).other_parties'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings.item(1).other_parties'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings.item(2).other_parties'].overflow_trigger = 3
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[0].other_parties'].overflow_trigger = 3
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[1].other_parties'].overflow_trigger = 3
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[2].other_parties'].overflow_trigger = 3
 
   affidavit_of_care_or_custody_attachment.overflow_fields['gals_investigators'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['gals_investigators'].label = "Guardians Ad Litem and Investigators (continued)"
@@ -1080,18 +1065,15 @@ code: |
   affidavit_of_care_or_custody_attachment.overflow_fields.gathered = True
 ---
 need: need_other_parties_appendix
-reconsider: True
 attachment:
   variable name: affidavit_of_care_or_custody_attachment.addendum
   name: Affidavit Disclosing Care or Custody Proceedings Appendix
   filename: Affidavit_Disclosing_Care_or_Custody_Appendix
   docx template file: care_or_custody_proceedings_appendix.docx
 ---
-need: affidavit_disclosing_care_or_custody
-reconsider: True
 attachment:
   variable name: affidavit_of_care_or_custody_attachment[i]
-  # skip undefined: True
+  skip undefined: True
   name: Affidavit of Care
   filename: Affidavit_of_Care
   # editable: False
