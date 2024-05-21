@@ -2,6 +2,7 @@
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
+  - affidavit_disclosing_care_or_custody.yml
   - shared.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
@@ -62,6 +63,7 @@ sections:
   - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
   - review_additional_requests: Additional Requests
+  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
   - review_petition_for_appointment_of_guardian: Review your answers
 ---
 #################### Interview order #####################
@@ -133,6 +135,9 @@ code: |
   
   nav.set_section("review_additional_requests")
   wants_additional_request
+
+  nav.set_section("review_affidavit_disclosing_care_or_custody")
+  interview_order_affidavit_disclosing_care_or_custody
 
   interview_order_petition_for_appointment_of_guardian = True
 ---
@@ -1651,6 +1656,7 @@ objects:
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
+      affidavit_of_care_or_custody_attachment,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
@@ -1661,6 +1667,7 @@ objects:
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
+      affidavit_of_care_or_custody_attachment,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",

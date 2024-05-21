@@ -47,6 +47,7 @@ objects:
   - attorneys_for_children: ALPeopleList.using(auto_gather=False)
   - attorneys_for_children[i].represented_children: ALPeopleList
   - attorneys_for_parents: ALPeopleList.using(auto_gather=False)
+
 ---
 id: interview_order_affidavit_disclosing_care_or_custody
 code: |
@@ -111,9 +112,8 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-mandatory: True
+# mandatory: True
 code: |
-  affidavit_disclosing_care_or_custody_intro
   interview_order_affidavit_disclosing_care_or_custody
   if esign:
     signature_date
@@ -136,23 +136,23 @@ subquestion: |
   We need to include this information together with the other information
   about other care or custody cases.
 fields:
+  # - no label: children_address_screener
+  #   datatype: radio
+  #   choices:
+  #     - They all live with me: me
+  #     #- They all live with ${other_parties.familiar()}: defendant
+  #     - Somewhere else or at more than one address: different
+    # show if:
+    #   code: |
+    #     users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
   - no label: children_address_screener
     datatype: radio
     choices:
       - They all live with me: me
-      - They all live with ${other_parties.familiar()}: defendant
       - Somewhere else or at more than one address: different
-    show if:
-      code: |
-        users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
-  - no label: children_address_screener
-    datatype: radio
-    choices:
-      - They all live with me: me
-      - Somewhere else or at more than one address: different
-    show if:
-      code: |
-        users[0].address.on_one_line(include_unit=True) == other_parties[0].address.on_one_line(include_unit=True)
+    # show if:
+    #   code: |
+    #     users[0].address.on_one_line(include_unit=True) == other_parties[0].address.on_one_line(include_unit=True)
 ---
 comment: |
   Post MVP I think we can skip subquestion here, it seems a bit wordy, unnecesary?
@@ -164,23 +164,23 @@ subquestion: |
   We need to include this information together with the other information
   about other care or custody cases.
 fields:
+  # - no label: children_address_screener
+  #   datatype: radio
+  #   choices:
+  #     - With me: me
+  #     - With ${other_parties.familiar()}: defendant
+  #     - Somewhere else: different
+  #   show if:
+  #     code: |
+  #       users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
   - no label: children_address_screener
     datatype: radio
     choices:
       - With me: me
-      - With ${other_parties.familiar()}: defendant
       - Somewhere else: different
-    show if:
-      code: |
-        users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
-  - no label: children_address_screener
-    datatype: radio
-    choices:
-      - With me: me
-      - Somewhere else: different
-    show if:
-      code: |
-        users[0].address.on_one_line(include_unit=True) == other_parties[0].address.on_one_line(include_unit=True)
+    # show if:
+    #   code: |
+    #     users[0].address.on_one_line(include_unit=True) == other_parties[0].address.on_one_line(include_unit=True)
 ---
 id: children have past addresses
 question: |
@@ -193,7 +193,7 @@ code: |
   if children_address_screener == 'me':
     for child in children_of_both:
       child.address = users[0].address
-  elif children_address_screener == 'defendant':
+  elif children_address_screener == 'defendant': # won't run but still fine to leave
     for child in children_of_both:
       child.address = other_parties[0].address
   else:
@@ -276,7 +276,7 @@ code: |
   # We use dict.setdefault method here so that we never add
   # the same address twice. Hash will be address.on_one_line() output
   collected_addresses_temp.setdefault(users[0].address.on_one_line(include_unit=True), users[0].address)
-  collected_addresses_temp.setdefault(other_parties[0].address.on_one_line(include_unit=True), other_parties[0].address)
+  # collected_addresses_temp.setdefault(other_parties[0].address.on_one_line(include_unit=True), other_parties[0].address)
   for child in children_of_both:
     if defined('child.address.address') and len(child.address.address):
       collected_addresses_temp.setdefault(child.address.on_one_line(include_unit=True),child.address)
@@ -326,10 +326,13 @@ code: |
   user_role = 'plaintiff'
 ---
 question: |
-  Confidential Address
+  Confidential Address - Affidavit Disclosing Care or Custody Proceeding
 subquestion: |
-  This form has two pages. The second page that lists addresses and phone
+  The affidavit disclosing care or custody proceedings form has two pages. 
+  The second page that lists addresses and phone
   numbers can be kept confidential (private) if you need it to be.
+
+  ${ collapse_template(explain_confidential_addresses) }
 
   Do you need your address to be kept private for any of the following reasons?
 fields:
@@ -341,17 +344,19 @@ fields:
       - I am in danger of abuse
       - My children are in danger of abuse
       - I have a legal reason to keep it private that is not listed above
-help:
-  label: When can I keep an address private?
-  content: |
-    You can keep an address private if you believe that:
+---
+template: explain_confidential_addresses
+subject: |
+  When can I keep an address private?
+content: |
+  You can keep an address private if you believe that:
 
-    * You live in a shelter for battered persons
-    * You or your children are in danger of physical or emotional abuse
-    * You are filing this form together with a 209A abuse prevention order
+  * You live in a shelter for battered persons
+  * You or your children are in danger of physical or emotional abuse
+  * You are filing this form together with a 209A abuse prevention order
 
-    If you believe that you have another legal reason to keep your
-    address information private, select that option on the previous screen.
+  If you believe that you have another legal reason to keep your
+  address information private, select that option on the previous screen.
 ---
 code: |
   # This checks box 3 on the form
@@ -604,7 +609,7 @@ fields:
   - Who else was part of this case?: other_care_custody_proceedings[i].other_party_types
     datatype: checkboxes
     choices:
-      - ${other_parties.familiar()}: defendant
+      # - ${other_parties.familiar()}: defendant
       - Department of Children and Families: dcf
       - Someone else (like a grandparent): other
   - Is this case still open?: other_care_custody_proceedings[i].is_open
@@ -630,35 +635,6 @@ validation code: |
   if len(children_of_both) == 1:
     other_care_custody_proceedings[i].children = children_of_both
 
-  # # Prepopulate the list of other parties involved in this case
-  # if other_care_custody_proceedings[i].other_party_types.any_true():
-  #   other_care_custody_proceedings[i].other_parties.clear()
-  #   if other_care_custody_proceedings[i].other_party_types["defendant"]:
-  #     other_care_custody_proceedings[i].other_parties.there_are_any=True
-  #     other_care_custody_proceedings[i].other_parties.append(other_parties[0])
-  #   if other_care_custody_proceedings[i].other_party_types["dcf"]:
-  #     other_care_custody_proceedings[i].other_parties.there_are_any=True      
-  #     other_care_custody_proceedings[i].other_parties.append(DCF)
-  #   if other_care_custody_proceedings[i].other_party_types["other"]:
-  #     if len(other_care_custody_proceedings[i].other_parties.elements):  
-  #       other_care_custody_proceedings[i].other_parties.there_are_any=True
-  #       other_care_custody_proceedings[i].other_parties.there_is_another = True
-  #   else:
-  #     if other_care_custody_proceedings[i].other_party_types["defendant"]:
-  #       other_care_custody_proceedings[i].other_parties.there_are_any=True
-  #       other_care_custody_proceedings[i].other_parties.append(other_parties[0])
-  #       # Assign a child letter to other_parties if they were part of this case
-  #       if hasattr(other_parties[0],'child_letters') and other_parties[0].child_letters:
-  #         other_parties[0].child_letters = other_parties[0].child_letters + other_care_custody_proceedings[i].child_letters()
-  #       else:
-  #         other_parties[0].child_letters = other_care_custody_proceedings[i].child_letters()
-  #     if other_care_custody_proceedings[i].other_party_types["dcf"]:
-  #       other_care_custody_proceedings[i].other_parties.there_are_any=True
-  #       other_care_custody_proceedings[i].other_parties.append(DCF)
-  #     other_care_custody_proceedings[i].other_parties.auto_gather=False
-  #     other_care_custody_proceedings[i].other_parties.gathered=True
-  # else:
-  #   other_care_custody_proceedings[i].other_parties.there_are_any=False
 ---
 code: |
   other_care_custody_proceedings[i].other_parties.there_are_any = other_care_custody_proceedings[i].other_party_types["other"]
@@ -693,7 +669,7 @@ fields:
     disable others: True
     exclude: # Don't ever offer DCF or OP here
       - DCF
-      - other_parties[0]
+      # - other_parties[0]
   - Name: other_care_custody_proceedings[i].other_parties[j].name.first
   - code: |
       other_care_custody_proceedings[i].other_parties[j].address_fields(default_state="MA")
@@ -735,9 +711,9 @@ code: |
     if case.other_party_types["dcf"]:
       DCF.merge_letters(case.child_letters())
       gathering_temp.add(DCF)
-    if case.other_party_types["defendant"]:
-      other_parties[0].merge_letters(case.child_letters())
-      gathering_temp.add(other_parties[0])
+    # if case.other_party_types["defendant"]:
+    #   # other_parties[0].merge_letters(case.child_letters())
+    #   gathering_temp.add(other_parties[0])
     if case.other_parties.there_are_any:
       for other_party in case.other_parties.complete_elements():
         other_party.merge_letters(case.child_letters())
@@ -755,7 +731,7 @@ question: |
   Lawyers in ${ordinal(i)} case
 subquestion: |
   The court wants to know about people who worked 
-  with you, ${other_parties.familiar()}, or ${children_of_both} 
+  with you or ${children_of_both} 
   for any open cases.
 
   Who has a lawyer on this case?
@@ -764,10 +740,10 @@ fields:
     datatype: yesnoradio
   - Name of your lawyer: other_care_custody_proceedings[i].atty_for_user_name
     show if: other_care_custody_proceedings[i].atty_for_user
-  - ${other_parties.familiar()}?: other_care_custody_proceedings[i].atty_for_defendant
-    datatype: yesnoradio
-  - Name of ${other_parties.familiar()}'s lawyer: other_care_custody_proceedings[i].atty_for_defendant_name
-    show if: other_care_custody_proceedings[i].atty_for_defendant
+  # - ${other_parties.familiar()}?: other_care_custody_proceedings[i].atty_for_defendant
+  #   datatype: yesnoradio
+  # - Name of ${other_parties.familiar()}'s lawyer: other_care_custody_proceedings[i].atty_for_defendant_name
+  #   show if: other_care_custody_proceedings[i].atty_for_defendant
   - ${comma_and_list(other_care_custody_proceedings[i].children,and_string=word("or"))}?: other_care_custody_proceedings[i].atty_for_children
     datatype: yesnoradio
   - Name of ${other_care_custody_proceedings[i].children}'s lawyer: other_care_custody_proceedings[i].atty_for_children_name
@@ -779,7 +755,7 @@ question: |
   Information about lawyers
 subquestion: |
   The court wants to know about people who worked 
-  with you, ${other_parties.familiar()}, or ${children_of_both} 
+  with you or ${children_of_both} 
   in the ${other_care_custody_proceedings[i]}.
 
   % if i > 1:
@@ -799,16 +775,16 @@ fields:
   #     - other_care_custody_proceedings[i].atty_for_user_name
   - Name of your lawyer: other_care_custody_proceedings[i].atty_for_user_name
     show if: other_care_custody_proceedings[i].atty_for_user
-  - ${other_parties.familiar()}?: other_care_custody_proceedings[i].atty_for_defendant
-    datatype: yesnoradio
+  # - ${other_parties.familiar()}?: other_care_custody_proceedings[i].atty_for_defendant
+  #   datatype: yesnoradio
   # - Name of ${other_parties.familiar()}'s lawyer (if already mentioned): other_care_custody_proceedings[i].atty_for_defendant_name
   #   datatype: object
   #   choices: attorneys_for_parents
   #   show if: other_care_custody_proceedings[i].atty_for_defendant
   #   disable others:
   #     - other_care_custody_proceedings[i].atty_for_defendant_name
-  - Name of ${other_parties.familiar()}'s lawyer: other_care_custody_proceedings[i].atty_for_defendant_name
-    show if: other_care_custody_proceedings[i].atty_for_defendant
+  # - Name of ${other_parties.familiar()}'s lawyer: other_care_custody_proceedings[i].atty_for_defendant_name
+  #   show if: other_care_custody_proceedings[i].atty_for_defendant
   - ${comma_and_list(other_care_custody_proceedings[i].children,and_string=word("or"))}?: other_care_custody_proceedings[i].atty_for_children
     datatype: yesnoradio
   - note: |
@@ -916,10 +892,10 @@ code: |
       atty = attorneys_for_parents.appendObject()
       atty.name.first = case.atty_for_user_name
       atty.represented_party = users
-    if case.is_open and case.atty_for_defendant and hasattr(case, 'atty_for_defendant_name'):
-      atty = attorneys_for_parents.appendObject()
-      atty.name.first = case.atty_for_defendant_name                
-      atty.represented_party = other_parties
+    # if case.is_open and case.atty_for_defendant and hasattr(case, 'atty_for_defendant_name'):
+    #   atty = attorneys_for_parents.appendObject()
+    #   atty.name.first = case.atty_for_defendant_name                
+    #   atty.represented_party = other_parties
   attorneys_for_parents.gathered = True
 ---
 reconsider: True
@@ -1164,11 +1140,16 @@ continue button field: affidavit_disclosing_care_or_custody_intro
 question: |
   Affidavit Disclosing Care or Custody Proceedings
 subquestion: |
+  As part of the petition for guardianship, the court needs to know about any
+  other cases involving the care or custody of your children. This includes
+  cases where you, the other parent, or someone else has been involved in a
+  court case about the care or custody of your children. This information helps
+
   If your children have been involved in court cases about their custody or care, 
   then you must submit an Affidavit Disclosing Care or Custody Proceeding. 
   The main purpose of this form is to find out about any open or closed cases 
   related to the care and/or custody of your children. This helps the court get a 
-  better picture of your childrens’ situations.
+  better picture of your childrens' situations.
 ---
 code: |
   # Trigger computed values
