@@ -80,6 +80,10 @@ code: |
   form_filled_by_attorney
 
   who_is_making_petition
+
+  if current_acting_guardian:
+    existing_guardians_or_conservators_kickout
+
   children.gather()
   trial_court
 
@@ -124,9 +128,6 @@ code: |
     if parents_deceased:
       if relatives.there_are_any:
         relatives.gather()
-
-  if current_acting_guardian:
-    existing_guardians_or_conservators_kickout
 
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
@@ -893,7 +894,7 @@ event: existing_guardians_or_conservators_kickout
 question: |
   We're sorry, but you cannot use this tool to create a *Petition for Appointment of Guardian of Minor*
 subquestion: |
-  If there is already an existing guardianship for ${ children[0] }, you will need to ask for a change in the existing case instead of filing a new petition.
+  If there is already an existing guardianship for the minor, you will need to ask for a change in the existing case instead of filing a new petition.
 
   If you made a mistake, select **Undo** to go back and change your answer.
 ---
@@ -949,10 +950,10 @@ fields:
 ---
 id: current guardian
 question: |
-  % if who_is_making_petition == "minor":
+  % if who_is_making_petition == "minor" and not form_filled_by_attorney:
   Is anyone currently acting as your Guardian or Conservator in Massachusetts or elsewhere?
   % else:
-  Is anyone currently acting as ${ children[0].name }'s Guardian or Conservator in Massachusetts or elsewhere?
+  Is anyone currently acting as the minor's Guardian or Conservator in Massachusetts or elsewhere?
   % endif
 fields:
   - no label: current_acting_guardian
