@@ -1,0 +1,343 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  - docassemble.MassAccess:massaccess.yml
+  - shared.yml
+---
+metadata:
+  title: |
+    Notarized Waiver and Consent to Petition (MPC 440)
+  short title: |
+    Notarized Waiver and Consent to Petition (MPC 440)
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  authors:
+    - Pratibha Bharti
+---
+
+
+mandatory: True
+comment: |
+  Global interview metadata
+variable name: interview_metadata["notarized_waiver"]
+data:
+  al_weaver_version: "1.8.0"
+  generated on: "2023-02-28"
+  title: >-
+    Notarized Waiver and Consent to Petition (MPC 440)
+  short title: >-
+    Notarized Waiver and Consent to Petition (MPC 440)
+  allowed courts: 
+    - "Probate and Family Court"
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  typical role: "unknown"
+  generate download screen: True
+  
+---  
+objects:
+  - guardians: ALPeopleList.using(maximum_number=2)
+  - notarization_public: ALPeopleList.using(there_are_any=True)
+---
+#################### Interview order #####################
+mandatory: True
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_notarized_waiver_and_consent
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+  notarized_waiver_and_consent
+  users[0].name.first
+  users[0].address.address
+  who_is_making_petition
+  children[0].name.first
+  children[0].birthdate
+  trial_court
+  docket_number
+  guardians.gather() 
+  Verification
+  temporary_guardianship_duration
+  permanent_guardianship_duration
+  child_support_obligation
+  notarization_public.gather()
+  notary_public_county
+  notarization_identification
+  if esign:
+    signature_date
+  Notarized_Waiver_and_Consent_download
+---
+
+code: |
+  users.there_is_another = False
+
+
+
+
+
+
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: Notarized Waiver and Consent to Petition
+continue button field: notarized_waiver_and_consent
+question: |
+  Notarized Waiver and Consent to Petition (MPC 440)
+subquestion: |
+  This interview will help you fill out an  Notarized Waiver and Consent to Petition (MPC 440).
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  Most people take about 20 minutes to finish this interview.
+---
+id: who is making petition
+question: |
+  What best describes you?
+fields:
+  - I am: who_is_making_petition
+    datatype: radio
+    choices:
+      - The mother: mother
+      - The father: father
+      - Someone interested in the minor's welfare: interested_party
+---
+id: minor info
+sets:
+  - children[0].name.first
+  - children[0].name.last
+  - children[0].name.middle
+  - children[0].name.suffix
+  - children[0].address.address
+  - children[0].address.unit
+  - children[0].address.city
+  - children[0].address.state
+  - children[0].address.zip
+  - children[0].address.country
+question: |
+  Who is the minor in this case?
+fields:
+  - code: |
+      children[0].name_fields()
+  - code: |
+      children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+id: minor birthdate
+question: |
+  When was ${ children[0].name } born?
+fields:
+  - Birthdate: children[0].birthdate
+    datatype: date
+---
+sets:
+  - guardians[i].name.first
+  - guardians[i].name.last
+  - guardians[i].name.middle
+  - guardians[i].name.suffix
+id: names of opposing parties
+question: |
+  Who are you requesting to be appointed as the child's ${ ordinal(i) } guardian(s)?
+fields:
+  - code: |
+      guardians[i].name_fields()
+---
+code: |
+  if len(guardians.complete_elements()) >= 2:
+     guardians.there_is_another = False
+---
+id: notary public county
+question: |
+  What is the county where the notary public is located?
+fields:
+  - no label: notary_public_county
+---
+sets:
+  - notarization_public[i].name.first
+  - notarization_public[i].name.last
+  - notarization_public[i].name.middle
+  - notarization_public[i].name.suffix
+id: names of notary public
+question: |
+  What is the full name of the person appearing before the notary public?
+fields:
+  - code: |
+      notarization_public[i].name_fields()
+---
+code: |
+  if len(notarization_public.complete_elements()) >= 2:
+     notarization_public.there_is_another = False
+---
+id: notarization identification
+question: |
+  What form of identification did the person appearing before the notary public provide?
+fields:
+  - Notarization Identification: notarization_identification
+
+---
+id: temporary_guardianship_duration
+question: |
+  Do you understand that if the court appoints a temporary guardian, the guardianship will initially last for 90 days and can be extended for additional 90 day periods if needed?
+fields: 
+  no label: temporary_guardianship_duration
+  datatype: yesnoradio
+---
+id: permanent_guardianship_duration
+question: |
+  Do you understand that if the court appoints a permanent guardian, the guardianship will continue until the child reaches 18 years old, gets married, or the court terminates the guardianship?
+fields: 
+  no label: permanent_guardianship_duration
+  datatype: yesnoradio
+---
+id: child_support_obligation
+question: |
+  Do you understand that if the court appoints a temporary or permanent guardian, you may still be required to pay child support if you were already legally obligated to do so?
+fields: 
+  no label: child_support_obligation
+  datatype: yesnoradio
+---
+id: Signing the Consent Form
+question: | 
+  Are you the child's parent or legal guardian?
+fields: 
+  no label: Verification
+  datatype: yesnoradio
+---
+id: electronic signature question
+question: |
+  Electronic Signature
+subquestion: |
+  % if (len(users.complete_elements()) > 1):
+  This tool can put "*/s/ ${ users[0] }*" and "*/s/ ${ users[1] }*" where the petitioners would sign their names so they do not have to sign the form by hand. The court will accept these as their signatures.
+
+  Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
+  % elif (len(users.complete_elements()) < 2):
+  This tool can put "*/s/ ${ users[0] }*" and where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
+
+  Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
+  % else:
+  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
+
+  Otherwise, you will need to print your forms and sign them by hand.
+  % endif
+fields:
+  - Would you like to add your electronic signature to your form?: esign
+    datatype: yesnoradio
+
+
+---
+id: download Notarized_Waiver_and_Consent
+event: Notarized_Waiver_and_Consent_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_Notarized_Waiver_and_Consent'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - Notarized_Waiver_and_Consent_attachment: ALDocument.using(title="Notarized Waiver and Consent to Petition (MPC 440)", filename="Notarized_Waiver_and_Consent", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[Notarized_Waiver_and_Consent_attachment], filename="Notarized_Waiver_and_Consent", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[Notarized_Waiver_and_Consent_attachment],  filename="Notarized_Waiver_and_Consent", title="All forms to deliver to court", enabled=True)
+
+---
+attachment:
+  - name: Notarized Waiver and Consent
+    filename: Notarized Waiver and Consent
+    variable name: Notarized_Waiver_and_Consent_attachment[i]
+    skip undefined: True
+    pdf template file: mpc_440_notarized_waiver_and_consent_to_petition.pdf
+    fields:
+      - "docker_number__1": ${docket_number}
+      - "trial_court_division": something
+      - "children1_name_first__1": something
+      - "children1_name_middle__1": something
+      - "children1_name_last__1": something
+      - "user_is_mother": No
+      - "interested_person_relationship": something
+      - "user_is_father": No
+      - "user_is_interested_person": No
+      - "guardians1_name_first": something
+      - "guardians1_name_middle_initial": something
+      - "guardians1_name_last": something
+      - "guardians2_name_middle_initial": something
+      - "guardians2_name_first": something
+      - "guardians2_name_last": something
+      - "parents1_signature": |
+          ${ user.signature }
+      - "parents2_signature": |
+          ${ user.signature }
+      - "parents2_name_full": something
+      - "parents1_name_full": something
+      - "parents1_address_address": something
+      - "parents1_address_unit": something
+      - "parents2_address_address": something
+      - "parents2_address_unit": something
+      - "parents1_address_state": something
+      - "parents1_address_zip": something
+      - "parents2_address_city": something
+      - "parents2_address_state": something
+      - "parents2_address_zip": something
+      - "parents1_address_city": something
+      - "parents1_signature_date": something
+      - "parents2_signature_date": something
+      - "notarization_county__1": something
+      - "notarization_date__1": something
+      - "notarization_date_year__1": something
+      - "notarization_date_day__1": something
+      - "notarization_date_month__1": something
+      - "users1_name_full": something
+      - "users1_notarization_identification": something
+      - "notary1_signature__1": |
+          ${ user.signature }
+      - "notary1_name_full__1": something
+      - "notary1_expiration__1": something
+      - "children1_name_first__2": something
+      - "children1_name_middle__2": something
+      - "children1_name_last__2": something
+      - "docket_number__2": ${docket_number}
+      - "notarization_county__2": something
+      - "notarization_date__2": something
+      - "notarization_date_year__2": something
+      - "users2_name_full": something
+      - "notarization_date_day__2": something
+      - "notarization_date_month__2": something
+      - "users2_notarization_identification": something
+      - "notary1_signature__2": |
+          ${ user.signature }
+      - "notary1_name_full__2": something
+      - "notary1_expiration__2": something
+---
