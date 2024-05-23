@@ -16,8 +16,6 @@ metadata:
   authors:
     - Pratibha Bharti
 ---
-
-
 mandatory: True
 comment: |
   Global interview metadata
@@ -29,15 +27,15 @@ data:
     Notarized Waiver and Consent to Petition (MPC 440)
   short title: >-
     Notarized Waiver and Consent to Petition (MPC 440)
-  allowed courts: 
+  allowed courts:
     - "Probate and Family Court"
   tags:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
   typical role: "unknown"
   generate download screen: True
-  
----  
+
+---
 objects:
   - guardians: ALPeopleList.using(maximum_number=2)
   - notarization_public: ALPeopleList.using(there_are_any=True)
@@ -54,6 +52,7 @@ code: |
   users[0].name.first
   users[0].address.address
   who_is_making_petition
+  interested_person_relationship
   children[0].name.first
   children[0].birthdate
   trial_court
@@ -70,15 +69,8 @@ code: |
     signature_date
   Notarized_Waiver_and_Consent_download
 ---
-
 code: |
   users.there_is_another = False
-
-
-
-
-
-
 ---
 comment: |
   This question is used to introduce your interview. Please customize
@@ -121,6 +113,12 @@ fields:
       - The mother: mother
       - The father: father
       - Someone interested in the minor's welfare: interested_party
+---
+id: interested_person_relationship
+question: |
+  What is your relationship to the child?
+fields:
+  - no label: interested_person_relationship
 ---
 id: minor info
 sets:
@@ -197,28 +195,28 @@ fields:
 id: temporary_guardianship_duration
 question: |
   Do you understand that if the court appoints a temporary guardian, the guardianship will initially last for 90 days and can be extended for additional 90 day periods if needed?
-fields: 
+fields:
   no label: temporary_guardianship_duration
   datatype: yesnoradio
 ---
 id: permanent_guardianship_duration
 question: |
   Do you understand that if the court appoints a permanent guardian, the guardianship will continue until the child reaches 18 years old, gets married, or the court terminates the guardianship?
-fields: 
+fields:
   no label: permanent_guardianship_duration
   datatype: yesnoradio
 ---
 id: child_support_obligation
 question: |
   Do you understand that if the court appoints a temporary or permanent guardian, you may still be required to pay child support if you were already legally obligated to do so?
-fields: 
+fields:
   no label: child_support_obligation
   datatype: yesnoradio
 ---
 id: Signing the Consent Form
-question: | 
+question: |
   Are you the child's parent or legal guardian?
-fields: 
+fields:
   no label: Verification
   datatype: yesnoradio
 ---
@@ -243,7 +241,6 @@ fields:
   - Would you like to add your electronic signature to your form?: esign
     datatype: yesnoradio
 
-
 ---
 id: download Notarized_Waiver_and_Consent
 event: Notarized_Waiver_and_Consent_download
@@ -251,14 +248,14 @@ question: |
   All done
 subquestion: |
   Thank you ${users}. Your form is ready to download and deliver.
-  
+
   View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
 
   ${ action_button_html(url_action('review_Notarized_Waiver_and_Consent'), label='Edit answers', color='info') }
-  
-  
+
+
   ${ al_user_bundle.download_list_html() }
-  
+
 
   ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
 
@@ -282,62 +279,63 @@ attachment:
     pdf template file: mpc_440_notarized_waiver_and_consent_to_petition.pdf
     fields:
       - "docker_number__1": ${docket_number}
-      - "trial_court_division": something
-      - "children1_name_first__1": something
-      - "children1_name_middle__1": something
-      - "children1_name_last__1": something
-      - "user_is_mother": No
-      - "interested_person_relationship": something
-      - "user_is_father": No
-      - "user_is_interested_person": No
-      - "guardians1_name_first": something
-      - "guardians1_name_middle_initial": something
-      - "guardians1_name_last": something
-      - "guardians2_name_middle_initial": something
-      - "guardians2_name_first": something
-      - "guardians2_name_last": something
+      - "trial_court_division": ${ trial_court.division }
+      - "children1_name_first__1": ${ children[0].name.first }
+      - "children1_name_middle__1": ${ children[0].name.middle }
+      - "children1_name_last__1": ${ children[0].name.last }
+      - "user_is_mother": ${ True if who_is_making_petition == 'mother' else False  }
+      - "interested_person_relationship": ${interested_person_relationship}
+      - "user_is_father": ${ True if who_is_making_petition == 'father' else False  }
+      - "user_is_interested_person": ${ True if who_is_making_petition == 'interested_party' else False  }
+      - "guardians1_name_first": ${ guardians[0].name.first }
+      - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
+      - "guardians1_name_last": ${ guardians[0].name.last }
+      - "guardians2_name_middle_initial": ${ guardians[1].name.middle_initial() }
+      - "guardians2_name_first": ${ guardians[1].name.first }
+      - "guardians2_name_last": ${ guardians[1].name.last }
       - "parents1_signature": |
-          ${ user.signature }
+          ${ f"/s/ {users[0]}" if esign and (who_is_making_petition == 'father' or who_is_making_petition == 'interested_party')  else "" }
       - "parents2_signature": |
-          ${ user.signature }
-      - "parents2_name_full": something
-      - "parents1_name_full": something
-      - "parents1_address_address": something
-      - "parents1_address_unit": something
-      - "parents2_address_address": something
-      - "parents2_address_unit": something
-      - "parents1_address_state": something
-      - "parents1_address_zip": something
-      - "parents2_address_city": something
-      - "parents2_address_state": something
-      - "parents2_address_zip": something
-      - "parents1_address_city": something
-      - "parents1_signature_date": something
-      - "parents2_signature_date": something
-      - "notarization_county__1": something
-      - "notarization_date__1": something
-      - "notarization_date_year__1": something
-      - "notarization_date_day__1": something
-      - "notarization_date_month__1": something
-      - "users1_name_full": something
-      - "users1_notarization_identification": something
+          ${ f"/s/ {users[0]}" if esign and (who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party')  else "" }
+      - "parents2_name_full": ${ users[0].name if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_name_full": ${ users[0].name if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_address_address": ${ users[0].address.address if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_address_unit": ${ users[0].address.unit if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_address_address": ${ users[0].address.address if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_address_unit": ${ users[0].address.unit if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_address_state": ${ users[0].address.state if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_address_zip": ${ users[0].address.zip if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_address_city": ${ users[0].address.city if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_address_state": ${ users[0].address.state if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_address_zip": ${ users[0].address.zip if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_address_city": ${ users[0].address.city if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents1_signature_date": ${ today() if who_is_making_petition == 'father' or who_is_making_petition == 'interested_party'  else "" }
+      - "parents2_signature_date": ${ today() if who_is_making_petition == 'mother' or who_is_making_petition == 'interested_party'  else "" }
+      - "notarization_county__1": ${notary_public_county if notarization_public[0].name != "" else "" }
+      - "notarization_date__1": ${format_date(today()) if notarization_public[0].name != "" else "" }
+      - "notarization_date_year__1": ${format_date(today(), format='yy') if notarization_public[0].name != "" else "" }
+      - "notarization_date_day__1": ${format_date(today(), format='dd') if notarization_public[0].name != "" else "" }
+      - "notarization_date_month__1": ${format_date(today(), format='MMMM') if notarization_public[0].name != "" else "" }
+      - "users1_name_full": ${users[0].name}
+      - "users1_notarization_identification": ${notarization_identification}
       - "notary1_signature__1": |
           ${ user.signature }
-      - "notary1_name_full__1": something
-      - "notary1_expiration__1": something
-      - "children1_name_first__2": something
-      - "children1_name_middle__2": something
-      - "children1_name_last__2": something
+      - "notary1_name_full__1": ${notarization_public[0].name}
+      - "notary1_expiration__1":
+      - "children1_name_first__2": ${ children[0].name.first }
+      - "children1_name_middle__2": ${ children[0].name.middle }
+      - "children1_name_last__2": ${ children[0].name.last }
       - "docket_number__2": ${docket_number}
-      - "notarization_county__2": something
-      - "notarization_date__2": something
-      - "notarization_date_year__2": something
-      - "users2_name_full": something
-      - "notarization_date_day__2": something
-      - "notarization_date_month__2": something
-      - "users2_notarization_identification": something
+      - "notarization_county__2":
+      - "notarization_date__2":
+      - "notarization_date_year__2":
+      - "users2_name_full": ${users[0].name}
+      - "notarization_date_day__2":
+      - "notarization_date_month__2":
+      - "users2_notarization_identification":
       - "notary1_signature__2": |
           ${ user.signature }
-      - "notary1_name_full__2": something
-      - "notary1_expiration__2": something
+      - "notary1_name_full__2": ${notarization_public[1].name}
+      - "notary1_expiration__2":
 ---
+
