@@ -74,6 +74,11 @@ code: |
   requested_guardians[i].name.first
   requested_guardians[i].complete = True
 ---
+code: |
+  if len(requested_guardians.complete_elements()) >= 2:
+     requested_guardians.there_is_another = False
+  
+---
 id: Verified_Motion_Appointment_intro
 continue button field: Verified_Motion_Appointment_intro
 question: |
@@ -137,58 +142,62 @@ fields:
 ---
 id: temporary_guardian_circumstances
 question: |
-  The nature of the circumstances requiring the appointment of a Temporary Guardian are:
+  What specific circumstances require the appointment of a temporary guardian?
 fields:
   - no label: temporary_guardian_circumstances
     input type: area
 ---
 id: harm_avoided
 question: |
-  The particular harm sought to be avoided is:
+  What specific harm is the petitioner trying to avoid by appointing a temporary guardian?
 fields:
   - no label: harm_avoided
     input type: area
 ---
 id: temporary_guardian_action
 question: |
-  The actions which need to be taken by a Temporary Guardian to avoid the harm are:
+  What specific actions does the petitioner believe a temporary guardian needs to take to avoid the harm?
 fields:
   - no label: temporary_guardian_action
     input type: area
 ---
 id: guardian_Minor_serve_sureties
 question: |
-  Does temporary guardian(s) of the Minor to serve with sureties?
+  Are you requesting the court to appoint the temporary guardian with or without sureties?
+subquestion: |
+   Someone who agrees to be financially responsible if the guardian mismanages the minor's assets.
+   
+   If you are requesting the appointment without sureties, you will need to explain why.
 fields:
-  - no label: guardian_Minor_serve_sureties
+  - "Do you need a surety?": guardian_Minor_serve_sureties
     datatype: yesnoradio
-  - Reasons: reasons
-    datatype: radio
-    choices:
-      - The minor has no estate
-      - Other
-  - no label: other_reason_explanation
+  - "Explain why a surety isn't needed": reasons
+    input type: area
     show if:
-      variable: reasons
-      is: Other
+      variable: guardian_Minor_serve_sureties
+      is: False
 ---
 id: court authorization
 question: |
-  The moving party further seeks specific court authorization:
+  Is there any specific authorization you are requesting from the court for the temporary guardian?
+subquestion: |
+  For example, you might request that the temporary guardian be authorized to enroll the minor in school or to access the minor's medical records.
 fields:
   - no label: wants_specific_court_auth
     datatype: yesnoradio
-  - no label: specific_court_authorization
+  - Specific Court Authorization: specific_court_authorization
     input type: area
     show if: wants_specific_court_auth
 ---
 id: additional request
 question: |
-  Do you have any additional request to the court?
+  Are there any other requests you have for the court?
+subquestion: |
+  For example, you might request that the court order the Department of Children and Families to conduct an investigation into the minor's situation.
 fields:
   - no label: wants_additional_request_to_court
     datatype: yesnoradio
-  - no label: additional_request_to_court
+  - Additional Requests: additional_request_to_court
     input type: area
     show if: wants_additional_request_to_court
 ---
@@ -233,7 +242,7 @@ attachment:
       - "children1_name_last": ${ children[0].name.last }
       - "children1_name_first": ${ children[0].name.first }
       - "children1_name_middle": ${ children[0].name.middle }
-      - "petition_filed": ${""}
+      - "petition_filed": ${users[0].name}
       - "users1_name_middle_initial": ${ users[0].name.middle }
       - "users1_name_first": ${ users[0].name.first }
       - "users1_name_last": ${ users[0].name.last }
@@ -249,9 +258,9 @@ attachment:
       - "guardians_serve_with_sureties": ${True if guardian_Minor_serve_sureties else False}
       - "guardians_serve_without_sureties": ${True if not guardian_Minor_serve_sureties else False}
       - "minor_with": No
-      - "minor_has_no_estate": ${True if reasons == "The minor has no estate" else False}
-      - "other_reason": ${True if reasons == "Other" else False}
-      - "other_reason_explanation": ${other_reason_explanation if reasons == "Other" else ""}
+      - "minor_has_no_estate": ${True if guardian_Minor_serve_sureties else False}
+      - "other_reason": ${True if not guardian_Minor_serve_sureties else False}
+      - "other_reason_explanation": ${reasons if not guardian_Minor_serve_sureties else ""}
       - "other_box": No
       - "wants_specific_court_auth": ${wants_specific_court_auth}
       - "moving_party": No
