@@ -1,0 +1,601 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  - docassemble.MassAccess:massaccess.yml
+---
+metadata:
+  title: |
+    Military Affidavit
+  short title: |
+    Military Affidavit
+  authors:
+    - Pratibha Bharti
+---
+mandatory: True
+comment: |
+  Global interview metadata
+variable name: interview_metadata["military_affidavit"]
+data:
+  al_weaver_version: "1.8.0"
+  generated on: "2023-02-28"
+  title: >-
+    Military Affidavit
+  short title: >-
+    Military Affidavit
+  description: |-
+    Affidavit Declaring whether the party is a military servicemember
+  allowed courts: 
+    - "Boston Municipal Court"
+    - "District Court"
+    - "Housing Court"
+    - "Juvenile Court"
+    - "Land Court"
+    - "Probate and Family Court"
+    - "Superior Court"
+  categories:
+    - "ED-00-00-00-00"
+    - "MO-00-00-00-00"
+    - "HE-00-00-00-00"
+    - "IM-00-00-00-00"
+    - "BE-00-00-00-00"
+    - "FA-07-00-00-00"
+    - "HO-00-00-00-00"
+    - "BE-04-00-00-00"
+    - "ES-00-00-00-00"
+    - "RI-10-00-00-00"
+    - "FA-00-00-00-00"
+  typical role: "unknown"
+  generate download screen: True
+---
+code: |
+  interview_metadata['main_interview_key'] =  'military_affidavit'
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name =  'docassemble-MilitaryAffidavit'
+---
+code: |
+  interview_short_title = "File a military affidavit"
+---
+code: |
+  al_form_type = "existing_case" 
+---
+objects:
+  - users: ALPeopleList.using(there_are_any=True)
+  - other_parties: ALPeopleList.using(there_are_any=True)
+  - serving_parties: ALPeopleList.using(there_are_any=True)
+  - unsure_serving_parties: ALPeopleList.using(there_are_any=True)
+  - not_serving_parties: ALPeopleList.using(there_are_any=True)
+  - concluded_service_parties: ALPeopleList.using(auto_gather=True, complete_attribute="complete", target_number=1)
+---
+sections:
+  - review_military_affidavit: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_military_affidavit
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = interview_metadata["military_affidavit"]["allowed courts"]
+  nav.set_section("review_military_affidavit")
+  are_you_attorney
+  user_ask_role
+  users.gather()
+  other_parties.gather()
+  court_department
+  trial_court.division
+  docket_numbers
+  if has_serving_parties:
+    serving_parties.gather()
+  if has_not_serving_parties:
+    not_serving_parties.gather()
+  if has_unsure_serving_parties:
+    unsure_serving_parties.gather()
+  if has_concluded_service_parties:
+    concluded_service_parties.gather()
+  has_used_scra_site
+  set_progress(48)
+  signature_date
+  interview_order_military_affidavit = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  military_affidavit_intro
+  interview_order_military_affidavit
+  signature_date
+  serving_parties_block
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  military_affidavit_download
+---
+code: |
+  users.there_is_another = False
+---
+code: |
+  other_parties.there_is_another = False
+---
+code: |
+  concluded_service_parties[i].name.first
+  concluded_service_parties[i].concluded_service_parties_date
+  concluded_service_parties[i].complete = True
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: Military_Affidavit
+continue button field: military_affidavit_intro
+question: |
+  Military Affidavit
+subquestion: |
+  This interview will help you fill out an  Military Affidavit.
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  Most people take about 20 minutes to finish this interview.
+---
+id: Military status of serving parties
+question: |
+  Are any of the parties in this case currently serving in the military?
+fields:
+  - no label: has_serving_parties
+    datatype: yesnoradio
+---
+id: Military status of not serving parties
+question: |
+  Are any of the parties in this case not currently serving in the military?
+fields:
+  - no label: has_not_serving_parties
+    datatype: yesnoradio
+---
+id: Military status of unsure serving parties
+question: |
+  Are you unsure about whether any of the parties in this case served in the military?
+fields:
+  - no label: has_unsure_serving_parties
+    datatype: yesnoradio
+---
+id: Military status of concluded service parties
+question: |
+  Are any of the parties in this case concluded serving in the military?
+fields:
+  - no label: has_concluded_service_parties
+    datatype: yesnoradio
+
+---
+sets:
+  - concluded_service_parties[i].name.first
+  - concluded_service_parties[i].name.last
+  - concluded_service_parties[i].name.middle
+  - concluded_service_parties[i].name.suffix
+id: names of opposing parties
+question: |
+  Name of your ${ ordinal(i) } concluded service party
+fields:
+  - code: |
+      concluded_service_parties[i].name_fields()
+      
+---
+id: concluded service parties date
+sets:
+  - concluded_service_parties[0].concluded_service_parties_date
+question: |
+  Concluded service parties date
+fields:
+  - "Please select the exact date that the party(ies) has/have concluded military service.": concluded_service_parties[i].concluded_service_parties_date
+    datatype: date
+---
+id: are_you_attorney
+question: |
+  Are you an attorney representing the person that will submit this form?
+fields:
+  - no label: are_you_attorney
+    datatype: yesnoradio
+---
+id: BBO number
+question: |
+  You are an attorney you need to give your BBO number.
+fields:
+  - "BBO number (if you are an attorney)": user_bbo
+    maxlength: 56
+---
+id: your name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+    - users[0].name.middle
+    - users[0].name.suffix
+question:  |
+  % if are_you_attorney:
+  What is your client’s name?
+  % else:
+  What is your name?
+  % endif
+fields:
+  - code: |
+      users[0].name_fields()
+---
+id: is the user the plaintiff or defendant?
+comment: |
+  This question is asked if the interview can be used by both
+  a Plaintiff and a Defendant. It sets the value of `user_role`, `user_started_case`,
+  `plaintiffs`, `defendants`, `petitioners` and `respondents`.
+  
+  If you know your interview is exclusively
+  used by the Plaintiff or Defendant, set `user_ask_role = 'plaintiff'` or
+  `user_ask_role='defendant'` in your code.
+question: |
+  What is your role in this case?
+subquestion: |
+  ${ collapse_template(help_user_ask_role_template) }
+fields: 
+  - "I am the…": user_ask_role
+    datatype: radio
+    choices:
+      - Plaintiff: plaintiff
+      - Defendant: defendant
+  - note: |
+      Okay, you are the **Plaintiff** or Petitioner in this case. The other 
+      side is the **Defendant** or Respondent.
+    show if:
+      variable: user_ask_role
+      is: "plaintiff"
+  - note: |
+      Okay, you are the **Defendant** or Respondent in this case. The other 
+      side is the **Plaintiff** or Petitioner.
+    show if:
+      variable: user_ask_role
+      is: "defendant"
+---
+id: court_department 
+question: |
+  Select court department
+fields:
+  - Select one: court_department
+    input type: radio
+    choices:
+      - Boston Municipal Court
+      - Juvenile Court
+      - Probate & Family Court
+      - District Court
+      - Housing Court
+      - Land Court
+      - Superior Court
+
+---
+id: supporting the affidavit
+question: |
+  You will be required to support your affidavit with evidence.
+fields:
+  - "Have you used the Servicemembers Civil Relief Act Website?": has_used_scra_site
+    datatype: yesnoradio
+  - note: |
+      You need to attach copies of the search results to this form
+    show if: has_used_scra_site
+  - "Any additional facts?": used_scra_site_facts
+    input type: area
+    show if: has_used_scra_site
+  - You need to provide facts that support their statements: not_used_scra_site_facts
+    input type: area
+    show if:
+      variable: has_used_scra_site
+      is: False
+---
+sets:
+  - other_parties[i].name.first
+  - other_parties[i].name.last
+  - other_parties[i].name.middle
+  - other_parties[i].name.suffix
+id: names of opposing parties
+question: |
+  % if user_started_case:
+  Name of **defendant** or respondent in this
+  matter
+  % else:
+  Name of **plaintiff** or petitioner in this matter
+  % endif
+fields:
+  - code: |
+      other_parties[i].name_fields(person_or_business='unsure')
+---
+id: docket numbers
+question: |
+  Case number
+fields:
+  - Case number: docket_numbers
+---
+code: |
+  signature_fields = ['users[0].signature']
+
+---
+id: military affidavit review screen
+event: review_military_affidavit
+question: |
+  Review your answers
+review:
+  - Edit: trial_court
+    button: |
+      **Trial court**
+  
+      % if defined("trial_court.department"):
+      * department: ${ trial_court.department }
+      % endif
+      % if defined("trial_court.division"):
+      * division: ${ trial_court.division }
+      % endif
+  - Edit: plaintiffs.revisit
+    button: |
+      **Plaintiffs**
+
+      % for item in plaintiffs:
+        * ${ item }
+      % endfor
+  - Edit: defendants.revisit
+    button: |
+      **Defendants**
+
+      % for item in defendants:
+        * ${ item }
+      % endfor
+  - Edit: docket_numbers.revisit
+    button: |
+      **Docket numbers**
+
+      % for item in docket_numbers:
+        * ${ item }
+      % endfor
+  - Edit: users.revisit
+    button: |
+      **Users**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: has_serving_parties
+    button: |
+      **Are any of the parties in this case currently serving in the military?**:
+      ${ has_serving_parties }
+  - Edit: serving_parties
+    button: |
+      **Serving parties**:
+      > ${ single_paragraph(serving_parties) }
+  - Edit: has_not_serving_parties
+    button: |
+      **Are any of the parties in this case not currently serving in the military?**:
+      ${ has_not_serving_parties }
+  - Edit: not_serving_parties
+    button: |
+      **Not serving parties**:
+      > ${ single_paragraph(not_serving_parties) }
+  - Edit: has_unsure_serving_parties
+    button: |
+      **Are you unsure about whether any of the parties in this case served in the military?**:
+      ${ has_unsure_serving_parties }
+  - Edit: unsure_serving_parties
+    button: |
+      **Unsure serving parties**:
+      > ${ single_paragraph(unsure_serving_parties) }
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: user_bbo
+    button: |
+      **BBO number (if you are an attorney)**:
+      ${ user_bbo }
+---
+continue button field: plaintiffs.revisit
+question: |
+  Edit plaintiffs
+subquestion: |
+  ${ plaintiffs.table }
+
+  ${ plaintiffs.add_action() }
+---
+table: plaintiffs.table
+rows: plaintiffs
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: defendants.revisit
+question: |
+  Edit defendants
+subquestion: |
+  ${ defendants.table }
+
+  ${ defendants.add_action() }
+---
+table: defendants.table
+rows: defendants
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: docket_numbers.revisit
+question: |
+  Edit docket_numbers
+subquestion: |
+  ${ docket_numbers.table }
+
+  ${ docket_numbers.add_action() }
+---
+table: docket_numbers.table
+rows: docket_numbers
+columns:
+  - Name: |
+      row_item
+edit: True
+confirm: True
+
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.first
+  - signature
+confirm: True
+
+---
+code: |
+  concluded_service_parties_dates_list = []
+  if has_concluded_service_parties and len(concluded_service_parties):
+    concluded_service_parties_names_list = str(concluded_service_parties)
+    for i in concluded_service_parties:
+      concluded_service_parties_dates_list.append(str(i.concluded_service_parties_date))
+  else:
+    concluded_service_parties_names_list = ""
+  if has_serving_parties and len(serving_parties):
+    serving_parties_names_list = str(serving_parties)
+  else: 
+    serving_parties_names_list = ""
+  if has_not_serving_parties and len(not_serving_parties):
+    not_serving_parties_names_list = str(not_serving_parties)
+  else: 
+    not_serving_parties_names_list = ""
+  if has_unsure_serving_parties and len(unsure_serving_parties):
+    unsure_serving_parties_names_list = str(unsure_serving_parties)
+  else: 
+    unsure_serving_parties_names_list = ""
+    
+  serving_parties_block = True
+---
+id: download military_affidavit
+event: military_affidavit_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+  
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_military_affidavit'), label='Edit answers', color='info') }
+  
+  
+  ${ al_user_bundle.download_list_html() }
+  
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - military_affidavit_attachment: ALDocument.using(title="Military Affidavit", filename="military_affidavit", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[military_affidavit_attachment], filename="military_affidavit", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[military_affidavit_attachment],  filename="military_affidavit", title="All forms to deliver to court", enabled=True)
+
+---
+attachment:
+  name: military affidavit
+  filename: military_affidavit
+  variable name: military_affidavit_attachment[i]
+  skip undefined: True
+  pdf template file: military_affidavit1.pdf
+  fields:
+      - "docket_number": ${ docket_numbers }
+      - "court_department_district": ${True if court_department == "District Court" else False}
+      - "court_department_bmc": ${True if court_department == "Boston Municipal Court" else False}
+      - "court_department_housing": ${True if court_department == "Housing Court" else False}
+      - "court_department_juvenile": ${True if court_department == "Juvenile Court" else False}
+      - "court_department_land": ${True if court_department == "Land Court" else False}
+      - "court_department_probate_family": ${True if court_department == "Probate & Family Court" else False}
+      - "court_department_superior": ${True if court_department == "Superior Court" else False}
+      - "petitioners":  |
+          % if user_ask_role == "plaintiff":
+          ${ users[0]}
+          % elif user_ask_role == "defendant":
+          ${ other_parties[0] }
+          % endif
+      - "trial_court_division": ${ trial_court.division }
+      - "respondents": |
+          % if user_ask_role == "defendant":
+          ${ users[0] }
+          % elif user_ask_role == "plaintiff":
+          ${ other_parties[0] }
+          % endif
+      - "users1_name_full__1": ${ users[0] }
+      - "date_signed__1": ${""}
+      - "has_serving_parties": ${ has_serving_parties }
+      - "serving_parties": ${ serving_parties_names_list }
+      - "has_not_serving_parties": ${ has_not_serving_parties }
+      - "not_serving_parties": ${ not_serving_parties_names_list }
+      - "has_concluded_service_parties": ${has_concluded_service_parties}
+      - "concluded_service_parties": ${concluded_service_parties_names_list}
+      - "concluded_service_parties_date": ${comma_and_list(concluded_service_parties_dates_list)}
+      - "has_unsure_serving_parties": ${ has_unsure_serving_parties }
+      - "unsure_serving_parties": ${ unsure_serving_parties_names_list }
+      - "has_used_scra_site": ${has_used_scra_site}
+      - "has_used_scra_site_facts": ${True if has_used_scra_site else False}
+      - "used_scra_site_facts": ${used_scra_site_facts if has_used_scra_site else ""}
+      - "has_not_used_scra_site": ${True if not has_used_scra_site else False}
+      - "not_used_scra_site_facts": ${not_used_scra_site_facts if not has_used_scra_site else ""}
+      - "users1_signature": |
+          ${ "" }
+      - "date_signed__2": ${""}
+      - "users1_name_full__2": ${users[0]}
+      - "users1_address_on_one_line": ${users[0].address.on_one_line()}
+      - "users1_phone": ${users[0].phone_number}
+      - "user_bbo": ${user_bbo}
+      - "users1_email": ${users[0].email}
+---
+
