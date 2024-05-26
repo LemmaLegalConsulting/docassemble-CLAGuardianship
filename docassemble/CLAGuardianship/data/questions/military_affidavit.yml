@@ -87,21 +87,19 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = interview_metadata["military_affidavit"]["allowed courts"]
   nav.set_section("review_military_affidavit")
-  are_you_attorney
+  form_filled_by_attorney
   user_ask_role
   users.gather()
   other_parties.gather()
-  court_department
-  trial_court.division
+  serving_parties
+  if len(serving_parties) < len(users) + len(other_parties):
+    not_serving_parties
+  if len(serving_parties) + len(not_serving_parties) < len(users) + len(other_parties):
+    concluded_service_parties
+  if len(serving_parties) + len(not_serving_parties) + len(concluded_service_parties) < len(users) + len(other_parties):
+    unsure_serving_parties
+  trial_court
   docket_numbers
-  if has_serving_parties:
-    serving_parties.gather()
-  if has_not_serving_parties:
-    not_serving_parties.gather()
-  if has_unsure_serving_parties:
-    unsure_serving_parties.gather()
-  if has_concluded_service_parties:
-    concluded_service_parties.gather()
   has_used_scra_site
   set_progress(48)
   signature_date
@@ -128,12 +126,6 @@ code: |
   military_affidavit_download
 ---
 code: |
-  users.there_is_another = False
----
-code: |
-  other_parties.there_is_another = False
----
-code: |
   concluded_service_parties[i].name.first
   concluded_service_parties[i].concluded_service_parties_date
   concluded_service_parties[i].complete = True
@@ -145,94 +137,117 @@ continue button field: military_affidavit_intro
 question: |
   Military Affidavit
 subquestion: |
-  This interview will help you fill out an  Military Affidavit.
+  This interview will help you fill out a Military Affidavit,
+  which declares whether anybody who is part of this case is
+  currently serving in a branch of the U.S. military.
 
-  You can use this tool if:
+  If someone is in the military, they may have special
+  protections under the Servicemembers Civil Relief Act.
 
-  * Sample language, to be filled later.
+  This affidavit has to be filed even if none of the parties
+  in the military right now.
 
-  * Sample language, to be filled later.
+  Use the best information you know. But you must explain either that:
 
-  **Before you get started**, please gather:
+  * you know the military status of each party, or 
+  * you searched the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/)
+    to find out their military status
+---
+id: explanation diligent search
+question: |
+  Before you answer the next questions
+subquestion: |
+  On the next few screens, we will ask you about the military status 
+  for:
 
-  1. Sample language, to be filled later.
+  * ${ users }
+  * ${ other_parties }
+fields:
+  - Do you already know the military status of **each** party in this case?: knows_status_already
+    datatype: yesno
+  - note: |
+      If you do not have personal knowledge of each party's military status,
+      you **must** search the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/).
 
-  2. Sample language, to be filled later.
+      1. Copy a [link to this interview](${ interview_url() }) to return to it later. You can also 
+         leave this window or tab open.
+      1. Click the link to visit the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/)
+         and search for the name of the party who you are unsure about.
+      1. **Save** a copy of the results as a PDF or take a screenshot that shows the search
+         results. You can also print a copy and attach it to this form later.
 
-  3. Sample language, to be filled later.
-
-  **When you are finished**, you will need to:
-
-  1. Sample language, to be filled later.
-
-  2. Sample language, to be filled later.
-
-  Most people take about 20 minutes to finish this interview.
+        You can take a minute to do that now. The website will open in a new tab. When
+        you have finished your search and saved the results, close the tab to return to this interview.
 ---
 id: Military status of serving parties
 question: |
-  Are any of the parties in this case currently serving in the military?
+  Are any of the parties in this case currently serving in the U.S. military?
 fields:
-  - no label: has_serving_parties
-    datatype: yesnoradio
+  - Choose every party who you know is in the military **now**: serving_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
 ---
-id: Military status of not serving parties
+id: ended military service
 question: |
-  Are any of the parties in this case not currently serving in the military?
+  Did any of the parties in this case serve in the military **in the past**?
 fields:
-  - no label: has_not_serving_parties
-    datatype: yesnoradio
+  - Choose every party who you know used to serve in the U.S. military:  concluded_service_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
+    exclude:
+      - serving_parties
 ---
-id: Military status of unsure serving parties
+id: concluded service parties date
+question: |
+  When did the military service end?
+fields:
+  - "End date": concluded_service_parties[i].concluded_service_parties_date
+    datatype: date
+---
+id: set all concluded service parties dates
+question: |
+  When did the military service end?
+fields:
+  - code: |
+      [
+        {
+          "field": party.attr_name("service_ended_date"),
+          "label": f"Date that { party.name_full() } ended military service",
+          "datatype": "ThreePartsDate"
+        }
+      ]
+continue button field: set_concluded_service_dates
+---
+id: unsure military service
 question: |
   Are you unsure about whether any of the parties in this case served in the military?
 fields:
-  - no label: has_unsure_serving_parties
-    datatype: yesnoradio
+  - Choose every party who you are unsure about: unsure_serving_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
+    exclude:
+      - serving_parties
+      - concluded_service_parties
 ---
-id: Military status of concluded service parties
+id: form_filled_by_attorney
 question: |
-  Are any of the parties in this case concluded serving in the military?
+  Are you an attorney for someone in this case?
 fields:
-  - no label: has_concluded_service_parties
-    datatype: yesnoradio
-
----
-sets:
-  - concluded_service_parties[i].name.first
-  - concluded_service_parties[i].name.last
-  - concluded_service_parties[i].name.middle
-  - concluded_service_parties[i].name.suffix
-id: names of opposing parties
-question: |
-  Name of your ${ ordinal(i) } concluded service party
-fields:
-  - code: |
-      concluded_service_parties[i].name_fields()
-      
----
-id: concluded service parties date
-sets:
-  - concluded_service_parties[0].concluded_service_parties_date
-question: |
-  Concluded service parties date
-fields:
-  - "Please select the exact date that the party(ies) has/have concluded military service.": concluded_service_parties[i].concluded_service_parties_date
-    datatype: date
----
-id: are_you_attorney
-question: |
-  Are you an attorney representing the person that will submit this form?
-fields:
-  - no label: are_you_attorney
-    datatype: yesnoradio
----
-id: BBO number
-question: |
-  You are an attorney you need to give your BBO number.
-fields:
-  - "BBO number (if you are an attorney)": user_bbo
+  - I am: form_filled_by_attorney
+    datatype: radio
+    choices:
+      - An attorney in this case: True
+      - A party to the case: False
+  - BBO number (for Massachusetts attorneys): bbo
     maxlength: 56
+    required: False
+    show if: form_filled_by_attorney
 ---
 id: your name
 sets:
@@ -241,8 +256,8 @@ sets:
     - users[0].name.middle
     - users[0].name.suffix
 question:  |
-  % if are_you_attorney:
-  What is your client’s name?
+  % if form_filled_by_attorney:
+  What is your client's name?
   % else:
   What is your name?
   % endif
@@ -250,88 +265,53 @@ fields:
   - code: |
       users[0].name_fields()
 ---
-id: is the user the plaintiff or defendant?
-comment: |
-  This question is asked if the interview can be used by both
-  a Plaintiff and a Defendant. It sets the value of `user_role`, `user_started_case`,
-  `plaintiffs`, `defendants`, `petitioners` and `respondents`.
-  
-  If you know your interview is exclusively
-  used by the Plaintiff or Defendant, set `user_ask_role = 'plaintiff'` or
-  `user_ask_role='defendant'` in your code.
-question: |
-  What is your role in this case?
-subquestion: |
-  ${ collapse_template(help_user_ask_role_template) }
-fields: 
-  - "I am the…": user_ask_role
-    datatype: radio
-    choices:
-      - Plaintiff: plaintiff
-      - Defendant: defendant
-  - note: |
-      Okay, you are the **Plaintiff** or Petitioner in this case. The other 
-      side is the **Defendant** or Respondent.
-    show if:
-      variable: user_ask_role
-      is: "plaintiff"
-  - note: |
-      Okay, you are the **Defendant** or Respondent in this case. The other 
-      side is the **Plaintiff** or Petitioner.
-    show if:
-      variable: user_ask_role
-      is: "defendant"
----
-id: court_department 
-question: |
-  Select court department
-fields:
-  - Select one: court_department
-    input type: radio
-    choices:
-      - Boston Municipal Court
-      - Juvenile Court
-      - Probate & Family Court
-      - District Court
-      - Housing Court
-      - Land Court
-      - Superior Court
-
----
 id: supporting the affidavit
 question: |
-  You will be required to support your affidavit with evidence.
+  How do you know the military status of the parties in this case?
+subquestion: |
+  Here's what you told us:
+
+  % if len(serving_parties):
+  % if len(serving_parties) == 1:
+  * You know that ${ serving_parties } is currently serving in the military.
+  % else:
+  * You know that ${ serving_parties } are currently serving in the military.
+  % endif
+  % endif
+  % if len(not_serving_parties):
+  % if len(not_serving_parties) == 1:
+  * You know that ${ not_serving_parties } is not currently serving in the military.
+  % else:
+  * You know that ${ not_serving_parties } are not currently serving in the military.
+  % endif
+  % endif
+  % if len(unsure_serving_parties):
+  * You are do not know whether ${ unsure_serving_parties } served in the military.
+  % endif
 fields:
-  - "Have you used the Servicemembers Civil Relief Act Website?": has_used_scra_site
+  - "Did you use the Servicemembers Civil Relief Act Website?": has_used_scra_site
     datatype: yesnoradio
   - note: |
       You need to attach copies of the search results to this form
     show if: has_used_scra_site
-  - "Any additional facts?": used_scra_site_facts
+  - Are you ready to attach a copy or screenshot now?: wants_to_attach_search_results
+    datatype: yesno
+    show if: has_used_scra_site
+  - Attach a copy of the search results: used_scra_site_attachment
+    datatype: file
+    file css class: None
+    accept: |
+      ".pdf, .png, application/pdf, image/*"
+    show if: wants_to_attach_search_results
+  - "Explain how you used the website in your search (optional if evidence attached)": used_scra_site_facts
+    required: False
     input type: area
     show if: has_used_scra_site
-  - You need to provide facts that support their statements: not_used_scra_site_facts
+  - Explain how you know: not_used_scra_site_facts
     input type: area
     show if:
       variable: has_used_scra_site
       is: False
----
-sets:
-  - other_parties[i].name.first
-  - other_parties[i].name.last
-  - other_parties[i].name.middle
-  - other_parties[i].name.suffix
-id: names of opposing parties
-question: |
-  % if user_started_case:
-  Name of **defendant** or respondent in this
-  matter
-  % else:
-  Name of **plaintiff** or petitioner in this matter
-  % endif
-fields:
-  - code: |
-      other_parties[i].name_fields(person_or_business='unsure')
 ---
 id: docket numbers
 question: |
@@ -414,10 +394,10 @@ review:
     button: |
       **Date of signature**:
       ${ signature_date }
-  - Edit: user_bbo
+  - Edit: bbo
     button: |
       **BBO number (if you are an attorney)**:
-      ${ user_bbo }
+      ${ bbo }
 ---
 continue button field: plaintiffs.revisit
 question: |
@@ -538,6 +518,10 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - military_affidavit_attachment: ALDocument.using(title="Military Affidavit", filename="military_affidavit", enabled=True, has_addendum=False, )
+  - military_affidavit_search_results: ALDocumentUpload.using(title="Search results from SCRA website", filename="military_affidavit_search_results", has_addendum=False, )
+---
+code: |
+  military_affidavit_search_results.enabled = has_used_scra_site and wants_to_attach_search_results
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
@@ -550,29 +534,21 @@ attachment:
   filename: military_affidavit
   variable name: military_affidavit_attachment[i]
   skip undefined: True
-  pdf template file: military_affidavit1.pdf
+  pdf template file: military_affidavit.pdf
   fields:
       - "docket_number": ${ docket_numbers }
-      - "court_department_district": ${True if court_department == "District Court" else False}
-      - "court_department_bmc": ${True if court_department == "Boston Municipal Court" else False}
-      - "court_department_housing": ${True if court_department == "Housing Court" else False}
-      - "court_department_juvenile": ${True if court_department == "Juvenile Court" else False}
-      - "court_department_land": ${True if court_department == "Land Court" else False}
-      - "court_department_probate_family": ${True if court_department == "Probate & Family Court" else False}
-      - "court_department_superior": ${True if court_department == "Superior Court" else False}
+      - "court_department_district": ${trial_court.department == "District Court"}
+      - "court_department_bmc": ${trial_court.department == "Boston Municipal Court"}
+      - "court_department_housing": ${trial_court.department == "Housing Court"}
+      - "court_department_juvenile": ${trial_court.department == "Juvenile Court"}
+      - "court_department_land": ${trial_court.department == "Land Court"}
+      - "court_department_probate_family": ${trial_court.department == "Probate and Family Court"}
+      - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "petitioners":  |
-          % if user_ask_role == "plaintiff":
-          ${ users[0]}
-          % elif user_ask_role == "defendant":
-          ${ other_parties[0] }
-          % endif
+          ${ petitioners }
       - "trial_court_division": ${ trial_court.division }
       - "respondents": |
-          % if user_ask_role == "defendant":
-          ${ users[0] }
-          % elif user_ask_role == "plaintiff":
-          ${ other_parties[0] }
-          % endif
+          ${ respondents }
       - "users1_name_full__1": ${ users[0] }
       - "date_signed__1": ${""}
       - "has_serving_parties": ${ has_serving_parties }
@@ -585,9 +561,9 @@ attachment:
       - "has_unsure_serving_parties": ${ has_unsure_serving_parties }
       - "unsure_serving_parties": ${ unsure_serving_parties_names_list }
       - "has_used_scra_site": ${has_used_scra_site}
-      - "has_used_scra_site_facts": ${True if has_used_scra_site else False}
+      - "has_used_scra_site_facts": ${ has_used_scra_site }
       - "used_scra_site_facts": ${used_scra_site_facts if has_used_scra_site else ""}
-      - "has_not_used_scra_site": ${True if not has_used_scra_site else False}
+      - "has_not_used_scra_site": ${not has_used_scra_site}
       - "not_used_scra_site_facts": ${not_used_scra_site_facts if not has_used_scra_site else ""}
       - "users1_signature": |
           ${ "" }
@@ -595,7 +571,7 @@ attachment:
       - "users1_name_full__2": ${users[0]}
       - "users1_address_on_one_line": ${users[0].address.on_one_line()}
       - "users1_phone": ${users[0].phone_number}
-      - "user_bbo": ${user_bbo}
+      - "bbo": ${bbo}
       - "users1_email": ${users[0].email}
 ---
 
