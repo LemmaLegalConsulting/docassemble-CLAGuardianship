@@ -52,6 +52,9 @@ code: |
   interview_metadata['main_interview_key'] =  'military_affidavit'
 ---
 code: |
+  addresses_to_search = [users[0].address]
+---
+code: |
   # This controls the default country and list of states in address field questions
   AL_DEFAULT_COUNTRY = "US"
 ---
@@ -91,13 +94,19 @@ code: |
   user_ask_role
   users.gather()
   other_parties.gather()
+  plaintiffs
+  defendants
   serving_parties
   if len(serving_parties) < len(users) + len(other_parties):
-    not_serving_parties
-  if len(serving_parties) + len(not_serving_parties) < len(users) + len(other_parties):
     concluded_service_parties
-  if len(serving_parties) + len(not_serving_parties) + len(concluded_service_parties) < len(users) + len(other_parties):
+    if len(concluded_service_parties.elements):
+      set_concluded_service_dates
+    for party in concluded_service_parties.elements:
+      party.service_ended_date
+  if len(serving_parties) + len(concluded_service_parties) < len(users) + len(other_parties):
     unsure_serving_parties
+  if len(serving_parties) + len(concluded_service_parties) + len(unsure_serving_parties) < len(users) + len(other_parties):
+    confirm_not_serving_parties
   trial_court
   docket_numbers
   has_used_scra_site
@@ -114,7 +123,6 @@ code: |
   military_affidavit_intro
   interview_order_military_affidavit
   signature_date
-  serving_parties_block
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(
       persistent=True,
@@ -217,8 +225,9 @@ fields:
         {
           "field": party.attr_name("service_ended_date"),
           "label": f"Date that { party.name_full() } ended military service",
-          "datatype": "ThreePartsDate"
         }
+        for party
+        in concluded_service_parties.elements
       ]
 continue button field: set_concluded_service_dates
 ---
@@ -234,6 +243,37 @@ fields:
     exclude:
       - serving_parties
       - concluded_service_parties
+---
+id: confirm not serving parties
+question: |
+  Parties **not** serving in the military
+subquestion: |
+  Here is what you told us so far:
+
+  % if len(serving_parties):
+  % if len(serving_parties) == 1:
+  * You know that ${ serving_parties } is currently serving in the military.
+  % else:
+  * You know that ${ serving_parties } are currently serving in the military.
+  % endif
+  % endif
+  % if len(concluded_service_parties):
+  * You know that ${ concluded_service_parties } served in the military in the past.
+  % endif
+  % if len(unsure_serving_parties):
+  * You do not know whether ${ unsure_serving_parties } served in the military.
+  % endif
+
+  That means that you know the following parties are **not** serving in the military:
+
+  * ${ comma_and_list( users.union(other_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+
+  If this is not correct, edit your responses by clicking the button below.
+
+  * ${ action_button_html(url_action('serving_parties'), label="Edit serving parties")}
+  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit concluded service parties")}
+  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit unsure serving parties")}
+continue button field: confirm_not_serving_parties
 ---
 id: form_filled_by_attorney
 question: |
@@ -278,16 +318,25 @@ subquestion: |
   * You know that ${ serving_parties } are currently serving in the military.
   % endif
   % endif
-  % if len(not_serving_parties):
-  % if len(not_serving_parties) == 1:
-  * You know that ${ not_serving_parties } is not currently serving in the military.
-  % else:
-  * You know that ${ not_serving_parties } are not currently serving in the military.
-  % endif
+  % if len(concluded_service_parties):
+  * You know that ${ concluded_service_parties } served in the military in the past.
   % endif
   % if len(unsure_serving_parties):
-  * You are do not know whether ${ unsure_serving_parties } served in the military.
+  * You do not know whether ${ unsure_serving_parties } served in the military.
   % endif
+
+  % if len(( users.union(other_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
+  That means that you know the following parties are **not** serving in the military:
+
+  * ${ comma_and_list( users.union(other_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+  % endif
+
+  If this is not correct, edit your responses by clicking the button below.
+
+  * ${ action_button_html(url_action('serving_parties'), label="Edit serving parties")}
+  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit concluded service parties")}
+  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit unsure serving parties")}
+
 fields:
   - "Did you use the Servicemembers Civil Relief Act Website?": has_used_scra_site
     datatype: yesnoradio
@@ -295,7 +344,7 @@ fields:
       You need to attach copies of the search results to this form
     show if: has_used_scra_site
   - Are you ready to attach a copy or screenshot now?: wants_to_attach_search_results
-    datatype: yesno
+    datatype: yesnoradio
     show if: has_used_scra_site
   - Attach a copy of the search results: used_scra_site_attachment
     datatype: file
@@ -312,12 +361,6 @@ fields:
     show if:
       variable: has_used_scra_site
       is: False
----
-id: docket numbers
-question: |
-  Case number
-fields:
-  - Case number: docket_numbers
 ---
 code: |
   signature_fields = ['users[0].signature']
@@ -473,29 +516,6 @@ edit:
 confirm: True
 
 ---
-code: |
-  concluded_service_parties_dates_list = []
-  if has_concluded_service_parties and len(concluded_service_parties):
-    concluded_service_parties_names_list = str(concluded_service_parties)
-    for i in concluded_service_parties:
-      concluded_service_parties_dates_list.append(str(i.concluded_service_parties_date))
-  else:
-    concluded_service_parties_names_list = ""
-  if has_serving_parties and len(serving_parties):
-    serving_parties_names_list = str(serving_parties)
-  else: 
-    serving_parties_names_list = ""
-  if has_not_serving_parties and len(not_serving_parties):
-    not_serving_parties_names_list = str(not_serving_parties)
-  else: 
-    not_serving_parties_names_list = ""
-  if has_unsure_serving_parties and len(unsure_serving_parties):
-    unsure_serving_parties_names_list = str(unsure_serving_parties)
-  else: 
-    unsure_serving_parties_names_list = ""
-    
-  serving_parties_block = True
----
 id: download military_affidavit
 event: military_affidavit_download
 question: |
@@ -545,17 +565,17 @@ attachment:
       - "court_department_probate_family": ${trial_court.department == "Probate and Family Court"}
       - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "petitioners":  |
-          ${ petitioners }
+          ${ plaintiffs }
       - "trial_court_division": ${ trial_court.division }
       - "respondents": |
-          ${ respondents }
+          ${ defendants }
       - "users1_name_full__1": ${ users[0] }
       - "date_signed__1": ${""}
-      - "has_serving_parties": ${ has_serving_parties }
-      - "serving_parties": ${ serving_parties_names_list }
-      - "has_not_serving_parties": ${ has_not_serving_parties }
-      - "not_serving_parties": ${ not_serving_parties_names_list }
-      - "has_concluded_service_parties": ${has_concluded_service_parties}
+      - "has_serving_parties": ${ len(serving_parties) }
+      - "serving_parties": ${ serving_parties }
+      - "has_not_serving_parties": ${ len(users.union(other_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) >= 1 }
+      - "not_serving_parties": ${ comma_and_list( users.union(other_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+      - "has_concluded_service_parties": ${ len(concluded_service_parties)}
       - "concluded_service_parties": ${concluded_service_parties_names_list}
       - "concluded_service_parties_date": ${comma_and_list(concluded_service_parties_dates_list)}
       - "has_unsure_serving_parties": ${ has_unsure_serving_parties }
