@@ -4,6 +4,7 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
   - military_affidavit.yml
+  - consent_to_nomination_by_a_minor.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - customized_screens.yml # Must come after the other includes
@@ -852,17 +853,26 @@ question: |
   % endif
 subquestion: |
   % if len(requested_guardians.complete_elements()) < 1:
-  You can request **up to two guardians** in this Petition. Start by telling us bout the first guardian you want to request.
+  You can request **up to two guardians** in this Petition. Start by telling us about the first guardian you want to request.
   % endif
 fields:
   - code: |
       requested_guardians[i].name_fields()
+  - label: |
+      % if not who_is_making_petition == "minor":
+      Does ${ children[0].familiar() } agree that this person should be appointed as their guardian?
+      % else:
+      Do you agree that this person should be appointed as your guardian?
+      % endif
+    field: requested_guardians[i].agrees_to_be_guardian
+    datatype: yesnomaybe
   - code: |
       requested_guardians[i].address_fields()
   - Primary phone number: requested_guardians[i].phone_number
   - Relationship to ${ children[0].name }: requested_guardians[i].relationship_to_minor
-validation code: |
-  if len(requested_guardians.complete_elements()) > 0:
+---
+code: |
+  if len(requested_guardians.complete_elements()) > 1:
     requested_guardians.there_is_another = False
 ---
 id: requested_guardians there_is_another
@@ -881,6 +891,7 @@ subquestion: |
   If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
 fields:
   - no label: requested_guardians[i].has_priority_appointment
+    datatype: yesnoradio
 ---
 id: requested_guardians there_is_another
 question: |
@@ -1657,6 +1668,7 @@ objects:
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
+      consent_to_nomination_by_a_minor_attachment,
       affidavitofindigency_attachment,
       military_affidavit_bundle,
       ],
@@ -1668,6 +1680,7 @@ objects:
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
+      consent_to_nomination_by_a_minor_attachment,
       military_affidavit_bundle,
       affidavitofindigency_attachment,
       ],

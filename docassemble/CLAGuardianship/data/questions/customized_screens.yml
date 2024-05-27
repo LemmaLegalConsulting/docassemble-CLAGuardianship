@@ -62,3 +62,8 @@ code: |
 ---
 code: |
   bbo = attorneys[0].bbo
+---
+############### Consent to Nomination by a Minor ################
+---
+code: |
+  consent_to_nomination_by_a_minor_attachment.enabled = True # who_is_making_petition == "minor"
