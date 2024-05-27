@@ -40,3 +40,25 @@ fields:
   - I ask for permission not to pay the counsel fee: waiver_fee
     datatype: yesnoradio
     show if: parent_wants_lawyer
+---
+################ Military affidavit ###################
+---
+code: |
+  military_affidavit_bundle.enabled = True
+---
+code: |
+  # note: inconsistency in how the user is referred to in the military
+  # affidavit and the petition.
+  # user = petitioner in the petition, and
+  # user should be "child" in the military affidavit
+  additional_parties = ALPeopleList(elements=[parent for parent in parents if not parent.is_deceased] + children + users + other_custodians)
+---
+template: military_affidavit_case_name
+content: |
+  In the interests of ${ children[0] }
+---
+code: |
+  other_parties.there_are_any = False
+---
+code: |
+  bbo = attorneys[0].bbo

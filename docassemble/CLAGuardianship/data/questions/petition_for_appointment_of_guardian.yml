@@ -3,6 +3,7 @@ include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
+  - military_affidavit.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - customized_screens.yml # Must come after the other includes
@@ -62,6 +63,7 @@ sections:
   - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
   - review_additional_requests: Additional Requests
+  - review_military_affidavit: Military Affidavit
   - review_petition_for_appointment_of_guardian: Review your answers
 ---
 #################### Interview order #####################
@@ -134,6 +136,10 @@ code: |
   nav.set_section("review_additional_requests")
   wants_additional_request
 
+  nav.set_section("review_military_affidavit")
+  military_affidavit_intro
+  knows_status_already
+  interview_order_military_affidavit
   interview_order_petition_for_appointment_of_guardian = True
 ---
 ###################### Main order ######################
@@ -1101,9 +1107,9 @@ question: |
 subquestion: |
   Here is a preview of the form you will sign on the next page.   
 
-  ${ al_court_bundle.as_pdf(key='preview') }
+  ${ action_button_html(al_court_bundle.as_pdf(key='preview').url_for(), label="Open preview") }
 
-  Click the image to open it in a new tab. Click the "Edit answers" button
+  Click the button to open it in a new tab. Click the "Edit answers" button
   to edit your answers.
 
   ${ action_button_html(url_action('review_petition_for_appointment_of_guardian'), label='Edit answers', color='info') }
@@ -1652,6 +1658,7 @@ objects:
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavitofindigency_attachment,
+      military_affidavit_bundle,
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to download for your records",
@@ -1661,6 +1668,7 @@ objects:
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
+      military_affidavit_bundle,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
