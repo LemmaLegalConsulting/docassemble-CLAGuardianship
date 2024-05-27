@@ -207,6 +207,7 @@ id: confirm not serving parties
 question: |
   Parties **not** serving in the military
 subquestion: |
+  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
   Here is what you told us so far:
 
   % if len(serving_parties):
@@ -224,6 +225,10 @@ subquestion: |
   % endif
 
   That means that you know the following parties are **not** serving in the military:
+  % else:
+  You have not told us about any parties serving in the military, which means
+  you know the following parties are **not** serving in the military:
+  % endif
 
   * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
 
@@ -305,7 +310,8 @@ id: supporting the affidavit
 question: |
   How do you know the military status of the parties in this case?
 subquestion: |
-  Here's what you told us:
+  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
+  Here is what you told us:
 
   % if len(serving_parties):
   % if len(serving_parties) == 1:
@@ -321,8 +327,9 @@ subquestion: |
   * You do not know whether ${ unsure_serving_parties } served in the military.
   % endif
 
+  % endif
   % if len(( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
-  That means that you know the following parties are **not** serving in the military:
+  You know the following parties are **not** serving in the military:
 
   * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
   % endif
@@ -357,6 +364,8 @@ fields:
     show if:
       variable: has_used_scra_site
       is: False
+    help: |
+      For example: I know the party personally.
 ---
 code: |
   signature_fields = ['users[0].signature']
