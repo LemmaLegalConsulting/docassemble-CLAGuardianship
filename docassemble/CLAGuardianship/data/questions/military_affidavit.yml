@@ -102,7 +102,7 @@ subquestion: |
   % endif
 fields:
   - Do you already know the military status of **each** party in this case?: knows_status_already
-    datatype: yesno
+    datatype: yesnoradio
   - note: |
       If you do not have personal knowledge of each party's military status,
       you **must** search the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/).
@@ -116,7 +116,9 @@ fields:
 
         You can take a minute to do that now. The website will open in a new tab. When
         you have finished your search and saved the results, close the tab to return to this interview.
-    show if: not knows_status_already
+    show if: 
+      variable: knows_status_already
+      is: False
 ---
 id: Military status of serving parties
 question: |
