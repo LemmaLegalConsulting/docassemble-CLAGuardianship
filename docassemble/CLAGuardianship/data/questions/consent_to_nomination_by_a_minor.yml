@@ -47,7 +47,7 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Notarized and verified", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
 ---
 attachment:
   - name: Motarized and verified
@@ -80,14 +80,35 @@ attachment:
       - "nonconsented_guardians2_name_last": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.last }
       - "nonconsented_guardians2_name_first": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.first }
       - "nonconsented_guardians2_name_middle_initial": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.middle_initial() }
-      - "nominated_guardians1_check": ${ True }
-      - "nominated_guardians1_name_middle_initial": ${ requested_guardians.item(0).name.middle_initial() }
-      - "nominated_guardians1_name_last": ${ requested_guardians.item(0).name.last }
-      - "nominated_guardians1_name_first": ${ requested_guardians.item(0).name.first }
-      - "nominated_guardians2_check": ${ True if len(requested_guardians) > 1 else False }
-      - "nominated_guardians2_name_middle_initial": ${ requested_guardians.item(1).name.middle_initial() }
-      - "nominated_guardians2_name_last": ${ requested_guardians.item(1).name.last }
-      - "nominated_guardians2_name_first": ${ requested_guardians.item(1).name.first }
+      - "nominated_guardians1_check": ${ who_is_making_petition == "minor" }
+      - "nominated_guardians1_name_middle_initial": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.middle_initial() }
+            % endif
+      - "nominated_guardians1_name_last": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.last }
+            % endif
+      - "nominated_guardians1_name_first": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.first }
+            % endif
+      - "nominated_guardians2_check": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ True if who_is_making_petition == "minor" and len(requested_guardians) > 1 else False }
+            % endif
+      - "nominated_guardians2_name_middle_initial": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.middle_initial() }
+            % endif
+      - "nominated_guardians2_name_last": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.last }
+            % endif
+      - "nominated_guardians2_name_first": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.first }
+            % endif
       - "users1_address_address": ${children[0].address.address}
       - "users1_address_unit": ${children[0].address.unit}
       - "users1_address_city": ${children[0].address.city}

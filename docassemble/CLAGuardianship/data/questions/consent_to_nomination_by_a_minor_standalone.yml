@@ -94,14 +94,13 @@ continue button field: notarized_and_verified_consent
 question: |
   Notarized And Verified Consent To Nomination By a Minor (MPC 441)
 subquestion: |
-  This interview will help you fill out an  Notarized And Verified Consent To Nomination By a Minor (MPC 441).
+  This interview will help you fill out a Consent To Nomination By a Minor (MPC 441).
 
   You can use this tool if:
 
   - You are at least 14 and want to choose who will be your guardian.
   - You have been asked to be a guardian for a child who is at least 14 and you agree **or** disagree to
     be the guardian.
-
 
   **Before you get started**:
 
@@ -266,7 +265,7 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Notarized and verified", filename="consent_to_nomination_by_a_minor", enabled=True, has_addendum=False, )
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", enabled=True, has_addendum=False, )
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
