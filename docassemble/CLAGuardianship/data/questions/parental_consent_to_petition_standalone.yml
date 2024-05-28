@@ -1,0 +1,70 @@
+---
+comment: |
+  This is a stub for a future standalone form
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  - docassemble.MassAccess:massaccess.yml
+  - shared.yml
+---
+metadata:
+  title: |
+    Notarized Waiver and Consent to Petition (MPC 440)
+  short title: |
+    Notarized Waiver and Consent to Petition (MPC 440)
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  authors:
+    - Pratibha Bharti
+---
+mandatory: True
+comment: |
+  Global interview metadata
+variable name: interview_metadata["notarized_waiver"]
+data:
+  al_weaver_version: "1.8.0"
+  generated on: "2023-02-28"
+  title: >-
+    Notarized Waiver and Consent to Petition (MPC 440)
+  short title: >-
+    Notarized Waiver and Consent to Petition (MPC 440)
+  allowed courts:
+    - "Probate and Family Court"
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  typical role: "unknown"
+  generate download screen: True
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[Notarized_Waiver_and_Consent_attachment], filename="Notarized_Waiver_and_Consent", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[Notarized_Waiver_and_Consent_attachment],  filename="Notarized_Waiver_and_Consent", title="All forms to deliver to court", enabled=True)
+
+---
+id: download Notarized_Waiver_and_Consent
+event: Notarized_Waiver_and_Consent_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_Notarized_Waiver_and_Consent'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+code: |
+  Notarized_Waiver_and_Consent_download
+---
+objects:
+  - guardians: ALPeopleList.using(maximum_number=2)
