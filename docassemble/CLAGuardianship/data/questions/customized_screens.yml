@@ -71,4 +71,4 @@ code: |
 ############### Parental consent to petition ################
 ---
 code: |
-  parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and parent.agrees_to_guardianship for parent in parents))
+  parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and (parent.agrees_to_guardianship or parent.agrees_to_guardianship == None) for parent in parents))
