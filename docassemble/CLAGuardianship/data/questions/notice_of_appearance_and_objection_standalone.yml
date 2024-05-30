@@ -44,7 +44,7 @@ sections:
   - review_notice_of_appearance_and_objection: Review your answers
 ---
 ###################### Main order ######################
-mandatory: True
+# mandatory: True
 code: |
   al_intro_screen
   notice_of_appearance_and_objection_intro

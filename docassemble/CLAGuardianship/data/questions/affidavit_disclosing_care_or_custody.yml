@@ -43,18 +43,20 @@ code: |
 objects:
   - other_care_custody_proceedings: OtherProceedingList
   - signing_attorney: ALIndividual
+  - attorneys: ALPeopleList.using(complete_attribute="complete")
   - others_in_proceedings: ALPeopleList.using(auto_gather=False)
   - attorneys_for_children: ALPeopleList.using(auto_gather=False)
   - attorneys_for_children[i].represented_children: ALPeopleList
   - attorneys_for_parents: ALPeopleList.using(auto_gather=False)
-
 ---
 id: interview_order_affidavit_disclosing_care_or_custody
 code: |
   affidavit_disclosing_care_or_custody_intro
 
-  defendants.there_are_any = True  
-  case_name
+  # defendants.there_are_any = True
+
+  users.gather()
+  case_name  
   children.there_are_any = True
   children.gather()
   assigned_letters # Give each "children_of_both" a letter from A-Z
@@ -89,7 +91,8 @@ code: |
   impound_affidavit
   day # uncomment for standalone
 
-  needs_attorney_signature
+  if needs_attorney_signature:
+    attorneys.gather()
 
   # uncomment for standalone
   need_past_address_appendix
@@ -103,8 +106,8 @@ code: |
   fill_in_court_name  
   docket_numbers[0]  # Enable this if a standalone form
   # affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
-  basic_questions_signature_flow
-  users[0].signature
+  # basic_questions_signature_flow
+  # users[0].signature
 
   interview_order_affidavit_disclosing_care_or_custody = True
 ---
@@ -112,7 +115,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   interview_order_affidavit_disclosing_care_or_custody
   if esign:
@@ -124,7 +127,52 @@ code: |
   DCF.address = DAEmpty()
   DCF.address_for_form = DAEmpty()
   DCF.name.first = "Department of Children and Families"
-
+---
+#################### Object/Code Blocks Start #####################
+---
+code: |
+  users[i].name.first
+  users[i].address.address
+  users[i].complete = True
+---
+code: |
+  users.there_is_another = False
+---
+code: |
+  attorneys[i].name.first
+  attorneys[i].address.address
+  attorneys[i].complete = True
+---
+code: |
+  attorneys.there_is_another = False
+---
+code: |
+  if needs_attorney_signature:
+    attorneys.there_are_any = True
+---
+#################### Override Blocks Start #####################
+---
+id: petitioner information
+sets:
+  - users[0].name.first
+  - users[0].name.last
+  - users[0].name.middle
+  - users[0].name.suffix
+  - users[0].address.address
+  - users[0].address.unit
+  - users[0].address.city
+  - users[0].address.state
+  - users[0].address.zip
+  - users[0].address.country
+question: |
+  Tell us about yourself
+fields:
+  - code: |
+      users[0].name_fields()
+  - code: |
+      users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+#################### Question Blocks Start #####################
 ---
 comment: |
   Post MVP I think we can skip subquestion here, it seems a bit wordy, unnecesary?
@@ -142,9 +190,9 @@ fields:
   #     - They all live with me: me
   #     #- They all live with ${other_parties.familiar()}: defendant
   #     - Somewhere else or at more than one address: different
-    # show if:
-    #   code: |
-    #     users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
+  # show if:
+  #   code: |
+  #     users[0].address.on_one_line(include_unit=True) != other_parties[0].address.on_one_line(include_unit=True)
   - no label: children_address_screener
     datatype: radio
     choices:
@@ -291,8 +339,14 @@ code: |
 code: |
   have_pending_cases = len(other_care_custody_proceedings.filter(is_open=True)) > 0
 ---
-code: |
-  case_name = str(plaintiffs) + ' v ' + str(defendants)
+# code: |
+#   case_name = str(plaintiffs) + ' v ' + str(defendants)
+---
+id: case name
+question: |
+  Case name
+fields:
+  - Enter the name of your case: case_name
 ---
 sets:
   - other_parties[i].name.first
@@ -487,21 +541,40 @@ buttons:
   - Myself: False
   - As an attorney: True
 ---
-id: attorney signing address
+# id: attorney signing address
+# question: |
+#   What is the address of the attorney signing this form?
+# fields:
+#   - Street: signing_attorney.address.address
+#     address autocomplete: True
+#   - Unit: signing_attorney.address.unit
+#     required: False
+#   - City: signing_attorney.address.city
+#   - State: signing_attorney.address.state
+#     code: |
+#       states_list()
+#   - Zip: signing_attorney.address.zip
+#     required: False
+---
+id: attorney information
+sets:
+  - attorneys[0].name.first
+  - attorneys[0].name.last
+  - attorneys[0].name.middle
+  - attorneys[0].name.suffix
+  - attorneys[0].address.address
+  - attorneys[0].address.unit
+  - attorneys[0].address.city
+  - attorneys[0].address.state
+  - attorneys[0].address.zip
 question: |
-  What is the address of the attorney signing this form?
+  Tell us about the attorney filling this form
 fields:
-  - Street: signing_attorney.address.address
-    address autocomplete: True
-  - Unit: signing_attorney.address.unit
-    required: False
-  - City: signing_attorney.address.city
-  - State: signing_attorney.address.state
-    code: |
-      states_list()
-  - Zip: signing_attorney.address.zip
-    required: False
-#---
+  - code: |
+      attorneys[0].name_fields()
+  - code: |
+      attorneys[0].address_fields()
+---
 #question: |
 #  Date
 #subquestion: |
@@ -1010,10 +1083,10 @@ objects:
 ---
 objects:
   - affidavit_of_care_or_custody_attachment:
-        ALDocument.using(filename="care_or_custody",
-        title="Affidavit of Care or Custody",
-        has_addendum=True,
-        enabled=True
+      ALDocument.using(filename="care_or_custody",
+      title="Affidavit of Care or Custody",
+      has_addendum=True,
+      enabled=True
       )
 ---
 code: |
@@ -1115,7 +1188,7 @@ attachment:
     - "day": ${ day }
     - "month": ${ month }
     - "year": ${ year }
-    - "attorney_for_juvenile_address_on_one_line": ${ signing_attorney.address.on_one_line(include_unit=True) if needs_attorney_signature else '' }
+    - "attorney_for_juvenile_address_on_one_line": ${ attorneys[0].address.on_one_line(include_unit=True) if needs_attorney_signature else '' }
     - "child1_past_addresses_1": ${ children_of_both.item(0).previous_addresses.item(0).on_one_line() if confidential_address else '' }
     - "child1_past_addresses_2": ${ children_of_both.item(0).previous_addresses.item(1).on_one_line() if confidential_address else '' }
     - "child2_past_addresses_1": ${ children_of_both.item(1).previous_addresses.item(0).on_one_line() if confidential_address else '' }
@@ -1131,7 +1204,7 @@ attachment:
     - "attorneys_for_parents_1": ${ str(attorneys_for_parents.item(0)) + ' (' + str(attorneys_for_parents.item(0).represented_party) + ')' if defined('attorneys_for_parents[0]') else ''}
     - "attorneys_for_parents_2": ${ str(attorneys_for_parents.item(1)) +  ' (' + str(attorneys_for_parents.item(1).represented_party) + ')' if defined('attorneys_for_parents[1]') else ''}
     - "attorneys_for_parents_3": ${ str(attorneys_for_parents.item(2)) + ' (' + str(attorneys_for_parents.item(2).represented_party) + ')' if defined('attorneys_for_parents[2]') else ''}
-    - "user_signature": ${ users[0].signature_if_final(i) }
+    - "user_signature": ${ f"/s/ {users[0]}" if esign else "" }
 ---
 id: care or custody intro
 comment: |
