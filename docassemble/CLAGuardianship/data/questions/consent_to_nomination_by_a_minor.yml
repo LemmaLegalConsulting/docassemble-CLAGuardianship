@@ -1,0 +1,120 @@
+---
+comment: |
+  This version of the file is only suitable for filing together with the petition.
+---
+#################### Interview order #####################
+id: interview_order_notarized_and_verified_consent
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+  who_is_making_petition
+  children[0].name.first
+  children[0].birthdate
+  children[0].phone_number
+  consented_guardians
+  not_consented_guardians
+  nominated_guardians
+  trial_court
+  docket_number
+
+  interview_order_consent_to_nomination_by_a_minor = True
+---
+code: |
+  users.there_is_another = False
+---
+code: |
+  notarization_public.there_is_another = False
+---
+id: minor phone number
+sets:
+  - children[0].phone_number
+question: |
+  % if who_is_making_petition == "minor":
+  What is your phone number?
+  % else:
+  What is ${ children[0].name }'s phone number?
+  % endif
+fields:
+  - Primary phone number: children[0].phone_number
+    datatype: al_international_phone
+---
+id: consent
+question: |
+  Does ${ children[0].familiar() } agree to have ${ requested_guardians[i] } as a guardian?
+fields:
+  - ${ children[0].familiar() } agrees to have ${ requested_guardians[i] } as a guardian: requested_guardians[i].agrees_to_be_guardian
+    datatype: yesnomaybe
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
+---
+attachment:
+  - name: Motarized and verified
+    filename: consent_to_nomination_by_a_minor
+    variable name: consent_to_nomination_by_a_minor_attachment[i]
+    skip undefined: True
+    pdf template file: mpc_441_notarized_and_verified_consent_to_nomination_by_a_minor.pdf
+    fields:
+      - "docket_number": ${ docket_number }
+      - "trial_court_division": ${ trial_court.division }
+      - "users1_name_middle__1": ${ children[0].name.middle }
+      - "users1_name_last__1": ${ children[0].name.last }
+      - "users1_name_first__1": ${ children[0].name.first }
+      - "users1_name_first__2": ${ children[0].name.first }
+      - "users1_name_middle__2": ${ children[0].name.middle }
+      - "users1_name_last__2": ${ children[0].name.last }
+      - "consented_guardians1_check": ${ True if requested_guardians.filter(agrees_to_be_guardian=True) else False }
+      - "consented_guardians1_name_last": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(0).name.last }
+      - "consented_guardians1_name_first": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(0).name.first }
+      - "consented_guardians1_name_middle_initial": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(0).name.middle_initial() }
+      - "consented_guardians2_consented": ${ True if len(requested_guardians.filter(agrees_to_be_guardian=True)) > 1 else False }
+      - "consented_guardians2_name_last": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(1).name.last }
+      - "consented_guardians2_name_first": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(1).name.first }
+      - "consented_guardians2_name_middle_initial": ${ requested_guardians.filter(agrees_to_be_guardian=True).item(1).name.middle_initial() }
+      - "nonconsented_guardians1_check": ${ True if len(requested_guardians.filter(agrees_to_be_guardian=False)) > 0 else False }
+      - "nonconsented_guardians1_name_last": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(0).name.last }
+      - "nonconsented_guardians1_name_first": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(0).name.first }
+      - "nonconsented_guardians1_name_middle_initial": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(0).name.middle_initial() }
+      - "nonconsented_guardians2_check": ${ True if len(requested_guardians.filter(agrees_to_be_guardian=False)) > 1 else False }
+      - "nonconsented_guardians2_name_last": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.last }
+      - "nonconsented_guardians2_name_first": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.first }
+      - "nonconsented_guardians2_name_middle_initial": ${ requested_guardians.filter(agrees_to_be_guardian=False).item(1).name.middle_initial() }
+      - "nominated_guardians1_check": ${ who_is_making_petition == "minor" }
+      - "nominated_guardians1_name_middle_initial": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.middle_initial() }
+            % endif
+      - "nominated_guardians1_name_last": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.last }
+            % endif
+      - "nominated_guardians1_name_first": |
+            % if who_is_making_petition == "minor":
+            ${ requested_guardians.item(0).name.first }
+            % endif
+      - "nominated_guardians2_check": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ True if who_is_making_petition == "minor" and len(requested_guardians) > 1 else False }
+            % endif
+      - "nominated_guardians2_name_middle_initial": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.middle_initial() }
+            % endif
+      - "nominated_guardians2_name_last": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.last }
+            % endif
+      - "nominated_guardians2_name_first": |
+            % if who_is_making_petition == "minor" and len(requested_guardians) > 1:
+            ${ requested_guardians.item(1).name.first }
+            % endif
+      - "users1_address_address": ${children[0].address.address}
+      - "users1_address_unit": ${children[0].address.unit}
+      - "users1_address_city": ${children[0].address.city}
+      - "users1_address_state": ${children[0].address.state}
+      - "users1_address_zip": ${children[0].address.zip}
+      - "users1_phone": ${children[0].phone_number}
+      - "users1_name": ${children[0].name}
+---
+

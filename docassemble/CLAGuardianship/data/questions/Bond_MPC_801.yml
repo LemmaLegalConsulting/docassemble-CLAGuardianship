@@ -1,5 +1,6 @@
 include:
-  - docassemble.mlhframework:mlh_interview_framework.yml
+  - docassemble.AssemblyLine:assembly_line.yml
+  - shared.yml
 ---
 objects:
   - person_with_interest: Individual

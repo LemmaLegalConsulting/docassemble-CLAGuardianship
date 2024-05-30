@@ -1,6 +1,7 @@
 ---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.MassAccess:massaccess.yml
   - shared.yml
 ---
 metadata:
@@ -39,6 +40,7 @@ code: |
   al_form_type = "other"
 ---
 objects:
+  - users: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - responsible_parents: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - guardian_successors: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
 ---
@@ -68,22 +70,24 @@ code: |
   nav.set_section("review_petitioner_information")
   who_is_making_petition
   users.gather()
+  petitioner_goals
+  minor_adopted
+  has_attachment
+  bio_parents_can_resume_responsibilities
 
   nav.set_section("review_guardian_information")
   guardians.gather()
-  bio_parents_can_resume_responsibilities
-  petitioners1_signature_date
 
   nav.set_section("review_requests")
-  bio_parents_can_resume_responsibilities
-  responsible_parents.gather()
-  minor_adopted
-  has_attachment
-  guardian_successors.gather()
+  if bio_parents_can_resume_responsibilities:
+    responsible_parents.gather()
+  if petitioner_goals == "name_someone_new":
+    guardian_successors.gather()
 
   nav.set_section("review_attorney_information")
   attorneys.gather()
-  attorneys1.bbo
+  if len(attorneys):
+    attorneys[0].bbo
 
   interview_order_petition_for_removal_of_guardian = True
 ---
@@ -91,6 +95,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
+# mandatory: True
 code: |
   al_intro_screen
   petition_for_removal_of_guardian_intro
@@ -105,20 +110,15 @@ continue button field: petition_for_removal_of_guardian_intro
 question: |
   Petition for Removal of Guardian of Minor (MPC 240)
 subquestion: |
-  This interview will help you file a Petition for the removal of a guardian of a minor.
+  If:
 
-  Before you get started, please gather:
+    * you or a child you know or are related to has a court-appointed guardian, and 
+    * you have a reason that the guardian should be removed or replaced,
+  
+  You can use this interview to ask the court to remove the guardian, or
+  to name a new guardian.
 
-  1. 
-  1. 
-  1. 
-
-  When you are finished, you will need to:
-
-  1. 
-  1. 
-
-  Most people take about _______ minutes to finish this interview.
+  You will need to explain why the guardian should be removed or replaced.
 ---
 #################### Object Blocks Start #####################
 ---
@@ -130,37 +130,34 @@ subquestion: |
 ---
 id: petitioners
 question: |
-  Who is making this petition?
+  Who is asking to change or remove the guardian?
 fields:
-  - no label: who_is_making_petition
+  - I am: who_is_making_petition
     datatype: radio
     choices:
-      - the minor's parent(s)
-      - the minor
-      - a person interested in the minor's welfare
-  - no label: parents_making_petition
+      - The minor's parent(s): parent
+      - The minor: minor
+      - A person interested in the minor's welfare: interested_person
+  - And my specific relationship is: parents_making_petition
     datatype: radio
     choices:
-      - the minor's mother
-      - the minor's father
-      - both
+      - The minor's mother: mother
+      - The minor's father: father
+      - Both the parents are making this request together: both
     show if:
       variable: who_is_making_petition
-      is: "the minor's parent(s)"
-validation code: |
-  if who_is_making_petition == "the minor's parent(s)":
-    petitioner_is_parent = True
-  elif who_is_making_petition == "the minor":
-    petitioner_is_minor = True
-  elif who_is_making_petition == "a person interested in the minor's welfare":
-    petitioner_is_interested_party = True
+      is: parent
+  - And my relationship or interest is: my_interest_is
+    datatype: area
+    show if:
+      variable: who_is_making_petition
+      is: interested_person
+    help: |
+      Explain how you are related to the child, such as 
+      a family relationship or a professional relationship.
 
-  if parents_making_petition == "both":
-    petitioner_is_both_parents = True
-  elif parents_making_petition == "the minor's father":
-    petitioner_is_father = True
-  elif parents_making_petition == "the minor's mother":
-    petitioner_is_mother = True
+      You do not need to explain why you want this petition 
+      in this box.
 ---
 id: first petitioner information
 sets:
@@ -176,16 +173,23 @@ sets:
   - users[0].address.country
   - users[0].phone_number
 question: |
-  Tell us about yourself
+  Information about you
 fields:
   - code: |
       users[0].name_fields()
   - code: |
       users[0].address_fields()
   - Phone number: users[0].phone_number
-validation code: |
-  if petitioner_is_both_parents == True:
-    users.there_is_another = True
+    datatype: al_international_phone
+---
+code: |
+  if who_is_making_petition == "parent":
+    if parents_making_petition == "both":
+      users.target_number = 2
+    else:
+      users.target_number = 1
+  else:
+    users.target_number = 1
 ---
 id: petitioner information
 sets:
@@ -201,16 +205,30 @@ sets:
   - users[i].address.country
   - users[i].phone_number
 question: |
-  Tell us about the other petitioner
+  Who else is asking to change or remove the guardian?
 fields:
   - code: |
       users[i].name_fields()
   - code: |
       users[i].address_fields()
   - Phone number: users[i].phone_number
-validation code: |
-  if len(users.complete_elements()) > 0:
-    users.there_is_another = False
+    datatype: al_international_phone
+---
+id: what is goal
+question: |
+  What are your goals?
+fields:
+  - label: |
+      % if len(users) > 1:
+      We would like to:
+      % else:
+      I would like to:
+      % endif
+    field: petitioner_goals
+    datatype: radio
+    choices:
+      - Remove the guardian: remove
+      - Replace the guardian with someone new: name_someone_new
 ---
 id: guardian information
 sets:
@@ -234,7 +252,8 @@ question: |
   % endif
 subquestion: |
   % if len(guardians.complete_elements()) < 1:
-  You can add up to two guardians in this petition. Start by telling us bout the first guardian.
+  You can add up to two guardians in this petition. Start by telling us 
+  about the first guardian.
   % endif
 fields:
   - code: |
@@ -242,44 +261,93 @@ fields:
   - code: |
       guardians[i].address_fields()
   - Phone number: guardians[i].phone_number
-  - note: When was this person appointed as a guardian for the minor?
-  - no label: guardians[i].appointment_date
+    datatype: al_international_phone
+  - When was this person appointed as a guardian for the minor?: guardians[i].appointment_date
     datatype: date
     required: True
-validation code: |
-  if len(guardians.complete_elements()) > 0:
-    guardians.there_is_another = False
 ---
 id: guardians there_is_another
 question: |
-  Do you want to add a second guardian to the petition?
+  Was a second guardian appointed for ${ children[0] }?
 fields:
   - no label: guardians.there_is_another
     datatype: yesnoradio
 ---
+code: |
+  if len(guardians.complete_elements()) > 0:
+    guardians.there_is_another = False
+---
 id: Reasons for removing the child s guardian s
 question: |
-  Reasons for removing the child's guardian(s)
+  % if petitioner_goals == "remove":
+  Why do you want to remove the guardian?
+  % else:
+  Why do you want to replace the guardian?
+  % endif
 subquestion: |
-  Tell us why the child's guardian(s) should be removed.
+  Check all reasons that apply.
 fields:
-  - "Bio parents can resume responsibilities": bio_parents_can_resume_responsibilities
+  - ${ children[0].familiar() }'s parents are able to take care of them now: bio_parents_can_resume_responsibilities
     datatype: yesno
-  - "Minor adopted": minor_adopted
+  - Explain why: why_parents_can_resume_responsibility
+    datatype: area
+    show if: bio_parents_can_resume_responsibilities
+  - ${ children[0].familiar() } was adopted: minor_adopted
     datatype: yesno
-  - "Has attachment": has_attachment
+  - Something else: has_attachment
     datatype: yesno
+  - Explain why: other_reason_for_removal
+    datatype: area
+    show if: has_attachment
+validation code: |
+  if not (bio_parents_can_resume_responsibilities or minor_adopted or has_attachment):
+    validation_error("You have to select at least one reason", field="has_attachment")
 ---
-id: Requested successors
+code: |
+  responsible_parents.there_are_any = bio_parents_can_resume_responsibilities
+  responsible_parents.there_is_another = False  
+---
+sets:
+  - responsible_parents[0].name.first
+  - responsible_parents[0].name.last
+id: about the responsible parents
 question: |
-  Requested successors
-subquestion: |
-  Who does the petitioner request as the new guardian(s) for the minor
+  Which parent will be taking responsibility for the child again?
 fields:
-  - "Date of petitioners1 signature": petitioners1_signature_date
-    datatype: date
-  - "Date of petitioners2 signature": petitioners2_signature_date
-    datatype: date
+  - ${ children[0].familiar() } should go back to being taken care of by: who_will_be_responsible
+    datatype: radio
+    choices:
+      - 1 parent: one
+      - Both parents: both
+  - note: |
+      <h2 class="h4">Information about parent 1</h2>
+  - code: |
+      responsible_parents[0].name_fields()
+  - code: |
+      responsible_parents[0].address_fields()
+  - Phone number: responsible_parents[0].phone_number
+    datatype: al_international_phone
+  - note: |
+      <h2 class="h4">Information about parent 2</h2>
+    show if:
+      variable: who_will_be_responsible
+      is: both
+  - code: |
+      responsible_parents[1].name_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
+  - code: |
+      responsible_parents[1].address_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
+  - Phone number: responsible_parents[1].phone_number
+    datatype: al_international_phone
+    show if:
+      variable: who_will_be_responsible
+      is: both
+---
+id: who will be on this form
+question: |
+  Do you have an attorney for this case?
+fields:
+  - I have an attorney: attorneys.there_are_any
+    datatype: yesnoradio
 ---
 id: Attorney s information
 question: |
@@ -287,8 +355,12 @@ question: |
 subquestion: |
   If you have an attorney, provide their information
 fields:
-  - "Attorneys1 bbo": attorneys1_bbo
+  - "BBO Number": attorneys[0].bbo
     datatype: number
+---
+code: |
+  if len(attorneys.complete_elements()) > 0:
+    attorneys.there_is_another = False
 ---
 id: preview petition_for_removal_of_guardian
 question: |
@@ -350,30 +422,6 @@ review:
       % for item in petitioners:
         * ${ item }
       % endfor
-  - Edit: petitioner_is_parent
-    button: |
-      **Petitioner(s) is/are the child's parent(s)**:
-      ${ petitioner_is_parent }
-  - Edit: petitioner_is_mother
-    button: |
-      **Petitioner is mother**:
-      ${ word(yesno(petitioner_is_mother)) }
-  - Edit: petitioner_is_father
-    button: |
-      **Petitioner is father**:
-      ${ word(yesno(petitioner_is_father)) }
-  - Edit: petitioner_is_both_parents
-    button: |
-      **Petitioner is both parents**:
-      ${ word(yesno(petitioner_is_both_parents)) }
-  - Edit: petitioner_is_minor
-    button: |
-      **Petitioner is minor**:
-      ${ word(yesno(petitioner_is_minor)) }
-  - Edit: petitioner_is_interested_party
-    button: |
-      **Petitioner is interested party**:
-      ${ word(yesno(petitioner_is_interested_party)) }
   - Edit: guardians.revisit
     button: |
       **Guardians**
@@ -430,10 +478,10 @@ review:
       % for item in attorneys:
         * ${ item }
       % endfor
-  - Edit: attorneys1_bbo
+  - Edit: attorneys[0].bbo
     button: |
-      **Attorneys1 bbo**:
-      ${ attorneys1_bbo }
+      **BBO Number**:
+      ${ attorneys[0].bbo }
 ---
 continue button field: children.revisit
 question: |
@@ -590,7 +638,7 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_removal_of_guardian_Post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_removal_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_removal_of_guardian_attachment: ALDocument.using(title="Petition for Removal of Guardian of Minor", filename="petition_for_removal_of_guardian", enabled=True, has_addendum=False, )
+  - petition_for_removal_of_guardian_attachment: ALDocument.using(title="Petition for Removal of Guardian of Minor", filename="petition_for_removal_of_guardian", enabled=True, has_addendum=True, )
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
@@ -603,10 +651,16 @@ objects:
 attachment:
   name: Post-interview-Instructions
   filename: petition_for_removal_of_guardian_next_steps
-  docx template file: petition_for_removal_of_guardian_next_steps.docx
+  docx template file: Petition_for_Removal_of_Guardian_of_Minor_next_steps.docx
   variable name: petition_for_removal_of_guardian_Post_interview_instructions[i]
   skip undefined: True
   tagged pdf: True
+---
+code: |
+  petition_for_removal_of_guardian_attachment.overflow_fields["other_reason_for_removal"].label = "Other reason for this petition"
+  petition_for_removal_of_guardian_attachment.overflow_fields["other_reason_for_removal"].overflow_trigger = 300
+
+  petition_for_removal_of_guardian_attachment.overflow_fields.gathered = True
 ---
 attachment:
   name: Petition for Removal of Guardian of
@@ -629,21 +683,21 @@ attachment:
     - "users1_address_zip": ${ users[0].address.zip }
     - "users1_address_city": ${ users[0].address.city }
     - "users1_phone": ${ users[0].phone_number }
-    - "users2_name_middle_initial": ${ users[1].name.middle_initial() }
-    - "users2_name_last": ${ users[1].name.last }
-    - "users2_name_first": ${ users[1].name.first }
-    - "users2_address_address": ${ users[1].address.address }
-    - "users2_address_unit": ${ users[1].address.unit }
-    - "users2_address_state": ${ users[1].address.state }
-    - "users2_address_zip": ${ users[1].address.zip }
-    - "users2_address_city": ${ users[1].address.city }
-    - "users2_phone": ${ users[1].phone_number }
-    - "petitioner_is_parent": ${ petitioner_is_parent }
-    - "petitioner_is_mother": ${ petitioner_is_mother }
-    - "petitioner_is_father": ${ petitioner_is_father }
-    - "petitioner_is_both_parents": ${ petitioner_is_both_parents }
-    - "petitioner_is_minor": ${ petitioner_is_minor }
-    - "petitioner_is_interested_party": ${ petitioner_is_interested_party }
+    - "users2_name_middle_initial": ${ users.item(1).name.middle_initial() }
+    - "users2_name_last": ${ users.item(1).name.last }
+    - "users2_name_first": ${ users.item(1).name.first }
+    - "users2_address_address": ${ users.item(1).address.address }
+    - "users2_address_unit": ${ users.item(1).address.unit }
+    - "users2_address_state": ${ users.item(1).address.state }
+    - "users2_address_zip": ${ users.item(1).address.zip }
+    - "users2_address_city": ${ users.item(1).address.city }
+    - "users2_phone": ${ users.item(1).phone_number }
+    - "petitioner_is_parent": ${ who_is_making_petition == "parent" }
+    - "petitioner_is_mother": ${ who_is_making_petition == "parent" and parents_making_petition == "mother" }
+    - "petitioner_is_father": ${ who_is_making_petition == "parent" and parents_making_petition == "father" }
+    - "petitioner_is_both_parents": ${ who_is_making_petition == "parent" and parents_making_petition == "both" }
+    - "petitioner_is_minor": ${ who_is_making_petition == "minor" }
+    - "petitioner_is_interested_party": ${ who_is_making_petition == "interested_person" }
     - "guardians1_name_last": ${ guardians[0].name.last }
     - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
     - "guardians1_name_first": ${ guardians[0].name.first }
@@ -702,7 +756,9 @@ attachment:
     - "attorneys1_address_state": ${ attorneys[0].address.state }
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
     - "attorneys1_phone": ${ attorneys[0].phone_number }
-    - "attorneys1_bbo": ${ "{:,.2f}".format(attorneys1_bbo) }
+    - "attorneys1_bbo": ${ attorneys[0].bbo }
+    - "my_interest_is": ${ my_interest_is }
+    - "why_parents_can_resume_responsibility": ${ why_parents_can_resume_responsibility }
 ---
 #################### Attachment Blocks End #####################
 ---

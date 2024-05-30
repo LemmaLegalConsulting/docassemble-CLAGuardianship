@@ -1,0 +1,618 @@
+---
+code: |
+  addresses_to_search = [users[0].address]
+---
+code: |
+  # This controls the default country and list of states in address field questions
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  # This controls the default state in address field questions
+  AL_DEFAULT_STATE = "MA"
+---
+code: |
+  github_repo_name =  'docassemble-MilitaryAffidavit'
+---
+code: |
+  interview_short_title = "File a military affidavit"
+---
+code: |
+  al_form_type = "existing_case" 
+---
+objects:
+  - users: ALPeopleList.using(there_are_any=True)
+  - other_parties: ALPeopleList
+  - additional_parties: ALPeopleList
+  - serving_parties: ALPeopleList
+  - unsure_serving_parties: ALPeopleList
+  - concluded_service_parties: ALPeopleList
+---
+sections:
+  - review_military_affidavit: Review your answers
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_military_affidavit
+code: |
+  # Set the allowed courts for this interview
+  form_filled_by_attorney
+  user_ask_role
+  users.gather()
+  other_parties.gather()
+  additional_parties.gather()
+  serving_parties
+  if len(serving_parties) < len(users) + len(other_parties) + len(additional_parties):
+    concluded_service_parties
+    if len(concluded_service_parties.elements):
+      set_concluded_service_dates
+    for party in concluded_service_parties.elements:
+      party.service_ended_date
+  if len(serving_parties) + len(concluded_service_parties) < len(users) + len(other_parties) + len(additional_parties):
+    unsure_serving_parties
+  if len(serving_parties) + len(concluded_service_parties) + len(unsure_serving_parties) < len(users) + len(other_parties) + len(additional_parties):
+    confirm_not_serving_parties
+  trial_court
+  docket_numbers
+  has_used_scra_site
+  signature_date
+  interview_order_military_affidavit = True
+---
+code: |
+  concluded_service_parties[i].name.first
+  concluded_service_parties[i].service_ended_date
+  concluded_service_parties[i].complete = True
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: Military_Affidavit
+continue button field: military_affidavit_intro
+question: |
+  Military Affidavit
+subquestion: |
+  This interview will help you fill out a Military Affidavit,
+  which declares whether anybody who is part of this case is
+  currently serving in a branch of the U.S. military.
+
+  If someone is in the military, they may have special
+  protections under the Servicemembers Civil Relief Act.
+
+  This affidavit has to be filed even if none of the parties are
+  in the military right now.
+
+  Use the best information you know. But you must explain either that:
+
+  * you know the military status of each party, or 
+  * you searched the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/)
+    to find out their military status
+---
+id: explanation diligent search
+question: |
+  Before you answer the next questions
+subquestion: |
+  On the next few screens, we will ask you about the military status 
+  of:
+
+  * ${ users }
+  % if len(other_parties):
+  * ${ other_parties }
+  % endif
+  % if len(additional_parties):
+  * ${ additional_parties }
+  % endif
+fields:
+  - Do you already know the military status of **each** party in this case?: knows_status_already
+    datatype: yesnoradio
+  - note: |
+      If you do not have personal knowledge of each party's military status,
+      you **must** search the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/).
+
+      1. Copy a [link to this interview](${ interview_url() }) to return to it later. You can also 
+         leave this window or tab open.
+      1. Click the link to visit the [Servicemembers Civil Relief Act website](https://scra.dmdc.osd.mil/)
+         and search for the name of the party who you are unsure about.
+      1. **Save** a copy of the results as a PDF or take a screenshot that shows the search
+         results. You can also print a copy and attach it to this form later.
+
+        You can take a minute to do that now. The website will open in a new tab. When
+        you have finished your search and saved the results, close the tab to return to this interview.
+    show if: 
+      variable: knows_status_already
+      is: False
+---
+id: Military status of serving parties
+question: |
+  Are any of the parties in this case currently serving in the U.S. military?
+fields:
+  - Choose every party who you know is in the military **now**: serving_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
+      - additional_parties
+---
+id: ended military service
+question: |
+  Did any of the parties in this case serve in the military **in the past**?
+fields:
+  - Choose every party who you know used to serve in the U.S. military:  concluded_service_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
+      - additional_parties
+    exclude:
+      - serving_parties
+---
+id: concluded service parties date
+question: |
+  When did the military service end?
+fields:
+  - "End date": concluded_service_parties[i].service_ended_date
+    datatype: date
+---
+id: set all concluded service parties dates
+question: |
+  When did the military service end?
+fields:
+  - code: |
+      [
+        {
+          "field": party.attr_name("service_ended_date"),
+          "label": f"Date that { party.name_full() } ended military service",
+        }
+        for party
+        in concluded_service_parties.elements
+      ]
+continue button field: set_concluded_service_dates
+---
+id: unsure military service
+question: |
+  Are you unsure about whether any of the parties in this case served in the military?
+subquestion: |
+  If you select "unsure" for any party, the judge may make you pay
+  a **bond** to protect the party's rights under the Servicemembers Civil Relief Act,
+  before the judge makes the judgment against the party final.
+
+  ${ collapse_template(explain_military_unsure_bond)}
+fields:
+  - Choose every party who you are unsure about: unsure_serving_parties
+    datatype: object_checkboxes
+    choices:
+      - users
+      - other_parties
+      - additional_parties
+    exclude:
+      - serving_parties
+      - concluded_service_parties
+  - I understand I may have to pay a bond if I am unsure about a party's military status before a judge makes the judgment final: bond_agreement_i_understand
+    datatype: yesno
+    js show if: |
+      val("unsure_serving_parties") && val("unsure_serving_parties").length > 0
+validation code: |
+  if len(unsure_serving_parties.elements) and not bond_agreement_i_understand:
+    validation_error("You must agree to pay a bond if you are unsure about a party's military status.")
+---
+template: explain_military_unsure_bond
+subject: |
+  What is the bond for?
+content: |
+  If you are unsure about the military status of any party in this case, the judge may require you to pay a bond to protect the party's rights under the Servicemembers Civil Relief Act.
+
+  The bond is money that you pay to the court. If the party is in the military, the bond will protect their rights under the Servicemembers Civil Relief Act. 
+  If the party is not in the military, the bond will be returned to you.
+
+  The bond is only required if the other party does not show up in court
+  and loses "by default".
+---
+id: confirm not serving parties
+question: |
+  Parties **not** serving in the military
+subquestion: |
+  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
+  Here is what you told us so far:
+
+  % if len(serving_parties):
+  % if len(serving_parties) == 1:
+  * You know that ${ serving_parties } is currently serving in the military.
+  % else:
+  * You know that ${ serving_parties } are currently serving in the military.
+  % endif
+  % endif
+  % if len(concluded_service_parties):
+  * You know that ${ concluded_service_parties } served in the military in the past.
+  % endif
+  % if len(unsure_serving_parties):
+  * You do not know whether ${ unsure_serving_parties } served in the military.
+  % endif
+
+  That means that you know the following parties are **not** serving in the military:
+  % else:
+  You have not told us about any parties serving in the military, which means
+  you know the following parties are **not** serving in the military:
+  % endif
+
+  * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+
+  If this is not correct, edit your responses by clicking the button below.
+
+  * ${ action_button_html(url_action('serving_parties'), label="Edit parties currently serving in the military")}
+  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit parties whose service ended")}
+  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit parties you do not know about")}
+
+  If this is correct, click the button below to continue.
+continue button field: confirm_not_serving_parties
+---
+id: form_filled_by_attorney
+question: |
+  Are you an attorney for someone in this case?
+fields:
+  - I am: form_filled_by_attorney
+    datatype: radio
+    choices:
+      - An attorney in this case: True
+      - A party to the case: False
+  - BBO number (for Massachusetts attorneys): bbo
+    maxlength: 56
+    required: False
+    show if: form_filled_by_attorney
+---
+id: your name
+sets:
+    - users[0].name.first
+    - users[0].name.last
+    - users[0].name.middle
+    - users[0].name.suffix
+question:  |
+  % if form_filled_by_attorney:
+  What is your client's name?
+  % else:
+  What is your name?
+  % endif
+subquestion: |
+  If this case is "in the interests of" someone else, enter their name here.
+
+  For example, if this case is for a guardianship or conservatorship, enter
+  the name of the person who needs the guardian or conservator.
+fields:
+  - code: |
+      users[0].name_fields()
+---
+id: has additional parties
+question: |
+  Is there someone else with an interest in this case?
+subquestion: |
+  For example, if this is a guardianship or conservatorship case, you may have to list the
+  parents or other relatives of the person who needs a guardian as well
+  as your own name.
+fields:
+  - There is someone else with an interest in this case: additional_parties.there_are_any
+    datatype: yesnoradio
+  - note: |
+      We will call this person an **additional party** in the rest of this interview.
+    show if: additional_parties.there_are_any
+---
+id: additional party name i
+sets:
+  - additional_parties[i].name.first
+  - additional_parties[i].name.last
+  - additional_parties[i].name.middle
+  - additional_parties[i].name.suffix
+question: |
+  What is the name of the ${ ordinal(i ) } additional party in this case?
+subquestion: |
+  % if len(additional_parties.complete_elements()) >= 1:
+  You have already told us about ${ additional_parties.complete_elements() }.
+  % endif
+fields:
+  - code: |
+      additional_parties[i].name_fields()
+---
+id: supporting the affidavit
+question: |
+  How do you know the military status of the parties in this case?
+subquestion: |
+  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
+  Here is what you told us:
+
+  % if len(serving_parties):
+  % if len(serving_parties) == 1:
+  * You know that ${ serving_parties } is currently serving in the military.
+  % else:
+  * You know that ${ serving_parties } are currently serving in the military.
+  % endif
+  % endif
+  % if len(concluded_service_parties):
+  * You know that ${ concluded_service_parties } served in the military in the past.
+  % endif
+  % if len(unsure_serving_parties):
+  * You do not know whether ${ unsure_serving_parties } served in the military.
+  % endif
+
+  % endif
+  % if len(( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
+  You know the following parties are **not** serving in the military:
+
+  * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+  % endif
+
+  If this is not correct, edit your responses by clicking the button below.
+
+  * ${ action_button_html(url_action('serving_parties'), label="Edit serving parties")}
+  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit concluded service parties")}
+  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit unsure serving parties")}
+
+fields:
+  - "Did you use the Servicemembers Civil Relief Act Website?": has_used_scra_site
+    datatype: yesnoradio
+  - note: |
+      You need to attach copies of the search results to this form
+    show if: has_used_scra_site
+  - Are you ready to attach a copy or screenshot now?: wants_to_attach_search_results
+    datatype: yesnoradio
+    show if: has_used_scra_site
+  - Attach a copy of the search results: used_scra_site_attachment
+    datatype: file
+    file css class: None
+    accept: |
+      ".pdf, .png, application/pdf, image/*"
+    show if: wants_to_attach_search_results
+  - "Explain how you used the website in your search (optional if evidence attached)": used_scra_site_facts
+    required: False
+    input type: area
+    show if: has_used_scra_site
+  - Explain how you know: not_used_scra_site_facts
+    input type: area
+    show if:
+      variable: has_used_scra_site
+      is: False
+    help: |
+      For example: I know the party personally.
+---
+code: |
+  signature_fields = ['users[0].signature']
+
+---
+id: military affidavit review screen
+event: review_military_affidavit
+question: |
+  Review your answers
+review:
+  - Edit: trial_court
+    button: |
+      **Trial court**
+  
+      % if defined("trial_court.department"):
+      * department: ${ trial_court.department }
+      % endif
+      % if defined("trial_court.division"):
+      * division: ${ trial_court.division }
+      % endif
+  - Edit: users.revisit
+    button: |
+      **People on your side of the case**
+
+      % for item in users:
+        * ${ item }
+      % endfor
+  - Edit: other_parties.revisit
+    button: |
+      **People on the other side of the case**
+
+      % for item in other_parties:
+        * ${ item }
+      % endfor
+  - Edit: additional_parties.revisit
+    button: |
+      **Other people with an interest in this case**
+
+      % for item in additional_parties:
+        * ${ item }
+      % endfor
+  - Edit: docket_numbers.revisit
+    button: |
+      **Docket numbers**
+
+      % for item in docket_numbers:
+        * ${ item }
+      % endfor
+  - note: |
+      **Military status of parties**
+
+      Here is what you told us:
+
+      % if len(serving_parties):
+      % if len(serving_parties) == 1:
+      * You know that ${ serving_parties } is currently serving in the military.
+      % else:
+      * You know that ${ serving_parties } are currently serving in the military.
+      % endif
+      % endif
+      % if len(concluded_service_parties):
+      * You know that ${ concluded_service_parties } served in the military in the past.
+      % endif
+      % if len(unsure_serving_parties):
+      * You do not know whether ${ unsure_serving_parties } served in the military.
+      % endif
+
+      % if len(( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
+      That means that you know the following parties are **not** serving in the military:
+
+      * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+      % endif
+
+      If this is not correct, edit your responses by clicking the button below.
+
+      * ${ action_button_html(url_action('serving_parties'), label="Edit parties currently serving in the military")}
+      * ${ action_button_html(url_action('concluded_service_parties'), label="Edit parties whose service ended")}
+      * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit parties you do not know about")}
+
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: bbo
+    button: |
+      **BBO number (if you are an attorney)**:
+      ${ bbo }
+---
+continue button field: plaintiffs.revisit
+question: |
+  Edit plaintiffs
+subquestion: |
+  ${ plaintiffs.table }
+
+  ${ plaintiffs.add_action() }
+---
+table: plaintiffs.table
+rows: plaintiffs
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: defendants.revisit
+question: |
+  Edit defendants
+subquestion: |
+  ${ defendants.table }
+
+  ${ defendants.add_action() }
+---
+table: defendants.table
+rows: defendants
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+edit:
+  - name.first
+confirm: True
+
+---
+continue button field: docket_numbers.revisit
+question: |
+  Edit docket_numbers
+subquestion: |
+  ${ docket_numbers.table }
+
+  ${ docket_numbers.add_action() }
+---
+table: docket_numbers.table
+rows: docket_numbers
+columns:
+  - Name: |
+      row_item
+edit: True
+confirm: True
+
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.first
+  - signature
+confirm: True
+
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - military_affidavit_attachment: ALDocument.using(title="Military Affidavit", filename="military_affidavit", has_addendum=False, )
+  - military_affidavit_search_results: ALDocumentUpload.using(title="Search results from SCRA website", filename="military_affidavit_search_results", has_addendum=False, )
+---
+objects:
+  - military_affidavit_bundle: ALDocumentBundle.using(elements=[military_affidavit_attachment, military_affidavit_search_results], filename="military_affidavit", title="Military Affidavit", enabled=True)
+---
+code: |
+  military_affidavit_search_results.enabled = has_used_scra_site and wants_to_attach_search_results
+---
+code: |
+  military_affidavit_attachment.enabled = True
+---
+need:
+  - military_affidavit_case_name
+attachment:
+  name: military affidavit
+  filename: military_affidavit
+  variable name: military_affidavit_attachment[i]
+  skip undefined: True
+  pdf template file: military_affidavit.pdf
+  fields:
+      - "docket_number": ${ docket_numbers }      
+      - "court_department_district": ${trial_court.department == "District Court"}
+      - "court_department_bmc": ${trial_court.department == "Boston Municipal Court"}
+      - "court_department_housing": ${trial_court.department == "Housing Court"}
+      - "court_department_juvenile": ${trial_court.department == "Juvenile Court"}
+      - "court_department_land": ${trial_court.department == "Land Court"}
+      - "court_department_probate_family": ${trial_court.department == "Probate and Family Court"}
+      - "court_department_superior": ${trial_court.department == "Superior Court"}
+      - "trial_court_division": ${ trial_court.division }
+      - "petitioners": |
+          ${ military_affidavit_case_name }
+      - "respondents": |
+          % if user_ask_role == "defendant":
+          ${ users }
+          % else:
+          ${ other_parties }
+          % endif
+      - "users1_name_full__1": |
+          ${ users[0] }
+      - "date_signed__1": ${ today() }
+      - "has_serving_parties": ${ len(serving_parties) }
+      - "serving_parties": ${ serving_parties }
+      - "has_not_serving_parties": ${ len(users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) >= 1 }
+      - "not_serving_parties": ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+      - "has_concluded_service_parties": ${ len(concluded_service_parties) }
+      - "concluded_service_parties": ${ concluded_service_parties }
+      - "service_ended_date": |
+          ${ comma_and_list([f"{party}: {party.service_ended_date}" for party in concluded_service_parties]) }
+      - "has_unsure_serving_parties": ${ len(unsure_serving_parties) }
+      - "unsure_serving_parties": ${ unsure_serving_parties }
+      - "has_used_scra_site": ${ has_used_scra_site }
+      - "used_scra_site_facts": |
+          % if has_used_scra_site:
+          ${ used_scra_site_facts }
+          % endif
+      - "has_not_used_scra_site": ${not has_used_scra_site}
+      - "not_used_scra_site_facts": |
+          % if not has_used_scra_site:
+          ${not_used_scra_site_facts }
+          % endif
+      - "users1_signature": |
+          ${ users[0].signature_if_final(i) }
+      - "date_signed__2": ${ today() }
+      - "users1_name_full__2": ${users[0]}
+      - "users1_address_on_one_line": ${users[0].address.on_one_line()}
+      - "users1_phone": ${users[0].phone_numbers() }
+      - "bbo": ${bbo}
+      - "users1_email": ${users[0].email}
+---
+code: |
+  military_affidavit_bundle.enabled = True
+---
+template: military_affidavit_case_name
+content: |
+  % if user_ask_role == "plaintiff":
+  % if len(other_parties):
+  ${ users }
+  % else:
+  In the interests of ${ users }
+  % endif
+  % else:
+  ${ other_parties }
+  % endif
