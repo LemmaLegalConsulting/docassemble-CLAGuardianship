@@ -1,0 +1,144 @@
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_notarized_waiver_and_consent
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+  parental_consent_to_petition
+  parents.gather()
+  interested_person_relationship
+  children[0].name.first
+  children[0].birthdate
+  trial_court
+  docket_number
+  requested_guardians.gather() 
+  # temporary_guardianship_duration
+  # permanent_guardianship_duration
+  # child_support_obligation
+---
+id: interested_person_relationship
+question: |
+  Who agrees to this petition?
+fields:
+  - no label: interested_person_relationship
+---
+id: minor info
+sets:
+  - children[0].name.first
+  - children[0].name.last
+  - children[0].name.middle
+  - children[0].name.suffix
+  - children[0].address.address
+  - children[0].address.unit
+  - children[0].address.city
+  - children[0].address.state
+  - children[0].address.zip
+  - children[0].address.country
+question: |
+  Who is the minor in this case?
+fields:
+  - code: |
+      children[0].name_fields()
+  - code: |
+      children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+# id: minor birthdate
+# question: |
+#   When was ${ children[0].name } born?
+# fields:
+#   - Birthdate: children[0].birthdate
+#     datatype: Birthdate
+---
+sets:
+  - requested_guardians[i].name.first
+  - requested_guardians[i].name.last
+  - requested_guardians[i].name.middle
+  - requested_guardians[i].name.suffix
+id: names of opposing parties
+question: |
+  Who are you requesting to be appointed as the child's ${ ordinal(i) } guardian(s)?
+fields:
+  - code: |
+      requested_guardians[i].name_fields()
+---
+code: |
+  if len(requested_guardians.complete_elements()) >= 2:
+     requested_guardians.there_is_another = False
+
+---
+id: temporary_guardianship_duration
+question: |
+  Do you understand that if the court appoints a temporary guardian, the guardianship will initially last for 90 days and can be extended for additional 90 day periods if needed?
+fields:
+  no label: temporary_guardianship_duration
+  datatype: yesnoradio
+---
+id: permanent_guardianship_duration
+question: |
+  Do you understand that if the court appoints a permanent guardian, the guardianship will continue until the child reaches 18 years old, gets married, or the court terminates the guardianship?
+fields:
+  no label: permanent_guardianship_duration
+  datatype: yesnoradio
+---
+id: child_support_obligation
+question: |
+  Do you understand that if the court appoints a temporary or permanent guardian, you may still be required to pay child support if you were already legally obligated to do so?
+fields:
+  no label: child_support_obligation
+  datatype: yesnoradio
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - parental_consent_to_petition_attachment: ALDocument.using(title="Parental Consent to Guardianship (MPC 440)", filename="parental_consent_to_petition", enabled=True, has_addendum=False, )
+---
+code: |
+  consenting_parents = DAList("consenting_parents", elements=[parent for parent in parents if parent.is_deceased == False and parent.agrees_to_guardianship])
+---
+need:
+  - consenting_parents
+reconsider:
+  - consenting_parents
+attachment:
+  - name: parental_consent_to_petition
+    filename: parental_consent_to_petition
+    variable name: parental_consent_to_petition_attachment[i]
+    skip undefined: True
+    pdf template file: parental_consent_to_petition.pdf
+    fields:
+      - "docket_number__1": ${docket_number}
+      - "trial_court_division": ${ trial_court.division }
+      - "children1_name_first__1": ${ children[0].name.first }
+      - "children1_name_middle__1": ${ children[0].name.middle }
+      - "children1_name_last__1": ${ children[0].name.last }
+      - "user_is_parent": ${ any((not parent.is_deceased for parent in parents))  }
+      - "interested_person_relationship": ""
+      # - "user_is_father": ${ True if who_is_making_petition == 'father' else False  }
+      # - "user_is_interested_person": ${ True if who_is_making_petition == 'interested_party' else False  }
+      - "guardians1_name_first": ${ requested_guardians[0].name.first }
+      - "guardians1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
+      - "guardians1_name_last": ${ requested_guardians[0].name.last }
+      - "guardians2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
+      - "guardians2_name_first": ${ requested_guardians[1].name.first }
+      - "guardians2_name_last": ${ requested_guardians[1].name.last }
+      - "parents1_name_full": ${ consenting_parents.item(0).name}
+      - "parents1_address_address": ${ consenting_parents.item(0).address.address}
+      - "parents1_address_unit": ${ consenting_parents.item(0).address.unit }
+      - "parents1_address_city": ${ consenting_parents.item(1).address.city}
+      - "parents1_address_state": ${ consenting_parents.item(0).address.state}
+      - "parents1_address_zip": ${ consenting_parents.item(0).address.zip}
+      - "parents2_name_full": ${ consenting_parents.item(1).name}
+      - "parents2_address_address": ${ consenting_parents.item(1).address.address}
+      - "parents2_address_unit": ${ consenting_parents.item(1).address.unit}
+      - "parents2_address_city": ${ consenting_parents.item(1).address.city}
+      - "parents2_address_state": ${ consenting_parents.item(1).address.state}
+      - "parents2_address_zip": ${ consenting_parents.item(1).address.zip}
+      - "parents1_signature_date": ${ today() if len(consenting_parents) else ""}
+      - "parents2_signature_date": ${ today() if len(consenting_parents) > 1 else ""}
+      - "users1_name_full": ${consenting_parents.item(0).name}
+      - "children1_name_first__2": ${ children[0].name.first }
+      - "children1_name_middle__2": ${ children[0].name.middle }
+      - "children1_name_last__2": ${ children[0].name.last }
+      - "docket_number__2": ${docket_number}
+      - "users2_name_full": ${consenting_parents.item(0).name}

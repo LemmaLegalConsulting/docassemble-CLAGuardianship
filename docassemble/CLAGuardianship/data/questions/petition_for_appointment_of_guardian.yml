@@ -5,6 +5,7 @@ include:
   - shared.yml
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
+  - parental_consent_to_petition.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - customized_screens.yml # Must come after the other includes
@@ -544,9 +545,11 @@ fields:
       parents[i].name_fields()
   - Is this person deceased?: parents[i].is_deceased
     datatype: yesnomaybe
-validation code: |
-  if len(parents.complete_elements()) > 0:
-    parents.there_is_another = False
+  - Does this parent agree to the appointment of a guardian?: parents[i].agrees_to_guardianship
+    datatype: yesnomaybe
+    show if:
+      variable: parents[i].is_deceased
+      is: False
 ---
 id: parent contact information
 sets:
@@ -576,9 +579,6 @@ fields:
     required: False
   - Primary phone number: parents[i].phone_number
     required: False
-validation code: |
-  if len(parents.complete_elements()) > 0:
-    parents.there_is_another = False
 ---
 id: parents there_is_another
 question: |
@@ -586,6 +586,10 @@ question: |
 fields:
   - no label: parents.there_is_another
     datatype: yesnoradio
+---
+code: |
+  if len(parents.complete_elements()) >= 2:
+    parents.there_is_another = False
 ---
 id: why seeking guardianship
 question: |
@@ -1657,6 +1661,7 @@ objects:
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       consent_to_nomination_by_a_minor_attachment,
+      parental_consent_to_petition_attachment,
       affidavitofindigency_attachment,
       military_affidavit_bundle,
       ],
@@ -1669,6 +1674,7 @@ objects:
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       consent_to_nomination_by_a_minor_attachment,
+      parental_consent_to_petition_attachment,
       military_affidavit_bundle,
       affidavitofindigency_attachment,
       ],
