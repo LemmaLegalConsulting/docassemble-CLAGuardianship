@@ -488,7 +488,7 @@ fields:
         1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
         % endif
 
-  - Why is this the right court?: court_choice_reason
+  - I will file in this court because: court_choice_reason
     datatype: checkboxes
     minlength: 1
     none of the above: False
