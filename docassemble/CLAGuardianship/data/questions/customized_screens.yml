@@ -67,3 +67,8 @@ code: |
 ---
 code: |
   consent_to_nomination_by_a_minor_attachment.enabled = True # who_is_making_petition == "minor"
+---
+############### Parental consent to petition ################
+---
+code: |
+  parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and parent.agrees_to_guardianship for parent in parents))
