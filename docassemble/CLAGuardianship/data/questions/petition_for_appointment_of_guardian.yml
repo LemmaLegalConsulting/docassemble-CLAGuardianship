@@ -600,6 +600,11 @@ question: |
   Why does ${ children[0].name } need a guardian?
   % endif
 subquestion: |
+  You need to give the judge a short reason to get a guardian.
+
+  When the judge schedules a hearing, you will have a chance to explain
+  more.
+
   Choose at least one reason.
 fields:
   - ${ children.familiar() }'s parents **agree** ${ children.familiar() } should have a guardian: reason_seeking_guardianship["parents_consent"]
@@ -756,19 +761,24 @@ fields:
 ---
 id: sureties waiver
 question: |
-  Do you want to ask the court to waive sureties required on the bond?
+  Waiving the **surety** requirement
 subquestion: |
-  **What is a surety bond?**
+  When a judge appoints a guardian, they require the guardian to sign a **bond**
+  to the court and name someone as a **surety**. The bond is a personal guarantee. 
+  It is a promise that the guardian will manage the money and property of the ward responsibly.
 
-  In order to be appointed as a guardian, a person must promise the court to faithfully carry out the legal duties of a guardian. This promise is called a **bond**.
+  The **surety** is a person who promises to pay the court if the guardian does not manage the money
+  or property the way that they should. The surety can be someone other than the guardian.
 
-  A **surety** is a person who also signs the bond, and is also responsible to the court for the guardian carrying out their duties.
+  [More about surety bonds](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment)
+  (opens in a new tab).
 
-  The court can decide that a surety is not required. 
+  When the guardian is for a minor, the surety requirement is often waived, or skipped.
+  This is because the guardian does not have control over the minor's money or property.
 
-  You can find more information about surety bonds [here](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment).
+  You can ask the judge to skip the surety requirement now.
 fields:
-  - no label: wants_sureties_waiver
+  - I want permission to skip the **surety** requirement: wants_sureties_waiver
     datatype: yesnoradio
 ---
 id: other custodian during past 60 days
