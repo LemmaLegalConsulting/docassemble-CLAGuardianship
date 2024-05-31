@@ -145,7 +145,7 @@ code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
-  if wants_fee_waiver:
+  if who_is_making_petition == "interested_party" and wants_fee_waiver:
     set_fee_waiver_defaults
     ask_affidavit_questions
   petition_for_appointment_of_guardian_preview_question
@@ -256,24 +256,6 @@ code: |
     parents_deceased = False
   
   set_parents_deceased = True
----
-code: |
-  fees['Filing fee'].waive = True
-  fees['Filing fee'].amount = 240
-  fees['Costs of an expert witness'].waive = False
-  
-  set_fee_waiver_defaults = True
----
-code: |
-  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
----
-code: |
-  fees['Filing fee'].waive = True
-  fees['Filing fee'].amount = 240
-  set_fee_waiver_defaults = True
----
-code: |
-  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
 ---
 #################### Object/Code Blocks End #####################
 ---
@@ -394,9 +376,16 @@ id: waiving_cost
 question: |
   You may qualify for a fee waiver
 subquestion: |
-  It usually costs $240 to get a guardianship. But some people qualify to file for free.
+  There is no fee to ask for a guardian. But you may need to pay to **serve** 
+  (give) the papers to the other people who need to know about this case.
+
+  The judge may also want to know your income to decide if you can afford to
+  guarantee the **surety bond**.
+
+  If you earn under a certain amount, you can ask the court to help pay to
+  serve the papers and to waive the surety bond.
 fields:
-  - Do you want to find out if you qualify to file for free?: wants_fee_waiver
+  - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
     datatype: yesnoradio
 ---
 #################### Override Blocks End #####################
