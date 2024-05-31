@@ -57,16 +57,26 @@ objects:
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
-sections:
+code: |
+  enable_al_nav_sections = True
+---
+depends on:
+  - who_is_making_petition
+variable name: al_nav_sections
+data:
   - review_case_information: About the case
-  - review_petitioner_information: Petitioner(s)
-  - review_parents_information: Minor's parents
-  - review_requests: Your requests to the Court
-  - review_minors_guardianship: Minor's guardianship history
-  - review_minor_assets: Minor's assets
+  - review_petitioner_information: About you
+  - review_parents_information: About the parents
+  - review_requests: What you need
+  - review_minors_guardianship: History
+  - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
-  - review_military_affidavit: Military Affidavit
+  - review_military_affidavit: Military affidavit
+  - section_fee_waiver: Fee waiver
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
   - review_petition_for_appointment_of_guardian: Review your answers
+  - section_download_petition: Download and print
 ---
 #################### Interview order #####################
 comment: |
@@ -75,8 +85,6 @@ id: interview_order_petition_for_appointment_of_guardian
 code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
-
-  nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
   form_filled_by_attorney
@@ -93,34 +101,31 @@ code: |
 
   nav.set_section("review_parents_information")
   parents.gather()
+  if parents_deceased:
+    if relatives.there_are_any:
+      relatives.gather()
+
+  if other_custodians.there_are_any:
+    other_custodians.gather()
+
   set_parents_deceased
   # if not form_filled_by_attorney:
   #   if any((user.is_bio_parent for user in users)):
   #     parent_wants_lawyer    
 
-  nav.set_section("review_requests")
-  has_guardian_nomination_by_signed_doc
-  
+  nav.set_section("review_requests") 
   reason_seeking_guardianship["parents_consent"]
+  has_guardian_nomination_by_signed_doc
 
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
   wants_sureties_waiver
 
   nav.set_section("review_minors_guardianship")
-  if other_custodians.there_are_any:
-    other_custodians.gather()
-  if who_is_making_petition == "interested_party":
-    if parents_deceased:
-      if relatives.there_are_any:
-        relatives.gather()
-  else:
-    if parents_deceased:
-      if relatives.there_are_any:
-        relatives.gather()
 
   if current_acting_guardian:
     existing_guardians_or_conservators_kickout
+  has_conservator_case_or_petition
 
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
@@ -130,10 +135,6 @@ code: |
   nav.set_section("review_additional_requests")
   wants_additional_request
 
-  nav.set_section("review_military_affidavit")
-  military_affidavit_intro
-  knows_status_already
-  interview_order_military_affidavit
   interview_order_petition_for_appointment_of_guardian = True
 ---
 ###################### Main order ######################
@@ -145,10 +146,22 @@ code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
-  if who_is_making_petition == "interested_party" and wants_fee_waiver:
-    set_fee_waiver_defaults
-    ask_affidavit_questions
+
+  nav.set_section("review_military_affidavit")
+  military_affidavit_intro
+  knows_status_already
+  interview_order_military_affidavit
+
+  if who_is_making_petition == "interested_party":
+    nav.set_section("section_fee_waiver")
+    if wants_fee_waiver:
+      set_fee_waiver_defaults
+      ask_affidavit_questions
+  
+  nav.set_section("review_petition_for_appointment_of_guardian")
   petition_for_appointment_of_guardian_preview_question
+
+  nav.set_section("section_download_petition")
   if esign:
     signature_date
   petition_for_appointment_of_guardian_download
@@ -395,9 +408,11 @@ fields:
 id: petition_for_appointment_of_guardian
 continue button field: petition_for_appointment_of_guardian_intro
 question: |
-  Petition for Appointment of Guardian of Minor (MPC 140)
+  Ask the court for a guardian for a minor
 subquestion: |
-  This interview will help you make a "Petition for the Appointment of a Guardian of a Minor."
+  This interview will help you make a "Petition for the Appointment of a Guardian of a Minor (MPC 140),"
+  and additional forms that are filed with the petition.
+
   A guardian is an adult who gets permission from a judge to make decisions for a minor.
   A minor is someone who is under 18.
 
@@ -411,11 +426,11 @@ subquestion: |
   1. Information about the minor's parents, including name, contact information, and whether they are living.
   1. Information about anyone **else** who has taken care of the minor over the last 60 days.
   2. Information about any bank accounts and other property that the minor owns.
+  1. Your own financial information, unless you are the minor.
 
-  **When you are finished**:
+  **When you are finished**
 
-  1. Attach any relevant documents to this Petition. As you complete this interview, the questions will let you know which documents you will need to gather.
-  2. File the documents this interview makes with the court.
+  You need to print and file the documents that this interview makes with the court.
 
   Some of the documents may need to be signed in front of a notary public.
   You may also need or want the signatures of:
@@ -586,10 +601,16 @@ fields:
     datatype: object_radio
     choices:
       - petitioners[0].address
+      - children[0].address
       - |
         [parent.address for parent in parents.complete_elements() if not parent.is_deceased]
     none of the above: A different address
-    disable others: True
+    disable others:
+      - parents[i].address.address
+      - parents[i].address.unit
+      - parents[i].address.city
+      - parents[i].address.state
+      - parents[i].address.zip
   - Street address: parents[i].address.address
     required: False
     address autocomplete: True
@@ -869,7 +890,17 @@ subquestion: |
 fields:
   - code: |
       other_custodians[i].name_fields()
-  - code: |
+  # - An address already mentioned: other_custodians[i].address
+  #   datatype: object_radio
+  #   choices:
+  #     - petitioners[0].address
+  #     - children[0].address
+  #     - |
+  #       [parent.address for parent in parents.complete_elements() if not parent.is_deceased and parent.address.address]
+  #     - |
+  #       [custodian.adddress for custodian in other_custodians.complete_elements() if custodian.address.address]
+  #   none of the above: A different address
+  - code: | 
       other_custodians[i].address_fields()
   - Primary phone number: other_custodians[i].phone_number
   - Relationship to ${ children.familiar() }: other_custodians[i].relationship_to_minor
@@ -936,7 +967,9 @@ fields:
   - code: |
       requested_guardians[i].address_fields()
   - Primary phone number: requested_guardians[i].phone_number
+    required: False
   - Relationship to ${ children.familiar() }: requested_guardians[i].relationship_to_minor
+    required: False
 ---
 id: requested guardian priority for appointment
 question: |
@@ -1725,13 +1758,13 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="petition for appointment of guardian of minor (MPC 140)", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
+  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
 ---
 code: |
   petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].label = "People with primary care or custody in the last 60 days"
   petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].overflow_trigger = 2
 
-  petition_for_removal_of_guardian_attachment.overflow_fields.gathered = True
+  petition_for_appointment_of_guardian_attachment.overflow_fields.gathered = True
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:

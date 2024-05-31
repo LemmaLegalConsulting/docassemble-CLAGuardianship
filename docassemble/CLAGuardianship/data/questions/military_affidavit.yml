@@ -24,8 +24,8 @@ objects:
   - other_parties: ALPeopleList
   - additional_parties: ALPeopleList
   - serving_parties: ALPeopleList
-  - unsure_serving_parties: ALPeopleList
-  - concluded_service_parties: ALPeopleList
+  - unsure_serving_parties: ALPeopleList.using(auto_gather=False, gathered=True)
+  - concluded_service_parties: ALPeopleList.using(auto_gather=False, gathered=True)
 ---
 sections:
   - review_military_affidavit: Review your answers
@@ -43,13 +43,13 @@ code: |
   additional_parties.gather()
   serving_parties
   if len(serving_parties) < len(users) + len(other_parties) + len(additional_parties):
-    concluded_service_parties
+    ask_concluded_service_parties
     if len(concluded_service_parties.elements):
       set_concluded_service_dates
     for party in concluded_service_parties.elements:
       party.service_ended_date
-  if len(serving_parties) + len(concluded_service_parties) < len(users) + len(other_parties) + len(additional_parties):
-    unsure_serving_parties
+  if (len(serving_parties) + len(concluded_service_parties)) < len(users) + len(other_parties) + len(additional_parties):
+    ask_unsure_serving_parties
   if len(serving_parties) + len(concluded_service_parties) + len(unsure_serving_parties) < len(users) + len(other_parties) + len(additional_parties):
     confirm_not_serving_parties
   trial_court
@@ -143,6 +143,7 @@ fields:
       - additional_parties
     exclude:
       - serving_parties
+continue button field: ask_concluded_service_parties
 ---
 id: concluded service parties date
 question: |
@@ -192,6 +193,7 @@ fields:
 validation code: |
   if len(unsure_serving_parties.elements) and not bond_agreement_i_understand:
     validation_error("You must agree to pay a bond if you are unsure about a party's military status.")
+continue button field: ask_unsure_serving_parties
 ---
 template: explain_military_unsure_bond
 subject: |
@@ -378,7 +380,7 @@ code: |
 
 ---
 id: military affidavit review screen
-event: review_military_affidavit
+# event: review_military_affidavit
 question: |
   Review your answers
 review:
@@ -567,7 +569,7 @@ attachment:
       - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "trial_court_division": ${ trial_court.division }
       - "petitioners": |
-          ${ military_affidavit_case_name }
+          ${ str(military_affidavit_case_name) }
       - "respondents": |
           % if user_ask_role == "defendant":
           ${ users }
