@@ -85,6 +85,10 @@ code: |
   form_filled_by_attorney
 
   who_is_making_petition
+
+  if current_acting_guardian:
+    existing_guardians_or_conservators_kickout
+    
   children.gather()
   trial_court
 
@@ -129,9 +133,6 @@ code: |
     if parents_deceased:
       if relatives.there_are_any:
         relatives.gather()
-
-  if current_acting_guardian:
-    existing_guardians_or_conservators_kickout
 
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:

@@ -348,21 +348,21 @@ question: |
   Confidential Address - Affidavit Disclosing Care or Custody Proceeding
 subquestion: |
   The affidavit disclosing care or custody proceedings form has two pages. 
-  The second page that lists addresses and phone
-  numbers can be kept confidential (private) if you need it to be.
+  The second page lists addresses and phone
+  numbers and can be kept confidential (private) if you need it to be.
 
   ${ collapse_template(explain_confidential_addresses) }
 
-  Do you need your address to be kept private for any of the following reasons?
+  Do you need to keep phone numbers and addresses information private for any of the following reasons?
 fields:
   - Check any that you have good reason to believe: confidential_address_reasons
     datatype: checkboxes
     choices:
-      - I am filing a 209A (abuse prevention) order
-      - I live in a domestic violence shelter
-      - I am in danger of abuse
-      - My children are in danger of abuse
-      - I have a legal reason to keep it private that is not listed above
+      - someone has a 209A (abuse prevention) order
+      - someone lives in a domestic violence shelter
+      - someone (other the minor) in danger of abuse
+      - the minor is in danger of abuse
+      - another (legal) reason not listed above
 ---
 template: explain_confidential_addresses
 subject: |
@@ -1183,4 +1183,3 @@ code: |
   year
   trigger_aff_care_or_custody_computed_variables = True
 ---
-
