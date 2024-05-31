@@ -6,6 +6,7 @@ include:
   - shared.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
+  - affidavit_disclosing_care_or_custody.yml
   - customized_screens.yml # Must come after the other includes
 ---
 metadata:
@@ -150,6 +151,7 @@ code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
+  interview_order_affidavit_disclosing_care_or_custody
   if wants_fee_waiver:
     set_fee_waiver_defaults
     ask_affidavit_questions
@@ -1877,3 +1879,4 @@ attachment:
 ---
 code: |
   user_ask_role = "plaintiff"
+---

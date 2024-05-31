@@ -51,11 +51,13 @@ objects:
 ---
 id: interview_order_affidavit_disclosing_care_or_custody
 code: |
+  nav.set_section("review_affidavit_disclosing_care_or_custody")
+  
   affidavit_disclosing_care_or_custody_intro
 
   # defendants.there_are_any = True
 
-  users.gather()
+  # users.gather()
   case_name  
   children.there_are_any = True
   children.gather()
@@ -92,7 +94,9 @@ code: |
   day # uncomment for standalone
 
   if needs_attorney_signature:
-    attorneys.gather()
+    signing_attorney.name.first
+    signing_attorney.address.address
+  
 
   # uncomment for standalone
   need_past_address_appendix
@@ -108,6 +112,7 @@ code: |
   # affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
   # basic_questions_signature_flow
   # users[0].signature
+  others_in_proceedings.gather() # making sure defined before attachment block
 
   interview_order_affidavit_disclosing_care_or_custody = True
 ---
@@ -115,7 +120,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-mandatory: True
+# mandatory: True
 code: |
   interview_order_affidavit_disclosing_care_or_custody
   if esign:
@@ -130,47 +135,7 @@ code: |
 ---
 #################### Object/Code Blocks Start #####################
 ---
-code: |
-  users[i].name.first
-  users[i].address.address
-  users[i].complete = True
----
-code: |
-  users.there_is_another = False
----
-code: |
-  attorneys[i].name.first
-  attorneys[i].address.address
-  attorneys[i].complete = True
----
-code: |
-  attorneys.there_is_another = False
----
-code: |
-  if needs_attorney_signature:
-    attorneys.there_are_any = True
----
 #################### Override Blocks Start #####################
----
-id: petitioner information
-sets:
-  - users[0].name.first
-  - users[0].name.last
-  - users[0].name.middle
-  - users[0].name.suffix
-  - users[0].address.address
-  - users[0].address.unit
-  - users[0].address.city
-  - users[0].address.state
-  - users[0].address.zip
-  - users[0].address.country
-question: |
-  Tell us about yourself
-fields:
-  - code: |
-      users[0].name_fields()
-  - code: |
-      users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
 ---
 #################### Question Blocks Start #####################
 ---
@@ -541,39 +506,20 @@ buttons:
   - Myself: False
   - As an attorney: True
 ---
-# id: attorney signing address
-# question: |
-#   What is the address of the attorney signing this form?
-# fields:
-#   - Street: signing_attorney.address.address
-#     address autocomplete: True
-#   - Unit: signing_attorney.address.unit
-#     required: False
-#   - City: signing_attorney.address.city
-#   - State: signing_attorney.address.state
-#     code: |
-#       states_list()
-#   - Zip: signing_attorney.address.zip
-#     required: False
----
-id: attorney information
-sets:
-  - attorneys[0].name.first
-  - attorneys[0].name.last
-  - attorneys[0].name.middle
-  - attorneys[0].name.suffix
-  - attorneys[0].address.address
-  - attorneys[0].address.unit
-  - attorneys[0].address.city
-  - attorneys[0].address.state
-  - attorneys[0].address.zip
+id: attorney signing address
 question: |
-  Tell us about the attorney filling this form
+  What is the address of the attorney signing this form?
 fields:
-  - code: |
-      attorneys[0].name_fields()
-  - code: |
-      attorneys[0].address_fields()
+  - Street: signing_attorney.address.address
+    address autocomplete: True
+  - Unit: signing_attorney.address.unit
+    required: False
+  - City: signing_attorney.address.city
+  - State: signing_attorney.address.state
+    code: |
+      states_list()
+  - Zip: signing_attorney.address.zip
+    required: False
 ---
 #question: |
 #  Date
@@ -742,6 +688,7 @@ fields:
     disable others: True
     exclude: # Don't ever offer DCF or OP here
       - DCF
+      - other_care_custody_proceedings[i].other_parties.complete_elements()
       # - other_parties[0]
   - Name: other_care_custody_proceedings[i].other_parties[j].name.first
   - code: |
@@ -1122,7 +1069,7 @@ attachment:
 ---
 attachment:
   variable name: affidavit_of_care_or_custody_attachment[i]
-  skip undefined: True
+  skip undefined: False
   name: Affidavit of Care
   filename: Affidavit_of_Care
   # editable: False
@@ -1188,7 +1135,7 @@ attachment:
     - "day": ${ day }
     - "month": ${ month }
     - "year": ${ year }
-    - "attorney_for_juvenile_address_on_one_line": ${ attorneys[0].address.on_one_line(include_unit=True) if needs_attorney_signature else '' }
+    - "attorney_for_juvenile_address_on_one_line": ${ signing_attorney.on_one_line(include_unit=True) if needs_attorney_signature else '' }
     - "child1_past_addresses_1": ${ children_of_both.item(0).previous_addresses.item(0).on_one_line() if confidential_address else '' }
     - "child1_past_addresses_2": ${ children_of_both.item(0).previous_addresses.item(1).on_one_line() if confidential_address else '' }
     - "child2_past_addresses_1": ${ children_of_both.item(1).previous_addresses.item(0).on_one_line() if confidential_address else '' }
