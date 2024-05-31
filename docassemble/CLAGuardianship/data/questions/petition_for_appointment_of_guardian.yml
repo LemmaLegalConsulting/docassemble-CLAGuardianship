@@ -53,23 +53,33 @@ code: |
   al_form_type = "other"
 ---
 objects:
-  - parents: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
-  - other_custodians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+  - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
-sections:
+code: |
+  enable_al_nav_sections = True
+---
+depends on:
+  - who_is_making_petition
+variable name: al_nav_sections
+data:
   - review_case_information: About the case
-  - review_petitioner_information: Petitioner(s)
-  - review_parents_information: Minor's parents
-  - review_requests: Your requests to the Court
-  - review_minors_guardianship: Minor's guardianship history
-  - review_minor_assets: Minor's assets
+  - review_petitioner_information: About you
+  - review_parents_information: About the parents
+  - review_requests: What you need
+  - review_minors_guardianship: History
+  - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
-  - review_military_affidavit: Military Affidavit
+  - review_military_affidavit: Military affidavit
+  - section_fee_waiver: Fee waiver
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
   - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
   - review_petition_for_appointment_of_guardian: Review your answers
+  - section_download_petition: Download and print
 ---
 #################### Interview order #####################
 comment: |
@@ -78,8 +88,6 @@ id: interview_order_petition_for_appointment_of_guardian
 code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
-
-  nav.set_section("review_petition_for_appointment_of_guardian")
 
   nav.set_section("review_case_information")
   form_filled_by_attorney
@@ -100,39 +108,31 @@ code: |
 
   nav.set_section("review_parents_information")
   parents.gather()
+  if parents_deceased:
+    if relatives.there_are_any:
+      relatives.gather()
+
+  if other_custodians.there_are_any:
+    other_custodians.gather()
+
   set_parents_deceased
   # if not form_filled_by_attorney:
   #   if any((user.is_bio_parent for user in users)):
   #     parent_wants_lawyer    
 
-  nav.set_section("review_requests")
+  nav.set_section("review_requests") 
+  reason_seeking_guardianship["parents_consent"]
   has_guardian_nomination_by_signed_doc
-  
-  reason_seeking_guardianship
-  if reason_seeking_guardianship['parents_rights_terminated']:
-    parental_rights_termination_reason
-  if reason_seeking_guardianship['parents_unavailable']:
-    parents_unavailable_to_exercise_parental_rights_exp
-  if reason_seeking_guardianship['parents_unfit']:
-    parents_unfit_to_exercise_parental_rights_exp
-  if reason_seeking_guardianship['previous_guardian']:
-    previous_third_party_guardian_death_or_incapacitation_exp
 
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
   wants_sureties_waiver
 
   nav.set_section("review_minors_guardianship")
-  if other_custodians.there_are_any:
-    other_custodians.gather()
-  if who_is_making_petition == "interested_party":
-    if parents_deceased:
-      if relatives.there_are_any:
-        relatives.gather()
-  else:
-    if parents_deceased:
-      if relatives.there_are_any:
-        relatives.gather()
+
+  if current_acting_guardian:
+    existing_guardians_or_conservators_kickout
+  has_conservator_case_or_petition
 
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
@@ -163,10 +163,22 @@ code: |
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
   interview_order_affidavit_disclosing_care_or_custody
-  if wants_fee_waiver:
-    set_fee_waiver_defaults
-    ask_affidavit_questions
+
+  nav.set_section("review_military_affidavit")
+  military_affidavit_intro
+  knows_status_already
+  interview_order_military_affidavit
+
+  if who_is_making_petition == "interested_party":
+    nav.set_section("section_fee_waiver")
+    if wants_fee_waiver:
+      set_fee_waiver_defaults
+      ask_affidavit_questions
+  
+  nav.set_section("review_petition_for_appointment_of_guardian")
   petition_for_appointment_of_guardian_preview_question
+
+  nav.set_section("section_download_petition")
   if esign:
     signature_date
   petition_for_appointment_of_guardian_download
@@ -275,24 +287,6 @@ code: |
   
   set_parents_deceased = True
 ---
-code: |
-  fees['Filing fee'].waive = True
-  fees['Filing fee'].amount = 240
-  fees['Costs of an expert witness'].waive = False
-  
-  set_fee_waiver_defaults = True
----
-code: |
-  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
----
-code: |
-  fees['Filing fee'].waive = True
-  fees['Filing fee'].amount = 240
-  set_fee_waiver_defaults = True
----
-code: |
-  affidavitofindigency_attachment.enabled = wants_fee_waiver and is_indigent
----
 #################### Object/Code Blocks End #####################
 ---
 #################### Override Blocks Start #####################
@@ -326,7 +320,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   When were you born?
   % else:
-  When was ${ children[0].name } born?
+  When was ${ children.familiar() } born?
   % endif
 fields:
   - Birthdate: children[0].birthdate
@@ -339,7 +333,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   What is your phone number?
   % else:
-  What is ${ children[0].name }'s phone number?
+  What is ${ children.familiar() }'s phone number?
   % endif
 fields:
   - Primary phone number: children[0].phone_number
@@ -372,7 +366,7 @@ fields:
       users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[0].phone_number
     datatype: al_international_phone
-  - Relationship to ${ children[0].name }: users[0].relationship_to_minor
+  - Relationship to ${ children.familiar() }: users[0].relationship_to_minor
 ---
 id: petitioner information
 sets:
@@ -403,7 +397,7 @@ fields:
       users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[i].phone_number
     datatype: al_international_phone
-  - Relationship to ${ children[0].name }: users[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: users[i].relationship_to_minor
 validation code: |
   if len(users.complete_elements()) > 0:
     users.there_is_another = False
@@ -412,9 +406,16 @@ id: waiving_cost
 question: |
   You may qualify for a fee waiver
 subquestion: |
-  It usually costs $240 to get a guardianship. But some people qualify to file for free.
+  There is no fee to ask for a guardian. But you may need to pay to **serve** 
+  (give) the papers to the other people who need to know about this case.
+
+  The judge may also want to know your income to decide if you can afford to
+  guarantee the **surety bond**.
+
+  If you earn under a certain amount, you can ask the court to help pay to
+  serve the papers and to waive the surety bond.
 fields:
-  - Do you want to find out if you qualify to file for free?: wants_fee_waiver
+  - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
     datatype: yesnoradio
 ---
 #################### Override Blocks End #####################
@@ -424,27 +425,35 @@ fields:
 id: petition_for_appointment_of_guardian
 continue button field: petition_for_appointment_of_guardian_intro
 question: |
-  Petition for Appointment of Guardian of Minor (MPC 140)
+  Ask the court for a guardian for a minor
 subquestion: |
-  This interview will help you fill out a petition for the appointment of a guardian for a minor.
+  This interview will help you make a "Petition for the Appointment of a Guardian of a Minor (MPC 140),"
+  and additional forms that are filed with the petition.
 
-  You can use this tool if you are **either**:
+  A guardian is an adult who gets permission from a judge to make decisions for a minor.
+  A minor is someone who is under 18.
 
-  * A minor who is 14 years of age or older; **or**
+  You can use this interview if you are **either**:
 
-  * Any person interested in the welfare of a minor.
+  * An adult who cares about a minor's well-being; **or**
+  * A minor who is 14 or older.
 
   **Before you get started**, please gather:
 
-  1. Information about the minor's parents, including name, contact information, and whether they are still living. If both parents are deceased, include the names and contact information of any living relatives.
+  1. Information about the minor's parents, including name, contact information, and whether they are living.
+  1. Information about anyone **else** who has taken care of the minor over the last 60 days.
+  2. Information about any bank accounts and other property that the minor owns.
+  1. Your own financial information, unless you are the minor.
 
-  2. Information about any assets the minor may have, such as bank accounts and property, as well as the value of each asset.
+  **When you are finished**
 
-  **When you are finished**, you will need to:
+  You need to print and file the documents that this interview makes with the court.
 
-  1. Attach any relevant documents to this Petition. As you complete this interview, the questions will let you know which documents you will need to gather.
+  Some of the documents may need to be signed in front of a notary public.
+  You may also need or want the signatures of:
 
-  2. File this Petition in the relevant court.  
+  * The minor, if they are 14 or older
+  * The minor's parents, if they are still living
 
   Most people take about 20 minutes to finish this interview.
 ---
@@ -498,7 +507,7 @@ fields:
         1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
         % endif
 
-  - Why is this the right court?: court_choice_reason
+  - I will file in this court because: court_choice_reason
     datatype: checkboxes
     minlength: 1
     none of the above: False
@@ -530,6 +539,36 @@ fields:
   - no label: users.there_is_another
     datatype: yesnoradio
 ---
+id: how many parents
+question: |
+  How many parents can you tell us about?
+subquestion: |
+  The judge needs to know about the minor's parents, whether or not they are alive.
+
+  ${ collapse_template(what_is_a_parent) }
+
+  But if you do not have information about a parent, you can just tell us the information
+  you know.
+fields:
+  - I can tell you about: parents.target_number
+    datatype: integer
+    input type: radio
+    choices:
+      - No parents: 0
+      - One parent: 1
+      - Both parents: 2
+---
+template: what_is_a_parent
+subject: |
+  What is a parent?
+content: |
+  A parent is someone who is named on the child's official birth record.
+  That includes a birth parent who still has parental rights and an adoptive parent.
+
+  When someone is adopted, the birth record is updated with the new parent's name.
+
+  You do not need to list a step parent or a foster parent unless they have legally adopted the child.      
+---
 id: parent basic information
 sets:
   - parents[i].name.first
@@ -537,18 +576,18 @@ sets:
   - parents[i].name.middle
   - parents[i].name.suffix
 question: |
-  % if (who_is_making_petition == "minor") and (len(parents.complete_elements()) < 1) and (not form_filled_by_attorney):
-  Tell us about either of your parents
-  % elif (who_is_making_petition == "minor") and (len(parents.complete_elements()) > 0) and (not form_filled_by_attorney):
-  Tell us about your other parent
-  % elif (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and form_filled_by_attorney)) and len(parents.complete_elements()) > 0:
-  Tell us about ${ children[0].name }'s other parent
-  % else: 
-  Tell us about either of ${ children[0].name }'s parents
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  % if parents.target_number == 1:
+  Tell us about your parent
+  % else:
+  Tell us about your ${ ordinal(i) } parent
   % endif
-subquestion: |
-  % if len(parents.complete_elements()) < 1:
-  You must provide information for **at least one parent**. If there are two parents, you can start with either one. You will get the chance to add another parent later on.  
+  % else:
+  % if parents.target_number == 1:
+  Tell us about ${ children.familiar() }'s parent
+  % else:
+  Tell us about ${ children.familiar() }'s ${ ordinal(i) } parent
+  % endif
   % endif
 fields:
   - code: |
@@ -571,14 +610,27 @@ sets:
   - parents[i].address.country
   - parents[i].phone_number
 question: |
-  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  If available, enter contact information for your parent, ${ parents[i].name }
-  % else: 
-  If available, enter contact information for ${ children[0].name }'s parent, ${ parents[i].name }
-  % endif
+  Contact information for ${ parents[i] }
+subquestion: |
+  Give as much information as you know.
 fields:
+  - An address already mentioned: parents[i].address
+    datatype: object_radio
+    choices:
+      - petitioners[0].address
+      - children[0].address
+      - |
+        [parent.address for parent in parents.complete_elements() if not parent.is_deceased]
+    none of the above: A different address
+    disable others:
+      - parents[i].address.address
+      - parents[i].address.unit
+      - parents[i].address.city
+      - parents[i].address.state
+      - parents[i].address.zip
   - Street address: parents[i].address.address
     required: False
+    address autocomplete: True
   - Apartment: parents[i].address.unit
     required: False
   - City: parents[i].address.city
@@ -590,71 +642,85 @@ fields:
   - Primary phone number: parents[i].phone_number
     required: False
 ---
-id: parents there_is_another
-question: |
-  Is there another parent you can tell us about?
-fields:
-  - no label: parents.there_is_another
-    datatype: yesnoradio
----
-code: |
-  if len(parents.complete_elements()) >= 2:
-    parents.there_is_another = False
+objects:
+  - reason_seeking_guardianship: DADict.using(auto_gather=False, gathered=True)
 ---
 id: why seeking guardianship
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  Why are you seeking guardianship for yourself?
-  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
-  Why is ${ children[0].name } seeking guardianship for themselves?
+  Why do you need a guardian?
   % else:
-  Why are you seeking guardianship for ${ children[0].name }?
+  Why does ${ children.familiar() } need a guardian?
   % endif
 subquestion: |
-  % if who_is_making_petition == "minor":
-  If you are seeking guardianship because of the death of your parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
-  If ${ children[0].name } is seeking guardianship because of the death of their parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % else:
-  If you are seeking guardianship because of the death of ${ children[0].name }'s parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % endif
+  You need to give the judge a short reason to get a guardian.
+
+  When the judge schedules a hearing, you will have a chance to explain
+  more.
+
+  Choose at least one reason.
 fields:
-  - Select all that apply: reason_seeking_guardianship
-    datatype: checkboxes
-    none of the above: False
-    required: True
-    choices:
-      - Parent or parents consent to the appointment of a guardian: parents_consent
-      - Parent or parents had all their parental rights terminated: parents_rights_terminated
-      - Parent or parents are unavailable to exercise their parental rights: parents_unavailable
-      - Parent or parents are unfit to exercise their parental rights: parents_unfit
-      - Guardianship was granted to a third party that is now deceased or incapacitated, and did not appoint a successor by will or written instrument: previous_guardian
+  - ${ children.familiar() }'s parents **agree** ${ children.familiar() } should have a guardian: reason_seeking_guardianship["parents_consent"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents are **not fit** parents (they do not or cannot take care of ${ children.familiar() }) : reason_seeking_guardianship["parents_unfit"]
+    datatype: yesno
+  - Briefly explain: parents_unfit_to_exercise_parental_rights_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["parents_unfit"]
+    help: |
+      Give the judge a short explanation for why the parents are unfit to take care of ${ children.familiar() }.
 
+      You do not need to list every reason. You will be able to explain more at the hearing.
+  - ${ children.familiar()}'s parents **died**: reason_seeking_guardianship["parents_death"]
+    datatype: yesno
+  - A judge ended (**terminated**) the parental rights of ${ children.familiar() }'s parents: reason_seeking_guardianship["parents_rights_terminated"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents voluntarily **gave up** their right to take care of ${ children.familiar() } in a court: reason_seeking_guardianship["parents_surrendered_rights"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents are **not available** to take care of ${ children.familiar() }: reason_seeking_guardianship["parents_unavailable"]
+    datatype: yesno
+  - Briefly explain: parents_unavailable_to_exercise_parental_rights_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["parents_unavailable"]
+    help: |
+      Give the judge a short explanation for why the parents are not **available** to take care of ${ children.familiar() }.
+
+      You do not need to list every reason. You will be able to explain more at the hearing.
+  - ${ children.familiar() } already had a guardian, but that **guardian died** or is no longer able to act as guardian and the guardian did not name a replacement in writing: reason_seeking_guardianship["previous_guardian"]
+    datatype: yesno
+  - note: |
+      **Because you said that the previous guardian died or is no longer able to take care of ${ children.familiar() }, you need to give the judge more information.**
+
+      The information could include:
+      
+      * A copy of the court order that appointed the previous guardian
+      * A copy of the death certificate of the previous guardian
+
+      You can upload the information now, or make a copy and attach it before you file.
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Briefly explain the information you will give the judge: previous_third_party_guardian_death_or_incapacitation_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Are you ready to upload the documents now?: ready_to_attach_previous_guardian_order
+    datatype: yesnoradio
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Upload the document (as a PDF or a picture with your phone): previous_guardian_order_attachment
+    datatype: files
+    show if: ready_to_attach_previous_guardian_order
+    file css class: None
 validation code: |
-  if all(value == False for value in reason_seeking_guardianship.values()):
-    validation_error("You need to select at least one reason for seeking guardianship.")
-
-  if reason_seeking_guardianship['parents_consent']:
-    parents_consent_to_guardian_appointment = True
-
-  if reason_seeking_guardianship['parents_rights_terminated']:
-    parental_rights_terminated = True
-
-  if reason_seeking_guardianship['parents_unavailable']:
-    parents_unavailable_to_exercise_parental_rights = True
-
-  if reason_seeking_guardianship['parents_unfit']:
-    parents_unfit_to_exercise_parental_rights = True
-
-  if reason_seeking_guardianship['previous_guardian']:
-    previous_third_party_guardian_death_or_incapacitation = True
+  if not reason_seeking_guardianship.true_values():
+    validation_error('You must choose at least one reason', field='reason_seeking_guardianship["previous_guardian"]')
 ---
 id: nomination of guardian by signed writing
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has a guardian been nominated for you in a will or other written document, signed by a parent or existing guardian?
   % else:
-  Has a guardian been nominated for ${ children[0].name } in a will or other written document, signed by a parent or existing guardian?
+  Has a guardian been nominated for ${ children.familiar() } in a will or other written document, signed by a parent or existing guardian?
   % endif
 subquestion: |
   If you select **Yes**, you will need to attach a copy of that signed document.
@@ -672,7 +738,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do your parents consent to the appointment of a guardian?
   % else:
-  Do ${ children[0].name }'s parents consent to the appointment of a guardian?
+  Do ${ children.familiar() }'s parents consent to the appointment of a guardian?
   % endif
 fields:
   - no label: parents_consent_to_guardian_appointment
@@ -683,7 +749,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   How were the parental rights of your parent(s) terminated?
   % else:
-  How were the parental rights of ${ children[0].name }'s parent(s) terminated?
+  How were the parental rights of ${ children.familiar() }'s parent(s) terminated?
   % endif
 subquestion: |
   Depending on which answer you select, **you must attach a copy of a corresponding document**—either a court order, a surrender, or a death certificate—to this Petition.
@@ -700,7 +766,7 @@ question: |
   % if who_is_making_petition == "minor" and not (form_filled_by_attorney):
   Tell us why your parent(s) are unavailable to exercise their parental rights
   % else:
-  Tell us why ${ children[0].name }'s parent(s) are unavailable to exercise their parental rights
+  Tell us why ${ children.familiar() }'s parent(s) are unavailable to exercise their parental rights
   % endif
 fields:
   - Please give a brief explanation: parents_unavailable_to_exercise_parental_rights_exp
@@ -712,7 +778,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Tell us why your parent(s) are unfit to exercise their parental rights
   % else:
-  Tell us why ${ children[0].name }'s parent(s) are unfit to exercise their parental rights
+  Tell us why ${ children.familiar() }'s parent(s) are unfit to exercise their parental rights
   % endif
 fields:
   - Please give a brief explanation: parents_unfit_to_exercise_parental_rights_exp
@@ -732,9 +798,9 @@ fields:
 id: petitioner requesting guardianship
 question: |
   % if form_filled_by_attorney:
-  Does the petitioner want to ask the court to appoint them as a guardian for ${ children[0].name }?
+  Does the petitioner want to ask the court to appoint them as a guardian for ${ children.familiar() }?
   % else:
-  Do you want to ask the court to appoint you as a guardian for ${ children[0].name }?
+  Do you want to ask the court to appoint you as a guardian for ${ children.familiar() }?
   % endif
 subquestion: |
   % if form_filled_by_attorney:
@@ -748,36 +814,73 @@ fields:
 ---
 id: sureties waiver
 question: |
-  Do you want to ask the court to waive sureties required on the bond?
+  Waiving the **surety** requirement
 subquestion: |
-  **What is a surety bond?**
+  When a judge appoints a guardian, they require the guardian to sign a **bond**
+  to the court and name someone as a **surety**. The bond is a personal guarantee. 
+  It is a promise that the guardian will manage the money and property of the ward responsibly.
 
-  In order to be appointed as a guardian, a person must promise the court to faithfully carry out the legal duties of a guardian. This promise is called a **bond**.
+  The **surety** is a person who promises to pay the court if the guardian does not manage the money
+  or property the way that they should. The surety can be someone other than the guardian.
 
-  A **surety** is a person who also signs the bond, and is also responsible to the court for the guardian carrying out their duties.
+  [More about surety bonds](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment)
+  (opens in a new tab).
 
-  The court can decide that a surety is not required. 
+  When the guardian is for a minor, the surety requirement is often waived, or skipped.
+  This is because the guardian does not have control over the minor's money or property.
 
-  You can find more information about surety bonds [here](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment).
+  You can ask the judge to skip the surety requirement now.
 fields:
-  - no label: wants_sureties_waiver
+  - I want permission to skip the **surety** requirement: wants_sureties_waiver
     datatype: yesnoradio
 ---
 id: other custodian during past 60 days
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  Has anyone else had primary care and custody of you during the last 60 days?
+  Is there someone else who was in charge of taking care of you in the last 60 days?
   % else:
-  Has anyone else had primary care and custody of ${ children[0].name } during the last 60 days?
+  Is there someone else who was in charge of taking care of ${ children.familiar() } in the last 60 days?
   % endif
+subquestion: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  The court needs to know who had **primary care or custody** of you.
+
+  Anyone who had primary care or custody of you needs to know about this court case and has
+  a right to go to the hearing.
+  % else:
+  The court needs to know who had **primary care or custody** of ${ children.familiar() }.
+
+  Anyone who had primary care or custody of ${ children.familiar() } needs to know about this court case and has
+  a right to go to the hearing.
+  % endif
+
+  ${ collapse_template(what_is_primary_care_or_custody) }
 fields:
-  - no label: other_custodians.there_are_any
+  - Did someone else have primary care or custody in the last 60 days?: other_custodians.there_are_any
     datatype: yesnoradio
+  - label: |
+      % if who_is_making_petition == "minor":
+      How many people?
+      % else:
+      How many people, not counting yourself?
+      % endif
+    field: other_custodians.target_number
+    datatype: integer
+    show if: other_custodians.there_are_any
 validation code: |
-  if other_custodians.there_are_any:
-    other_primary_care_or_custody_yes = True
-  else:
-    other_primary_care_or_custody_no = True
+  if not other_custodians.there_are_any:
+    other_custodians.target_number = 0
+---
+template: what_is_primary_care_or_custody
+subject: |
+  What does **primary care or custody** mean?
+content: |
+  "Primary care or custody" means you are one of the people who takes care of a child 
+  most of the time. You make big decisions for them and handle their daily needs like meals, 
+  a place to live, and keeping them safe.
+  
+  A paid babysitter doesn't have primary care or custody. 
+  They are only helping for a short time and aren't responsible for all of the child's needs.
 ---
 id: other custodian information
 sets:
@@ -792,42 +895,45 @@ sets:
   - other_custodians[i].address.zip
   - other_custodians[i].phone_number
 question: |
-  % if (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
-  Who had primary care and custody over you during the past 60 days? 
-  % elif (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
-  Who had primary care and custody over ${ children[0].name } during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
-  Who else had primary care and custody over you during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
-  Who else had primary care and custody over ${ children[0].name } during the past 60 days?
+  % if other_custodians.target_number == 1:
+  Information about the person with primary care or custody
+  % else:
+  Information about the ${ ordinal(i) } person with primary care or custody
   % endif
 subquestion: |
-  % if len(other_custodians.complete_elements()) < 1:
-  You can name **up to two people** in this Petition. Start by telling us about the first one.
+  % if len(other_custodians.complete_elements()) > 0:  
+  So far, you have told us about ${ other_custodians.complete_elements() }.
   % endif
 fields:
   - code: |
       other_custodians[i].name_fields()
-  - code: |
+  # - An address already mentioned: other_custodians[i].address
+  #   datatype: object_radio
+  #   choices:
+  #     - petitioners[0].address
+  #     - children[0].address
+  #     - |
+  #       [parent.address for parent in parents.complete_elements() if not parent.is_deceased and parent.address.address]
+  #     - |
+  #       [custodian.adddress for custodian in other_custodians.complete_elements() if custodian.address.address]
+  #   none of the above: A different address
+  - code: | 
       other_custodians[i].address_fields()
   - Primary phone number: other_custodians[i].phone_number
-  - Relationship to ${ children[0].name }: other_custodians[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: other_custodians[i].relationship_to_minor
   - Start date: other_custodians[i].start_date
     datatype: date
     required: True
-  - End date: other_custodians[i].end_date
+  - End date (leave blank if ongoing): other_custodians[i].end_date
     datatype: date
-    required: True
-validation code: |
-  if len(other_custodians.complete_elements()) > 0:
-    other_custodians.there_is_another = False
+    required: False
 ---
 id: other custodians there_is_another
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has anyone else had primary care and custody over you during the last 60 days?
   % else:
-  Has anyone else had primary care and custody over ${ children[0].name } during the last 60 days?
+  Has anyone else had primary care and custody over ${ children.familiar() } during the last 60 days?
   % endif
 fields:
   - no label: other_custodians.there_is_another
@@ -852,13 +958,13 @@ question: |
   % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor" and form_filled_by_attorney):
   Who does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "interested_party"):
-  Who do you want the court to appoint as a guardian for ${ children[0].name }?
+  Who do you want the court to appoint as a guardian for ${ children.familiar() }?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who else do you want the court to appoint as your guardian?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and form_filled_by_attorney):
   Who else does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "interested_party"):
-  Who else do you want the court to appoint as a guardian for ${ children[0].name }?
+  Who else do you want the court to appoint as a guardian for ${ children.familiar() }?
   % endif
 subquestion: |
   % if len(requested_guardians.complete_elements()) < 1:
@@ -878,13 +984,16 @@ fields:
   - code: |
       requested_guardians[i].address_fields()
   - Primary phone number: requested_guardians[i].phone_number
-  - Relationship to ${ children[0].name }: requested_guardians[i].relationship_to_minor
+    required: False
+  - Relationship to ${ children.familiar() }: requested_guardians[i].relationship_to_minor
+    required: False
 ---
 id: requested guardian priority for appointment
 question: |
   Does ${ requested_guardians[i].name } have priority for appointment?
 subquestion: |
-  In order to have priority for appointment as a guardian, a person must have been nominated by the minor **and** the minor must be at least 14 years old.
+  In order to have priority for appointment as a guardian, a person must have been nominated
+  by the minor **and** the minor must be at least 14 years old.
 
   If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
 fields:
@@ -916,7 +1025,7 @@ question: |
   % if who_is_making_petition == "minor":
   Aside from your parents, can you provide information about any other relatives that can be found?
   % else:
-  Aside form ${ children[0].name }'s parents, can you provide information about any of ${ children[0].name }'s other relatives that can be found?
+  Aside from ${ children.familiar() }'s parents, can you provide information about any of ${ children.familiar() }'s other relatives that can be found?
   % endif
 subquestion: |
   You will be able to add **up to two people**. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
@@ -941,7 +1050,7 @@ question: |
   % if who_is_making_petition == "minor":
   Tell us about your relative
   % else:
-  Tell us about ${ children[0].name }'s relative
+  Tell us about ${ children.familiar() }'s relative
   % endif
 fields:
   - code: |
@@ -949,7 +1058,7 @@ fields:
   - code: |
       relatives[i].address_fields()
   - Primary phone number: relatives[i].phone_number
-  - Relationship to ${ children[0].name }: relatives[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: relatives[i].relationship_to_minor
 validation code: |
   if len(relatives.complete_elements()) > 0:
     relatives.there_is_another = False
@@ -966,7 +1075,7 @@ question: |
   % if who_is_making_petition == "minor" and not form_filled_by_attorney:
   Is anyone currently acting as your Guardian or Conservator in Massachusetts or elsewhere?
   % else:
-  Is anyone currently acting as the minor's Guardian or Conservator in Massachusetts or elsewhere?
+  Is anyone currently acting as ${ children.familiar() }'s Guardian or Conservator in Massachusetts or elsewhere?
   % endif
 fields:
   - no label: current_acting_guardian
@@ -994,7 +1103,7 @@ question: |
   % if who_is_making_petition == "minor":
   Tell us about your current Guardian or Conservator
   % else:
-  Tell us about ${ children[0].name }'s current Guardian or Conservator
+  Tell us about ${ children.familiar() }'s current Guardian or Conservator
   % endif
 fields:
   - code: |
@@ -1002,14 +1111,14 @@ fields:
   - code: |
       guardians[i].address_fields()
   - Primary phone number: guardians[i].phone_number
-  - Relationship to ${ children[0].name }: guardians[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: guardians[i].relationship_to_minor
 ---
 id: has conservatorship case or petition
 question: |
   % if who_is_making_petition == "minor":
   Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
   % else:
-  Does ${ children[0].name } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
+  Does ${ children.familiar() } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
   % endif
 fields:
   - no label: has_conservator_case_or_petition
@@ -1020,7 +1129,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do you have any assets?
   % else:
-  Does ${ children[0].name } have any assets?
+  Does ${ children.familiar() } have any assets?
   % endif
 subquestion: |
   Assets can include things like bank accounts, property, and anticipated income.
@@ -1062,11 +1171,16 @@ fields:
 ---
 id: additional request
 question: |
-  Do you want to add an additional request for the Court?
+  Do you need to ask the court **something else**?
+subquestion: |
+  If there is something else you need to ask the court on the
+  Petition for Guardianship, you can ask it here.
+
+  This is optional.
 fields:
-  - no label: wants_additional_request
+  - I have another request for the court: wants_additional_request
     datatype: yesnoradio
-  - Please give a brief explanation: additional_request_exp
+  - What do you want to ask?: additional_request_exp
     input type: area
     maxlength: 310
     show if:
@@ -1661,7 +1775,13 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="petition for appointment of guardian of minor (MPC 140)", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=False, )
+  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
+---
+code: |
+  petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].label = "People with primary care or custody in the last 60 days"
+  petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].overflow_trigger = 2
+
+  petition_for_appointment_of_guardian_attachment.overflow_fields.gathered = True
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
@@ -1772,13 +1892,16 @@ attachment:
     - "parents2_address_zip": ${ parents[1].address.zip }
     - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc_yes }
     - "has_guardian_nomination_by_signed_doc_no": ${ has_guardian_nomination_by_signed_doc_no }
-    - "parents_consent_to_guardian_appointment": ${ parents_consent_to_guardian_appointment }
-    - "parental_rights_terminated": ${ parental_rights_terminated }
-    - "parents_unavailable_to_exercise_parental_rights": ${ parents_unavailable_to_exercise_parental_rights }
+    - "parents_consent_to_guardian_appointment": ${ reason_seeking_guardianship["parents_consent"] }
+    - "parental_rights_terminated": ${ len(reason_seeking_guardianship.true_values().intersection({"parents_death", "parents_rights_terminated", "parents_surrendered_rights"})) >= 1 }
+    - "parental_rights_terminated_by_court_order": ${ reason_seeking_guardianship["parents_rights_terminated"] }
+    - "parental_rights_terminated_by_voluntary_surrender": ${ reason_seeking_guardianship["parents_surrendered_rights"] }
+    - "parental_rights_terminated_by_death": ${ reason_seeking_guardianship["parents_death"] }
+    - "parents_unavailable_to_exercise_parental_rights": ${ reason_seeking_guardianship["parents_unavailable"] }
     - "parents_unavailable_to_exercise_parental_rights_exp": ${ parents_unavailable_to_exercise_parental_rights_exp }
-    - "parents_unfit_to_exercise_parental_rights": ${ parents_unfit_to_exercise_parental_rights }
+    - "parents_unfit_to_exercise_parental_rights": ${ reason_seeking_guardianship["parents_unfit"] }
     - "parents_unfit_to_exercise_parental_rights_exp": ${ parents_unfit_to_exercise_parental_rights_exp }
-    - "previous_third_party_guardian_death_or_incapacitation": ${ previous_third_party_guardian_death_or_incapacitation }
+    - "previous_third_party_guardian_death_or_incapacitation": ${ reason_seeking_guardianship["previous_guardian"] }
     - "previous_third_party_guardian_death_or_incapacitation_exp": ${ previous_third_party_guardian_death_or_incapacitation_exp }
     - "petitioner_requesting_guardianship": ${ petitioner_requesting_guardianship }
     - "wants_sureties_waiver": ${ wants_sureties_waiver }
@@ -1889,9 +2012,6 @@ attachment:
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - "minor_resides_in_court_county_division": ${ court_choice_reason["minors_county"] }
     - "guardian_nomination_probated_to_county_division": ${ court_choice_reason["will_county"] }
-    - "parental_rights_terminated_by_court_order": ${ parental_rights_termination_reason == "court_order" }
-    - "parental_rights_terminated_by_voluntary_surrender": ${ parental_rights_termination_reason == "voluntary_surrender" }
-    - "parental_rights_terminated_by_death": ${ parental_rights_termination_reason == "parent_death" }
 ---
 #################### Attachment Blocks End #####################
 ---

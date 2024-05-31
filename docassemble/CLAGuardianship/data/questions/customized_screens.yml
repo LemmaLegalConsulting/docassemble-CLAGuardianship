@@ -41,6 +41,17 @@ fields:
     datatype: yesnoradio
     show if: parent_wants_lawyer
 ---
+################ Fee waiver ######################
+---
+code: |
+  fees['Filing fee'].waive = False
+  
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = who_is_making_petition == "interested_party" and wants_fee_waiver and is_indigent
+
+---
 ################# Care and Custody Affidavit #########################
 ---
 id: care or custody intro
