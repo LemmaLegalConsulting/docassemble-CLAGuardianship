@@ -265,7 +265,7 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", enabled=True, has_addendum=False, )
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to Appointment by Minor", filename="consent_to_nomination_by_a_minor", enabled=True, has_addendum=False, )
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
