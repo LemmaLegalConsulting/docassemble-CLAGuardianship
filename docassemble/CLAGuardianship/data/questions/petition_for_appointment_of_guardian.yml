@@ -53,7 +53,7 @@ code: |
 objects:
   - parents: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
-  - other_custodians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+  - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
 ---
@@ -308,7 +308,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   When were you born?
   % else:
-  When was ${ children[0].name } born?
+  When was ${ children.familiar() } born?
   % endif
 fields:
   - Birthdate: children[0].birthdate
@@ -321,7 +321,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   What is your phone number?
   % else:
-  What is ${ children[0].name }'s phone number?
+  What is ${ children.familiar() }'s phone number?
   % endif
 fields:
   - Primary phone number: children[0].phone_number
@@ -354,7 +354,7 @@ fields:
       users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[0].phone_number
     datatype: al_international_phone
-  - Relationship to ${ children[0].name }: users[0].relationship_to_minor
+  - Relationship to ${ children.familiar() }: users[0].relationship_to_minor
 ---
 id: petitioner information
 sets:
@@ -385,7 +385,7 @@ fields:
       users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[i].phone_number
     datatype: al_international_phone
-  - Relationship to ${ children[0].name }: users[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: users[i].relationship_to_minor
 validation code: |
   if len(users.complete_elements()) > 0:
     users.there_is_another = False
@@ -530,9 +530,9 @@ question: |
   % elif (who_is_making_petition == "minor") and (len(parents.complete_elements()) > 0) and (not form_filled_by_attorney):
   Tell us about your other parent
   % elif (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and form_filled_by_attorney)) and len(parents.complete_elements()) > 0:
-  Tell us about ${ children[0].name }'s other parent
+  Tell us about ${ children.familiar() }'s other parent
   % else: 
-  Tell us about either of ${ children[0].name }'s parents
+  Tell us about either of ${ children.familiar() }'s parents
   % endif
 subquestion: |
   % if len(parents.complete_elements()) < 1:
@@ -562,7 +562,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   If available, enter contact information for your parent, ${ parents[i].name }
   % else: 
-  If available, enter contact information for ${ children[0].name }'s parent, ${ parents[i].name }
+  If available, enter contact information for ${ children.familiar() }'s parent, ${ parents[i].name }
   % endif
 fields:
   - Street address: parents[i].address.address
@@ -597,7 +597,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Why do you need a guardian?
   % else:
-  Why does ${ children[0].name } need a guardian?
+  Why does ${ children.familiar() } need a guardian?
   % endif
 subquestion: |
   You need to give the judge a short reason to get a guardian.
@@ -667,7 +667,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has a guardian been nominated for you in a will or other written document, signed by a parent or existing guardian?
   % else:
-  Has a guardian been nominated for ${ children[0].name } in a will or other written document, signed by a parent or existing guardian?
+  Has a guardian been nominated for ${ children.familiar() } in a will or other written document, signed by a parent or existing guardian?
   % endif
 subquestion: |
   If you select **Yes**, you will need to attach a copy of that signed document.
@@ -685,7 +685,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do your parents consent to the appointment of a guardian?
   % else:
-  Do ${ children[0].name }'s parents consent to the appointment of a guardian?
+  Do ${ children.familiar() }'s parents consent to the appointment of a guardian?
   % endif
 fields:
   - no label: parents_consent_to_guardian_appointment
@@ -696,7 +696,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   How were the parental rights of your parent(s) terminated?
   % else:
-  How were the parental rights of ${ children[0].name }'s parent(s) terminated?
+  How were the parental rights of ${ children.familiar() }'s parent(s) terminated?
   % endif
 subquestion: |
   Depending on which answer you select, **you must attach a copy of a corresponding document**—either a court order, a surrender, or a death certificate—to this Petition.
@@ -713,7 +713,7 @@ question: |
   % if who_is_making_petition == "minor" and not (form_filled_by_attorney):
   Tell us why your parent(s) are unavailable to exercise their parental rights
   % else:
-  Tell us why ${ children[0].name }'s parent(s) are unavailable to exercise their parental rights
+  Tell us why ${ children.familiar() }'s parent(s) are unavailable to exercise their parental rights
   % endif
 fields:
   - Please give a brief explanation: parents_unavailable_to_exercise_parental_rights_exp
@@ -725,7 +725,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Tell us why your parent(s) are unfit to exercise their parental rights
   % else:
-  Tell us why ${ children[0].name }'s parent(s) are unfit to exercise their parental rights
+  Tell us why ${ children.familiar() }'s parent(s) are unfit to exercise their parental rights
   % endif
 fields:
   - Please give a brief explanation: parents_unfit_to_exercise_parental_rights_exp
@@ -745,9 +745,9 @@ fields:
 id: petitioner requesting guardianship
 question: |
   % if form_filled_by_attorney:
-  Does the petitioner want to ask the court to appoint them as a guardian for ${ children[0].name }?
+  Does the petitioner want to ask the court to appoint them as a guardian for ${ children.familiar() }?
   % else:
-  Do you want to ask the court to appoint you as a guardian for ${ children[0].name }?
+  Do you want to ask the court to appoint you as a guardian for ${ children.familiar() }?
   % endif
 subquestion: |
   % if form_filled_by_attorney:
@@ -784,18 +784,50 @@ fields:
 id: other custodian during past 60 days
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  Has anyone else had primary care and custody of you during the last 60 days?
+  Is there someone else who was in charge of taking care of you in the last 60 days?
   % else:
-  Has anyone else had primary care and custody of ${ children[0].name } during the last 60 days?
+  Is there someone else who was in charge of taking care of ${ children.familiar() } in the last 60 days?
   % endif
+subquestion: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  The court needs to know who had **primary care or custody** of you.
+
+  Anyone who had primary care or custody of you needs to know about this court case and has
+  a right to go to the hearing.
+  % else:
+  The court needs to know who had **primary care or custody** of ${ children.familiar() }.
+
+  Anyone who had primary care or custody of ${ children.familiar() } needs to know about this court case and has
+  a right to go to the hearing.
+  % endif
+
+  ${ collapse_template(what_is_primary_care_or_custody) }
 fields:
-  - no label: other_custodians.there_are_any
+  - Did someone else have primary care or custody in the last 60 days?: other_custodians.there_are_any
     datatype: yesnoradio
+  - label: |
+      % if who_is_making_petition == "minor":
+      How many people?
+      % else:
+      How many people, not counting yourself?
+      % endif
+    field: other_custodians.target_number
+    datatype: integer
+    show if: other_custodians.there_are_any
 validation code: |
-  if other_custodians.there_are_any:
-    other_primary_care_or_custody_yes = True
-  else:
-    other_primary_care_or_custody_no = True
+  if not other_custodians.there_are_any:
+    other_custodians.target_number = 0
+---
+template: what_is_primary_care_or_custody
+subject: |
+  What does **primary care or custody** mean?
+content: |
+  "Primary care or custody" means you are one of the people who takes care of a child 
+  most of the time. You make big decisions for them and handle their daily needs like meals, 
+  a place to live, and keeping them safe.
+  
+  A paid babysitter doesn't have primary care or custody. 
+  They are only helping for a short time and aren't responsible for all of the child's needs.
 ---
 id: other custodian information
 sets:
@@ -810,18 +842,14 @@ sets:
   - other_custodians[i].address.zip
   - other_custodians[i].phone_number
 question: |
-  % if (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
-  Who had primary care and custody over you during the past 60 days? 
-  % elif (len(other_custodians.complete_elements()) < 1) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
-  Who had primary care and custody over ${ children[0].name } during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
-  Who else had primary care and custody over you during the past 60 days?
-  % elif (len(other_custodians.complete_elements()) > 0) and (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and not form_filled_by_attorney)):
-  Who else had primary care and custody over ${ children[0].name } during the past 60 days?
+  % if other_custodians.target_number == 1:
+  Information about the person with primary care or custody
+  % else:
+  Information about the ${ ordinal(i) } person with primary care or custody
   % endif
 subquestion: |
-  % if len(other_custodians.complete_elements()) < 1:
-  You can name **up to two people** in this Petition. Start by telling us about the first one.
+  % if len(other_custodians.complete_elements()) > 0:  
+  So far, you have told us about ${ other_custodians.complete_elements() }.
   % endif
 fields:
   - code: |
@@ -829,23 +857,20 @@ fields:
   - code: |
       other_custodians[i].address_fields()
   - Primary phone number: other_custodians[i].phone_number
-  - Relationship to ${ children[0].name }: other_custodians[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: other_custodians[i].relationship_to_minor
   - Start date: other_custodians[i].start_date
     datatype: date
     required: True
-  - End date: other_custodians[i].end_date
+  - End date (leave blank if ongoing): other_custodians[i].end_date
     datatype: date
-    required: True
-validation code: |
-  if len(other_custodians.complete_elements()) > 0:
-    other_custodians.there_is_another = False
+    required: False
 ---
 id: other custodians there_is_another
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Has anyone else had primary care and custody over you during the last 60 days?
   % else:
-  Has anyone else had primary care and custody over ${ children[0].name } during the last 60 days?
+  Has anyone else had primary care and custody over ${ children.familiar() } during the last 60 days?
   % endif
 fields:
   - no label: other_custodians.there_is_another
@@ -870,13 +895,13 @@ question: |
   % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "minor" and form_filled_by_attorney):
   Who does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) < 1) and (who_is_making_petition == "interested_party"):
-  Who do you want the court to appoint as a guardian for ${ children[0].name }?
+  Who do you want the court to appoint as a guardian for ${ children.familiar() }?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and not form_filled_by_attorney):
   Who else do you want the court to appoint as your guardian?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "minor" and form_filled_by_attorney):
   Who else does ${ children[0] } want the court to appoint as their guardian?
   % elif (len(requested_guardians.complete_elements()) > 0) and (who_is_making_petition == "interested_party"):
-  Who else do you want the court to appoint as a guardian for ${ children[0].name }?
+  Who else do you want the court to appoint as a guardian for ${ children.familiar() }?
   % endif
 subquestion: |
   % if len(requested_guardians.complete_elements()) < 1:
@@ -896,13 +921,14 @@ fields:
   - code: |
       requested_guardians[i].address_fields()
   - Primary phone number: requested_guardians[i].phone_number
-  - Relationship to ${ children[0].name }: requested_guardians[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: requested_guardians[i].relationship_to_minor
 ---
 id: requested guardian priority for appointment
 question: |
   Does ${ requested_guardians[i].name } have priority for appointment?
 subquestion: |
-  In order to have priority for appointment as a guardian, a person must have been nominated by the minor **and** the minor must be at least 14 years old.
+  In order to have priority for appointment as a guardian, a person must have been nominated
+  by the minor **and** the minor must be at least 14 years old.
 
   If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
 fields:
@@ -934,7 +960,7 @@ question: |
   % if who_is_making_petition == "minor":
   Aside from your parents, can you provide information about any other relatives that can be found?
   % else:
-  Aside form ${ children[0].name }'s parents, can you provide information about any of ${ children[0].name }'s other relatives that can be found?
+  Aside from ${ children.familiar() }'s parents, can you provide information about any of ${ children.familiar() }'s other relatives that can be found?
   % endif
 subquestion: |
   You will be able to add **up to two people**. They can include brothers and sisters, or adult relatives, such as aunts, uncles, and grandparents.
@@ -959,7 +985,7 @@ question: |
   % if who_is_making_petition == "minor":
   Tell us about your relative
   % else:
-  Tell us about ${ children[0].name }'s relative
+  Tell us about ${ children.familiar() }'s relative
   % endif
 fields:
   - code: |
@@ -967,7 +993,7 @@ fields:
   - code: |
       relatives[i].address_fields()
   - Primary phone number: relatives[i].phone_number
-  - Relationship to ${ children[0].name }: relatives[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: relatives[i].relationship_to_minor
 validation code: |
   if len(relatives.complete_elements()) > 0:
     relatives.there_is_another = False
@@ -984,7 +1010,7 @@ question: |
   % if who_is_making_petition == "minor":
   Is anyone currently acting as your Guardian or Conservator in Massachusetts or elsewhere?
   % else:
-  Is anyone currently acting as ${ children[0].name }'s Guardian or Conservator in Massachusetts or elsewhere?
+  Is anyone currently acting as ${ children.familiar() }'s Guardian or Conservator in Massachusetts or elsewhere?
   % endif
 fields:
   - no label: current_acting_guardian
@@ -1012,7 +1038,7 @@ question: |
   % if who_is_making_petition == "minor":
   Tell us about your current Guardian or Conservator
   % else:
-  Tell us about ${ children[0].name }'s current Guardian or Conservator
+  Tell us about ${ children.familiar() }'s current Guardian or Conservator
   % endif
 fields:
   - code: |
@@ -1020,14 +1046,14 @@ fields:
   - code: |
       guardians[i].address_fields()
   - Primary phone number: guardians[i].phone_number
-  - Relationship to ${ children[0].name }: guardians[i].relationship_to_minor
+  - Relationship to ${ children.familiar() }: guardians[i].relationship_to_minor
 ---
 id: has conservatorship case or petition
 question: |
   % if who_is_making_petition == "minor":
   Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
   % else:
-  Does ${ children[0].name } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
+  Does ${ children.familiar() } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
   % endif
 fields:
   - no label: has_conservator_case_or_petition
@@ -1038,7 +1064,7 @@ question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do you have any assets?
   % else:
-  Does ${ children[0].name } have any assets?
+  Does ${ children.familiar() } have any assets?
   % endif
 subquestion: |
   Assets can include things like bank accounts, property, and anticipated income.
@@ -1679,7 +1705,13 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="petition for appointment of guardian of minor (MPC 140)", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=False, )
+  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="petition for appointment of guardian of minor (MPC 140)", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
+---
+code: |
+  petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].label = "People with primary care or custody in the last 60 days"
+  petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].overflow_trigger = 2
+
+  petition_for_removal_of_guardian_attachment.overflow_fields.gathered = True
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
