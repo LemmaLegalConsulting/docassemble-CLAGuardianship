@@ -1,5 +1,6 @@
 ---
 include:
+  - petition_for_appointment_of_guardian.yml
   - shared.yml
   - docassemble.AssemblyLine:assembly_line.yml
 ---
@@ -93,10 +94,9 @@ code: |
   impound_affidavit
   day # uncomment for standalone
 
-  if needs_attorney_signature:
-    signing_attorney.name.first
-    signing_attorney.address.address
-
+  if form_filled_by_attorney:
+    if (who_is_making_petition == "minor") or (who_is_making_petition == "interested_party" and needs_attorney_signature):
+      set_signing_attorney
 
   # uncomment for standalone
   need_past_address_appendix
@@ -134,6 +134,19 @@ code: |
   DCF.name.first = "Department of Children and Families"
 ---
 #################### Object/Code Blocks Start #####################
+---
+code: |
+  signing_attorney.name.first = attorneys[0].name.first
+  signing_attorney.name.last = attorneys[0].name.last
+  signing_attorney.name.middle = attorneys[0].name.middle
+  signing_attorney.name.suffix = attorneys[0].name.suffix
+  signing_attorney.address.address = attorneys[0].address.address
+  signing_attorney.address.unit = attorneys[0].address.unit
+  signing_attorney.address.city = attorneys[0].address.city
+  signing_attorney.address.state = attorneys[0].address.state
+  signing_attorney.address.zip = attorneys[0].address.zip
+
+  set_signing_attorney = True
 ---
 #################### Override Blocks Start #####################
 ---
@@ -499,12 +512,10 @@ id: attorney signature
 question: |
   Attorney Signature
 subquestion: |
-  Are you completing this form on behalf of yourself or as an attorney
-  for someone who is a juvenile (under 18) or incompetent?
-field: needs_attorney_signature
-buttons:
-  - Myself: False
-  - As an attorney: True
+  Are you completing this form on behalf of someone who is a juvenile (under 18) or incompetent?
+fields: 
+  - Choose one: needs_attorney_signature
+    datatype: yesnoradio
 ---
 id: attorney signing address
 question: |
@@ -1135,7 +1146,7 @@ attachment:
     - "day": ${ day }
     - "month": ${ month }
     - "year": ${ year }
-    - "attorney_for_juvenile_address_on_one_line": ${ signing_attorney.on_one_line(include_unit=True) if needs_attorney_signature else '' }
+    - "attorney_for_juvenile_address_on_one_line": ${ signing_attorney.address.on_one_line(include_unit=True) if needs_attorney_signature else '' }
     - "child1_past_addresses_1": ${ children_of_both.item(0).previous_addresses.item(0).on_one_line() if confidential_address else '' }
     - "child1_past_addresses_2": ${ children_of_both.item(0).previous_addresses.item(1).on_one_line() if confidential_address else '' }
     - "child2_past_addresses_1": ${ children_of_both.item(1).previous_addresses.item(0).on_one_line() if confidential_address else '' }

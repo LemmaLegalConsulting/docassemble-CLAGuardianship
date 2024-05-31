@@ -147,10 +147,10 @@ code: |
 
   nav.set_section("review_affidavit_disclosing_care_or_custody")
   interview_order_affidavit_disclosing_care_or_custody
-  nav.set_section("review_military_affidavit")
-  military_affidavit_intro
-  knows_status_already
-  interview_order_military_affidavit
+  # nav.set_section("review_military_affidavit")
+  # military_affidavit_intro
+  # knows_status_already
+  # interview_order_military_affidavit
   interview_order_petition_for_appointment_of_guardian = True
 ---
 ###################### Main order ######################
