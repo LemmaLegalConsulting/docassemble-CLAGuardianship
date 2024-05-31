@@ -1,0 +1,326 @@
+---
+comment: |
+  Note: this doesn't share anything with the consent_to_nomination_by_a_minor.yml
+
+  This version is used when the guardian files later, instead of
+  simultaneous with the petition.
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+  - docassemble.MassAccess:massaccess.yml
+  - shared.yml
+---
+metadata:
+  title: |
+    MPC 441 Notarized And Verified Consent To Nomination By Minor
+  short title: |
+    MPC 441 Notarized And Verified Consent To Nomination By Minor
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  authors:
+    - Pratibha Bharti
+    - Quinten Steenhuis
+---
+# mandatory: True
+comment: |
+  Global interview metadata
+variable name: interview_metadata["consent_to_nomination_by_a_minor"]
+data:
+  al_weaver_version: "1.8.0"
+  generated on: "2023-02-28"
+  title: >-
+    MPC 441 Notarized And Verified Consent To Nomination By Minor
+  short title: >-
+    MPC 441 Notarized And Verified Consent To Nomination By Minor
+  allowed courts:
+    - "Probate and Family Court"
+  tags:
+    - "FA-00-00-00-00"
+    - "FA-04-00-00-00"
+  typical role: "unknown"
+  generate download screen: True
+---
+metadata:
+  title: |
+    Consent to Nomination by a Minor
+  short title: |
+    Consent to Nomination by a Minor
+  authors:
+    - Pratibha Bharti
+    - Quinten Steenhuis
+---
+# mandatory: True
+code: |
+  interview_order_consent_to_nomination_by_a_minor  
+  notarized_and_verified_download
+---
+objects:
+  - consented_guardians: ALPeopleList.using(maximum_number=2)
+  - not_consented_guardians: ALPeopleList.using(maximum_number=2)
+  - nominated_guardians: ALPeopleList.using(maximum_number=2)
+---
+#################### Interview order #####################
+comment: |
+  Controls order and branching logic for questions specific to this form
+id: interview_order_notarized_and_verified_consent
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = ['Probate and Family Court']
+  who_is_making_petition
+  children[0].name.first
+  children[0].birthdate
+  children[0].phone_number
+  consented_guardians.gather()
+  not_consented_guardians.gather()
+  nominated_guardians.gather()
+  trial_court
+  docket_number
+
+  interview_order_consent_to_nomination_by_a_minor = True
+
+---
+code: |
+  users.there_is_another = False
+---
+code: |
+  notarization_public.there_is_another = False
+---
+comment: |
+  This question is used to introduce your interview. Please customize
+id: Notarized And Verified Consent
+continue button field: notarized_and_verified_consent
+question: |
+  Notarized And Verified Consent To Nomination By a Minor (MPC 441)
+subquestion: |
+  This interview will help you fill out a Consent To Nomination By a Minor (MPC 441).
+
+  You can use this tool if:
+
+  - You are at least 14 and want to choose who will be your guardian.
+  - You have been asked to be a guardian for a child who is at least 14 and you agree **or** disagree to
+    be the guardian.
+
+  **Before you get started**:
+
+  - If there is already a court case about the guardianship, get the case number (docket number)
+
+  **When you are finished**, you will need to:
+
+  1. Sign this form in front of a notary public.
+
+  Most people take about 10 minutes to finish this interview.
+---
+id: who is making petition
+question: |
+  What best describes you?
+fields:
+  - I am: who_is_making_petition
+    datatype: radio
+    choices:
+      - The minor: minor
+      - Someone interested in the minor's welfare: interested_party
+---
+
+---
+id: minor info
+sets:
+  - children[0].name.first
+  - children[0].name.last
+  - children[0].name.middle
+  - children[0].name.suffix
+  - children[0].address.address
+  - children[0].address.unit
+  - children[0].address.city
+  - children[0].address.state
+  - children[0].address.zip
+  - children[0].address.country
+question: |
+  % if who_is_making_petition == "minor":
+  Tell us about yourself
+  % else:
+  Who is the minor in this case?
+  % endif
+fields:
+  - code: |
+      children[0].name_fields()
+  - code: |
+      children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+id: minor birthdate
+question: |
+  % if who_is_making_petition == "minor":
+  When were you born?
+  % else:
+  When was ${ children[0].name } born?
+  % endif
+fields:
+  - Birthdate: children[0].birthdate
+    datatype: date
+---
+id: minor phone number
+sets:
+  - children[0].phone_number
+question: |
+  % if who_is_making_petition == "minor":
+  What is your phone number?
+  % else:
+  What is ${ children[0].name }'s phone number?
+  % endif
+fields:
+  - Primary phone number: children[0].phone_number
+    datatype: al_international_phone
+---
+id: choose a court
+question: |
+  % if who_is_making_petition == "minor":
+  What court will you file in?
+  % else:
+  What court will ${ children[0].name } file in?
+  % endif
+fields:
+  - I will file in: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
+---
+id: docket number
+question: |
+  % if who_is_making_petition == "minor":
+  What is your case number?
+  % else:
+  What is ${ children[0].name }'s case number?
+  % endif
+fields:
+  - Case number: docket_number
+---
+sets:
+  - consented_guardians[i].name.first
+  - consented_guardians[i].name.last
+  - consented_guardians[i].name.middle
+  - consented_guardians[i].name.suffix
+id: names of opposing parties
+question: |
+  Name of your ${ ordinal(i) } consented guardian
+fields:
+  - code: |
+      consented_guardians[i].name_fields()
+---
+code: |
+  if len(consented_guardians.complete_elements()) >= 2:
+     consented_guardians.there_is_another = False
+---
+sets:
+  - not_consented_guardians[i].name.first
+  - not_consented_guardians[i].name.last
+  - not_consented_guardians[i].name.middle
+  - not_consented_guardians[i].name.suffix
+id: names of opposing parties
+question: |
+  Name of your ${ ordinal(i) } not consented guardian
+fields:
+  - code: |
+      not_consented_guardians[i].name_fields()
+---
+code: |
+  if len(not_consented_guardians.complete_elements()) >= 2:
+     not_consented_guardians.there_is_another = False
+---
+sets:
+  - nominated_guardians[i].name.first
+  - nominated_guardians[i].name.last
+  - nominated_guardians[i].name.middle
+  - nominated_guardians[i].name.suffix
+id: names of opposing parties
+question: |
+  Name of your ${ ordinal(i) } nominated guardian
+fields:
+  - code: |
+      nominated_guardians[i].name_fields()
+---
+code: |
+  if len(nominated_guardians.complete_elements()) >= 2:
+     nominated_guardians.there_is_another = False
+
+---
+id: download consent_to_nomination_by_a_minor
+event: notarized_and_verified_download
+question: |
+  All done
+subquestion: |
+  Thank you. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_consent_to_nomination_by_a_minor'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[consent_to_nomination_by_a_minor_attachment], filename="consent_to_nomination_by_a_minor", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[consent_to_nomination_by_a_minor_attachment],  filename="consent_to_nomination_by_a_minor", title="All forms to deliver to court", enabled=True)
+
+---
+attachment:
+  - name: Motarized and verified
+    filename: consent_to_nomination_by_a_minor
+    variable name: consent_to_nomination_by_a_minor_attachment[i]
+    skip undefined: True
+    pdf template file: mpc_441_notarized_and_verified_consent_to_nomination_by_a_minor.pdf
+    fields:
+      - "docket_number": ${ docket_number }
+      - "trial_court_division": ${ trial_court.division }
+      - "users1_name_middle__1": ${ children[0].name.middle }
+      - "users1_name_last__1": ${ children[0].name.last }
+      - "users1_name_first__1": ${ children[0].name.first }
+      - "users1_name_first__2": ${ children[0].name.first }
+      - "users1_name_middle__2": ${ children[0].name.middle }
+      - "users1_name_last__2": ${ children[0].name.last }
+      - "consented_guardians1_check": ${ True if consented_guardians[0].name != "" else False }
+      - "consented_guardians1_name_last": ${ consented_guardians[0].name.last }
+      - "consented_guardians1_name_first": ${ consented_guardians[0].name.first }
+      - "consented_guardians1_name_middle_initial": ${ consented_guardians[0].name.middle_initial() }
+      - "consented_guardians2_consented": ${ True if consented_guardians[1].name != "" else False }
+      - "consented_guardians2_name_last": ${ consented_guardians[1].name.last }
+      - "consented_guardians2_name_first": ${ consented_guardians[1].name.first }
+      - "consented_guardians2_name_middle_initial": ${ consented_guardians[0].name.middle_initial() }
+      - "nonconsented_guardians1_check": ${ True if not_consented_guardians[0].name != "" else False }
+      - "nonconsented_guardians1_name_last": ${ not_consented_guardians[0].name.last }
+      - "nonconsented_guardians1_name_first": ${ not_consented_guardians[0].name.first }
+      - "nonconsented_guardians1_name_middle_initial": ${ not_consented_guardians[0].name.middle_initial() }
+      - "nonconsented_guardians2_check": ${ True if not_consented_guardians[1].name != "" else False }
+      - "nonconsented_guardians2_name_last": ${ not_consented_guardians[1].name.last }
+      - "nonconsented_guardians2_name_first": ${ not_consented_guardians[1].name.first }
+      - "nonconsented_guardians2_name_middle_initial": ${ not_consented_guardians[1].name.middle_initial() }
+      - "nominated_guardians1_check": ${ True if nominated_guardians[0].name != "" else False }
+      - "nominated_guardians1_name_middle_initial": ${ nominated_guardians[0].name.middle_initial() }
+      - "nominated_guardians1_name_last": ${ nominated_guardians[0].name.last }
+      - "nominated_guardians1_name_first": ${ nominated_guardians[0].name.first }
+      - "nominated_guardians2_check": ${ True if nominated_guardians[1].name != "" else False }
+      - "nominated_guardians2_name_middle_initial": ${ nominated_guardians[1].name.middle_initial() }
+      - "nominated_guardians2_name_last": ${ nominated_guardians[1].name.last }
+      - "nominated_guardians2_name_first": ${ nominated_guardians[1].name.first }
+      - "users1_signature_date": ${format_date(today())}
+      - "users1_signature": |
+          ${ user.signature }
+      - "users1_address_address": ${children[0].address.address}
+      - "users1_address_unit": ${children[0].address.unit}
+      - "users1_address_city": ${children[0].address.city}
+      - "users1_address_state": ${children[0].address.state}
+      - "users1_address_zip": ${children[0].address.zip}
+      - "users1_phone": ${children[0].phone_number}
+      - "users1_name": ${children[0].name}
+---
+

@@ -52,7 +52,7 @@ objects:
 id: interview_order_affidavit_disclosing_care_or_custody
 code: |
   nav.set_section("review_affidavit_disclosing_care_or_custody")
-  
+
   affidavit_disclosing_care_or_custody_intro
 
   # defendants.there_are_any = True
@@ -96,7 +96,7 @@ code: |
   if needs_attorney_signature:
     signing_attorney.name.first
     signing_attorney.address.address
-  
+
 
   # uncomment for standalone
   need_past_address_appendix
@@ -107,7 +107,7 @@ code: |
   str(users[0])
   users[0].address.on_one_line(include_unit=True)
   # courts.gather()
-  fill_in_court_name  
+  fill_in_court_name   
   docket_numbers[0]  # Enable this if a standalone form
   # affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
   # basic_questions_signature_flow
@@ -1183,3 +1183,4 @@ code: |
   year
   trigger_aff_care_or_custody_computed_variables = True
 ---
+

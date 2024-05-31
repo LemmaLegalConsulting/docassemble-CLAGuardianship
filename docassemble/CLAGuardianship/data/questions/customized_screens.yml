@@ -62,4 +62,35 @@ subquestion: |
   The answer to these questions will be used to make your **Affidavit Disclosing Care or Custody Proceedings**.
 ---
 objects:
-  - other_parties: DAEmpty
+  - other_parties: DAEmpty---
+################ Military affidavit ###################
+---
+code: |
+  military_affidavit_bundle.enabled = True
+---
+code: |
+  # note: inconsistency in how the user is referred to in the military
+  # affidavit and the petition.
+  # user = petitioner in the petition, and
+  # user should be "child" in the military affidavit
+  additional_parties = ALPeopleList(elements=[parent for parent in parents if not parent.is_deceased] + children + users + other_custodians)
+---
+template: military_affidavit_case_name
+content: |
+  In the interests of ${ children[0] }
+---
+code: |
+  other_parties.there_are_any = False
+---
+code: |
+  bbo = attorneys[0].bbo
+---
+############### Consent to Nomination by a Minor ################
+---
+code: |
+  consent_to_nomination_by_a_minor_attachment.enabled = True # who_is_making_petition == "minor"
+---
+############### Parental consent to petition ################
+---
+code: |
+  parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and (parent.agrees_to_guardianship or parent.agrees_to_guardianship == None) for parent in parents))

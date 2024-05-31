@@ -4,6 +4,9 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
   - affidavit_disclosing_care_or_custody.yml
   - shared.yml
+  - military_affidavit.yml
+  - consent_to_nomination_by_a_minor.yml
+  - parental_consent_to_petition.yml
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
@@ -64,6 +67,7 @@ sections:
   - review_minors_guardianship: Minor's guardianship history
   - review_minor_assets: Minor's assets
   - review_additional_requests: Additional Requests
+  - review_military_affidavit: Military Affidavit
   - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
   - review_petition_for_appointment_of_guardian: Review your answers
 ---
@@ -140,6 +144,12 @@ code: |
   nav.set_section("review_affidavit_disclosing_care_or_custody")
   interview_order_affidavit_disclosing_care_or_custody
 
+  nav.set_section("review_affidavit_disclosing_care_or_custody")
+  interview_order_affidavit_disclosing_care_or_custody
+  nav.set_section("review_military_affidavit")
+  military_affidavit_intro
+  knows_status_already
+  interview_order_military_affidavit
   interview_order_petition_for_appointment_of_guardian = True
 ---
 ###################### Main order ######################
@@ -183,11 +193,6 @@ code: |
   if parents[i].is_deceased != True:
     parents[i].address.address
   parents[i].complete = True
----
-code: |
-  requested_guardians[i].name.first
-  requested_guardians[i].address.address
-  requested_guardians[i].complete = True
 ---
 code: |
   other_custodians[i].name.first
@@ -549,9 +554,11 @@ fields:
       parents[i].name_fields()
   - Is this person deceased?: parents[i].is_deceased
     datatype: yesnomaybe
-validation code: |
-  if len(parents.complete_elements()) > 0:
-    parents.there_is_another = False
+  - Does this parent agree to the appointment of a guardian?: parents[i].agrees_to_guardianship
+    datatype: yesnomaybe
+    show if:
+      variable: parents[i].is_deceased
+      is: False
 ---
 id: parent contact information
 sets:
@@ -581,9 +588,6 @@ fields:
     required: False
   - Primary phone number: parents[i].phone_number
     required: False
-validation code: |
-  if len(parents.complete_elements()) > 0:
-    parents.there_is_another = False
 ---
 id: parents there_is_another
 question: |
@@ -591,6 +595,10 @@ question: |
 fields:
   - no label: parents.there_is_another
     datatype: yesnoradio
+---
+code: |
+  if len(parents.complete_elements()) >= 2:
+    parents.there_is_another = False
 ---
 id: why seeking guardianship
 question: |
@@ -853,25 +861,23 @@ question: |
   % endif
 subquestion: |
   % if len(requested_guardians.complete_elements()) < 1:
-  You can request **up to two guardians** in this Petition. Start by telling us bout the first guardian you want to request.
+  You can request **up to two guardians** in this Petition. Start by telling us about the first guardian you want to request.
   % endif
 fields:
   - code: |
       requested_guardians[i].name_fields()
+  - label: |
+      % if not who_is_making_petition == "minor":
+      Does ${ children[0].familiar() } agree that this person should be appointed as their guardian?
+      % else:
+      Do you agree that this person should be appointed as your guardian?
+      % endif
+    field: requested_guardians[i].agrees_to_be_guardian
+    datatype: yesnomaybe
   - code: |
       requested_guardians[i].address_fields()
   - Primary phone number: requested_guardians[i].phone_number
   - Relationship to ${ children[0].name }: requested_guardians[i].relationship_to_minor
-validation code: |
-  if len(requested_guardians.complete_elements()) > 0:
-    requested_guardians.there_is_another = False
----
-id: requested_guardians there_is_another
-question: |
-  Do you want the court to appoint anyone else as a guardian?
-fields:
-  - no label: requested_guardians.there_is_another
-    datatype: yesnoradio
 ---
 id: requested guardian priority for appointment
 question: |
@@ -882,6 +888,7 @@ subquestion: |
   If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
 fields:
   - no label: requested_guardians[i].has_priority_appointment
+    datatype: yesnoradio
 ---
 id: requested_guardians there_is_another
 question: |
@@ -889,6 +896,10 @@ question: |
 fields:
   - no label: requested_guardians.there_is_another
     datatype: yesnoradio
+---
+code: |
+  if len(requested_guardians.complete_elements()) > 1:
+    requested_guardians.there_is_another = False
 ---
 id: existing guardians or conservators kickout
 event: existing_guardians_or_conservators_kickout
@@ -1108,9 +1119,9 @@ question: |
 subquestion: |
   Here is a preview of the form you will sign on the next page.   
 
-  ${ al_court_bundle.as_pdf(key='preview') }
+  ${ action_button_html(al_court_bundle.as_pdf(key='preview').url_for(), label="Open preview") }
 
-  Click the image to open it in a new tab. Click the "Edit answers" button
+  Click the button to open it in a new tab. Click the "Edit answers" button
   to edit your answers.
 
   ${ action_button_html(url_action('review_petition_for_appointment_of_guardian'), label='Edit answers', color='info') }
@@ -1659,7 +1670,10 @@ objects:
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
+      consent_to_nomination_by_a_minor_attachment,
+      parental_consent_to_petition_attachment,
       affidavitofindigency_attachment,
+      military_affidavit_bundle,
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to download for your records",
@@ -1670,6 +1684,9 @@ objects:
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
+      consent_to_nomination_by_a_minor_attachment,
+      parental_consent_to_petition_attachment,
+      military_affidavit_bundle,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
