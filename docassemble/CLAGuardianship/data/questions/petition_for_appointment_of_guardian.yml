@@ -1106,11 +1106,16 @@ fields:
 ---
 id: additional request
 question: |
-  Do you want to add an additional request for the Court?
+  Do you need to ask the court **something else**?
+subquestion: |
+  If there is something else you need to ask the court on the
+  Petition for Guardianship, you can ask it here.
+
+  This is optional.
 fields:
-  - no label: wants_additional_request
+  - I have another request for the court: wants_additional_request
     datatype: yesnoradio
-  - Please give a brief explanation: additional_request_exp
+  - What do you want to ask?: additional_request_exp
     input type: area
     maxlength: 310
     show if:
