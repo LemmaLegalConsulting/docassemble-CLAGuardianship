@@ -62,7 +62,8 @@ subquestion: |
   The answer to these questions will be used to make your **Affidavit Disclosing Care or Custody Proceedings**.
 ---
 objects:
-  - other_parties: DAEmpty---
+  - other_parties: DAEmpty
+---
 ################ Military affidavit ###################
 ---
 code: |
