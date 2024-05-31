@@ -232,7 +232,9 @@ subquestion: |
   you know the following parties are **not** serving in the military:
   % endif
 
-  * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+  % for party in users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties):
+  * ${ party }
+  % endfor
 
   If this is not correct, edit your responses by clicking the button below.
 
@@ -333,7 +335,9 @@ subquestion: |
   % if len(( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
   You know the following parties are **not** serving in the military:
 
-  * ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
+  % for party in users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties):
+  * ${ party }
+  % endfor
   % endif
 
   If this is not correct, edit your responses by clicking the button below.

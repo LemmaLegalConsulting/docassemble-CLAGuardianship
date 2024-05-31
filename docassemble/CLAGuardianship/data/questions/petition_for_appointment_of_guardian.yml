@@ -101,15 +101,7 @@ code: |
   nav.set_section("review_requests")
   has_guardian_nomination_by_signed_doc
   
-  reason_seeking_guardianship
-  if reason_seeking_guardianship['parents_rights_terminated']:
-    parental_rights_termination_reason
-  if reason_seeking_guardianship['parents_unavailable']:
-    parents_unavailable_to_exercise_parental_rights_exp
-  if reason_seeking_guardianship['parents_unfit']:
-    parents_unfit_to_exercise_parental_rights_exp
-  if reason_seeking_guardianship['previous_guardian']:
-    previous_third_party_guardian_death_or_incapacitation_exp
+  reason_seeking_guardianship["parents_consent"]
 
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
@@ -422,16 +414,16 @@ subquestion: |
 
   You can use this interview if you are **either**:
 
-  * Someone who cares about a minor's well-being; **or**
+  * An adult who cares about a minor's well-being; **or**
   * A minor who is 14 or older.
 
   **Before you get started**, please gather:
 
-  1. Information about the minor's parents, including name, contact information, and whether they are still living.
+  1. Information about the minor's parents, including name, contact information, and whether they are living.
   1. Information about anyone **else** who has taken care of the minor over the last 60 days.
-  2. Information about any assets the minor has, like bank accounts and property, and the value of each asset.
+  2. Information about any bank accounts and other property that the minor owns.
 
-  **When you are finished**, you will need to:
+  **When you are finished**:
 
   1. Attach any relevant documents to this Petition. As you complete this interview, the questions will let you know which documents you will need to gather.
   2. File the documents this interview makes with the court.
@@ -597,53 +589,73 @@ code: |
   if len(parents.complete_elements()) >= 2:
     parents.there_is_another = False
 ---
+objects:
+  - reason_seeking_guardianship: DADict.using(auto_gather=False, gathered=True)
+---
 id: why seeking guardianship
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  Why are you seeking guardianship for yourself?
-  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
-  Why is ${ children[0].name } seeking guardianship for themselves?
+  Why do you need a guardian?
   % else:
-  Why are you seeking guardianship for ${ children[0].name }?
+  Why does ${ children[0].name } need a guardian?
   % endif
 subquestion: |
-  % if who_is_making_petition == "minor":
-  If you are seeking guardianship because of the death of your parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % elif who_is_making_petition == "minor" and form_filled_by_attorney:
-  If ${ children[0].name } is seeking guardianship because of the death of their parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % else:
-  If you are seeking guardianship because of the death of ${ children[0].name }'s parent(s), you should select **Parent or parents had all their parental rights terminated**.
-  % endif
+  Choose at least one reason.
 fields:
-  - Select all that apply: reason_seeking_guardianship
-    datatype: checkboxes
-    none of the above: False
-    required: True
-    choices:
-      - Parent or parents consent to the appointment of a guardian: parents_consent
-      - Parent or parents had all their parental rights terminated: parents_rights_terminated
-      - Parent or parents are unavailable to exercise their parental rights: parents_unavailable
-      - Parent or parents are unfit to exercise their parental rights: parents_unfit
-      - Guardianship was granted to a third party that is now deceased or incapacitated, and did not appoint a successor by will or written instrument: previous_guardian
+  - ${ children.familiar() }'s parents **agree** ${ children.familiar() } should have a guardian: reason_seeking_guardianship["parents_consent"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents are **not fit** parents (they do not or cannot take care of ${ children.familiar() }) : reason_seeking_guardianship["parents_unfit"]
+    datatype: yesno
+  - Briefly explain: parents_unfit_to_exercise_parental_rights_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["parents_unfit"]
+    help: |
+      Give the judge a short explanation for why the parents are unfit to take care of ${ children.familiar() }.
 
+      You do not need to list every reason. You will be able to explain more at the hearing.
+  - ${ children.familiar()}'s parents **died**: reason_seeking_guardianship["parents_death"]
+    datatype: yesno
+  - A judge ended (**terminated**) the parental rights of ${ children.familiar() }'s parents: reason_seeking_guardianship["parents_rights_terminated"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents voluntarily **gave up** their right to take care of ${ children.familiar() } in a court: reason_seeking_guardianship["parents_surrendered_rights"]
+    datatype: yesno
+  - ${ children.familiar() }'s parents are **not available** to take care of ${ children.familiar() }: reason_seeking_guardianship["parents_unavailable"]
+    datatype: yesno
+  - Briefly explain: parents_unavailable_to_exercise_parental_rights_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["parents_unavailable"]
+    help: |
+      Give the judge a short explanation for why the parents are not **available** to take care of ${ children.familiar() }.
+
+      You do not need to list every reason. You will be able to explain more at the hearing.
+  - ${ children.familiar() } already had a guardian, but that **guardian died** or is no longer able to act as guardian and the guardian did not name a replacement in writing: reason_seeking_guardianship["previous_guardian"]
+    datatype: yesno
+  - note: |
+      **Because you said that the previous guardian died or is no longer able to take care of ${ children.familiar() }, you need to give the judge more information.**
+
+      The information could include:
+      
+      * A copy of the court order that appointed the previous guardian
+      * A copy of the death certificate of the previous guardian
+
+      You can upload the information now, or make a copy and attach it before you file.
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Briefly explain the information you will give the judge: previous_third_party_guardian_death_or_incapacitation_exp
+    datatype: area
+    maxlength: 310
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Are you ready to upload the documents now?: ready_to_attach_previous_guardian_order
+    datatype: yesnoradio
+    show if: reason_seeking_guardianship["previous_guardian"]
+  - Upload the document (as a PDF or a picture with your phone): previous_guardian_order_attachment
+    datatype: files
+    show if: ready_to_attach_previous_guardian_order
+    file css class: None
 validation code: |
-  if all(value == False for value in reason_seeking_guardianship.values()):
-    validation_error("You need to select at least one reason for seeking guardianship.")
-
-  if reason_seeking_guardianship['parents_consent']:
-    parents_consent_to_guardian_appointment = True
-
-  if reason_seeking_guardianship['parents_rights_terminated']:
-    parental_rights_terminated = True
-
-  if reason_seeking_guardianship['parents_unavailable']:
-    parents_unavailable_to_exercise_parental_rights = True
-
-  if reason_seeking_guardianship['parents_unfit']:
-    parents_unfit_to_exercise_parental_rights = True
-
-  if reason_seeking_guardianship['previous_guardian']:
-    previous_third_party_guardian_death_or_incapacitation = True
+  if not reason_seeking_guardianship.true_values():
+    validation_error('You must choose at least one reason', field='reason_seeking_guardianship["previous_guardian"]')
 ---
 id: nomination of guardian by signed writing
 question: |
@@ -1766,13 +1778,16 @@ attachment:
     - "parents2_address_zip": ${ parents[1].address.zip }
     - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc_yes }
     - "has_guardian_nomination_by_signed_doc_no": ${ has_guardian_nomination_by_signed_doc_no }
-    - "parents_consent_to_guardian_appointment": ${ parents_consent_to_guardian_appointment }
-    - "parental_rights_terminated": ${ parental_rights_terminated }
-    - "parents_unavailable_to_exercise_parental_rights": ${ parents_unavailable_to_exercise_parental_rights }
+    - "parents_consent_to_guardian_appointment": ${ reason_seeking_guardianship["parents_consent"] }
+    - "parental_rights_terminated": ${ len(reason_seeking_guardianship.true_values().intersection({"parents_death", "parents_rights_terminated", "parents_surrendered_rights"})) >= 1 }
+    - "parental_rights_terminated_by_court_order": ${ reason_seeking_guardianship["parents_rights_terminated"] }
+    - "parental_rights_terminated_by_voluntary_surrender": ${ reason_seeking_guardianship["parents_surrendered_rights"] }
+    - "parental_rights_terminated_by_death": ${ reason_seeking_guardianship["parents_death"] }
+    - "parents_unavailable_to_exercise_parental_rights": ${ reason_seeking_guardianship["parents_unavailable"] }
     - "parents_unavailable_to_exercise_parental_rights_exp": ${ parents_unavailable_to_exercise_parental_rights_exp }
-    - "parents_unfit_to_exercise_parental_rights": ${ parents_unfit_to_exercise_parental_rights }
+    - "parents_unfit_to_exercise_parental_rights": ${ reason_seeking_guardianship["parents_unfit"] }
     - "parents_unfit_to_exercise_parental_rights_exp": ${ parents_unfit_to_exercise_parental_rights_exp }
-    - "previous_third_party_guardian_death_or_incapacitation": ${ previous_third_party_guardian_death_or_incapacitation }
+    - "previous_third_party_guardian_death_or_incapacitation": ${ reason_seeking_guardianship["previous_guardian"] }
     - "previous_third_party_guardian_death_or_incapacitation_exp": ${ previous_third_party_guardian_death_or_incapacitation_exp }
     - "petitioner_requesting_guardianship": ${ petitioner_requesting_guardianship }
     - "wants_sureties_waiver": ${ wants_sureties_waiver }
@@ -1883,9 +1898,6 @@ attachment:
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - "minor_resides_in_court_county_division": ${ court_choice_reason["minors_county"] }
     - "guardian_nomination_probated_to_county_division": ${ court_choice_reason["will_county"] }
-    - "parental_rights_terminated_by_court_order": ${ parental_rights_termination_reason == "court_order" }
-    - "parental_rights_terminated_by_voluntary_surrender": ${ parental_rights_termination_reason == "voluntary_surrender" }
-    - "parental_rights_terminated_by_death": ${ parental_rights_termination_reason == "parent_death" }
 ---
 #################### Attachment Blocks End #####################
 ---
