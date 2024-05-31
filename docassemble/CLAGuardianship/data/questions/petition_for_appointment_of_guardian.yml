@@ -51,7 +51,7 @@ code: |
   al_form_type = "other"
 ---
 objects:
-  - parents: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
@@ -507,6 +507,36 @@ fields:
   - no label: users.there_is_another
     datatype: yesnoradio
 ---
+id: how many parents
+question: |
+  How many parents can you tell us about?
+subquestion: |
+  The judge needs to know about the minor's parents, whether or not they are alive.
+
+  ${ collapse_template(what_is_a_parent) }
+
+  But if you do not have information about a parent, you can just tell us the information
+  you know.
+fields:
+  - I can tell you about: parents.target_number
+    datatype: integer
+    input type: radio
+    choices:
+      - No parents: 0
+      - One parent: 1
+      - Both parents: 2
+---
+template: what_is_a_parent
+subject: |
+  What is a parent?
+content: |
+  A parent is someone who is named on the child's official birth record.
+  That includes a birth parent who still has parental rights and an adoptive parent.
+
+  When someone is adopted, the birth record is updated with the new parent's name.
+
+  You do not need to list a step parent or a foster parent unless they have legally adopted the child.      
+---
 id: parent basic information
 sets:
   - parents[i].name.first
@@ -514,18 +544,18 @@ sets:
   - parents[i].name.middle
   - parents[i].name.suffix
 question: |
-  % if (who_is_making_petition == "minor") and (len(parents.complete_elements()) < 1) and (not form_filled_by_attorney):
-  Tell us about either of your parents
-  % elif (who_is_making_petition == "minor") and (len(parents.complete_elements()) > 0) and (not form_filled_by_attorney):
-  Tell us about your other parent
-  % elif (who_is_making_petition == "interested_party" or (who_is_making_petition == "minor" and form_filled_by_attorney)) and len(parents.complete_elements()) > 0:
-  Tell us about ${ children.familiar() }'s other parent
-  % else: 
-  Tell us about either of ${ children.familiar() }'s parents
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  % if parents.target_number == 1:
+  Tell us about your parent
+  % else:
+  Tell us about your ${ ordinal(i) } parent
   % endif
-subquestion: |
-  % if len(parents.complete_elements()) < 1:
-  You must provide information for **at least one parent**. If there are two parents, you can start with either one. You will get the chance to add another parent later on.  
+  % else:
+  % if parents.target_number == 1:
+  Tell us about ${ children.familiar() }'s parent
+  % else:
+  Tell us about ${ children.familiar() }'s ${ ordinal(i) } parent
+  % endif
   % endif
 fields:
   - code: |
@@ -548,12 +578,18 @@ sets:
   - parents[i].address.country
   - parents[i].phone_number
 question: |
-  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  If available, enter contact information for your parent, ${ parents[i].name }
-  % else: 
-  If available, enter contact information for ${ children.familiar() }'s parent, ${ parents[i].name }
-  % endif
+  Contact information for ${ parents[i] }
+subquestion: |
+  Give as much information as you know.
 fields:
+  - An address already mentioned: parents[i].address
+    datatype: object_radio
+    choices:
+      - petitioners[0].address
+      - |
+        [parent.address for parent in parents.complete_elements() if not parent.is_deceased]
+    none of the above: A different address
+    disable others: True
   - Street address: parents[i].address.address
     required: False
     address autocomplete: True
@@ -567,17 +603,6 @@ fields:
     required: False
   - Primary phone number: parents[i].phone_number
     required: False
----
-id: parents there_is_another
-question: |
-  Is there another parent you can tell us about?
-fields:
-  - no label: parents.there_is_another
-    datatype: yesnoradio
----
-code: |
-  if len(parents.complete_elements()) >= 2:
-    parents.there_is_another = False
 ---
 objects:
   - reason_seeking_guardianship: DADict.using(auto_gather=False, gathered=True)
