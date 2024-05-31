@@ -556,6 +556,7 @@ question: |
 fields:
   - Street address: parents[i].address.address
     required: False
+    address autocomplete: True
   - Apartment: parents[i].address.unit
     required: False
   - City: parents[i].address.city
