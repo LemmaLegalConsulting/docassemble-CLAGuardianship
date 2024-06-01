@@ -2,7 +2,6 @@
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
-  - affidavit_disclosing_care_or_custody.yml
   - shared.yml
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
@@ -67,17 +66,17 @@ depends on:
 variable name: al_nav_sections
 data:
   - review_case_information: About the case
-  - review_petitioner_information: About you
-  - review_parents_information: About the parents
+  - review_petitioner_information: Petitioners
+  - review_parents_information: Minor's Parents
   - review_requests: What you need
   - review_minors_guardianship: History
   - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
-  - review_military_affidavit: Military affidavit
   - section_fee_waiver: Fee waiver
     hidden: |
       showifdef("who_is_making_petition") == "minor"
   - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+  - review_military_affidavit: Military affidavit
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
 ---
@@ -142,15 +141,6 @@ code: |
   nav.set_section("review_additional_requests")
   wants_additional_request
 
-  nav.set_section("review_affidavit_disclosing_care_or_custody")
-  interview_order_affidavit_disclosing_care_or_custody
-
-  nav.set_section("review_affidavit_disclosing_care_or_custody")
-  interview_order_affidavit_disclosing_care_or_custody
-  # nav.set_section("review_military_affidavit")
-  # military_affidavit_intro
-  # knows_status_already
-  # interview_order_military_affidavit
   interview_order_petition_for_appointment_of_guardian = True
 ---
 ###################### Main order ######################
@@ -162,6 +152,7 @@ code: |
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
+  nav.set_section("review_affidavit_disclosing_care_or_custody")
   interview_order_affidavit_disclosing_care_or_custody
 
   nav.set_section("review_military_affidavit")
@@ -399,7 +390,7 @@ fields:
     datatype: al_international_phone
   - Relationship to ${ children.familiar() }: users[i].relationship_to_minor
 validation code: |
-  if len(users.complete_elements()) > 0:
+  if len(users.complete_elements()) > 1:
     users.there_is_another = False
 ---
 id: waiving_cost
@@ -465,7 +456,7 @@ question: |
   What best describes you?
   % endif
 fields:
-  - I am: who_is_making_petition
+  - Choose one: who_is_making_petition
     datatype: radio
     choices:
       - The minor: minor
@@ -1230,9 +1221,9 @@ fields:
 ---
 id: preview petition_for_appointment_of_guardian
 question: |
-  Preview your form before you sign it
+  Preview your forms
 subquestion: |
-  Here is a preview of the form you will sign on the next page.   
+  Here is a preview of the forms you will download on the next page.   
 
   ${ action_button_html(al_court_bundle.as_pdf(key='preview').url_for(), label="Open preview") }
 
@@ -1241,7 +1232,6 @@ subquestion: |
 
   ${ action_button_html(url_action('review_petition_for_appointment_of_guardian'), label='Edit answers', color='info') }
 
-  Remember to come back to this window to continue and sign your form.
 continue button field: petition_for_appointment_of_guardian_preview_question
 ---
 # code: |

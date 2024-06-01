@@ -19,8 +19,8 @@ code: |
 
   interview_order_consent_to_nomination_by_a_minor = True
 ---
-code: |
-  users.there_is_another = False
+# code: |
+#   users.there_is_another = False
 ---
 code: |
   notarization_public.there_is_another = False
@@ -117,4 +117,3 @@ attachment:
       - "users1_phone": ${children[0].phone_number}
       - "users1_name": ${children[0].name}
 ---
-

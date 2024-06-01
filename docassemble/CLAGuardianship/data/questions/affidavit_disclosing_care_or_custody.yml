@@ -52,14 +52,13 @@ objects:
 ---
 id: interview_order_affidavit_disclosing_care_or_custody
 code: |
-  nav.set_section("review_affidavit_disclosing_care_or_custody")
 
   affidavit_disclosing_care_or_custody_intro
 
   # defendants.there_are_any = True
 
   # users.gather()
-  case_name  
+  # case_name  
   children.there_are_any = True
   children.gather()
   assigned_letters # Give each "children_of_both" a letter from A-Z
@@ -317,14 +316,8 @@ code: |
 code: |
   have_pending_cases = len(other_care_custody_proceedings.filter(is_open=True)) > 0
 ---
-# code: |
-#   case_name = str(plaintiffs) + ' v ' + str(defendants)
----
-id: case name
-question: |
-  Case name
-fields:
-  - Enter the name of your case: case_name
+code: |
+  case_name = 'In the interests of: ' + str(children[0].name)
 ---
 sets:
   - other_parties[i].name.first
@@ -487,26 +480,26 @@ code: |
   month = signature_date.format('MMMM')
   year = signature_date.format('yy')
 ---
-id: docket number
-comment: |
-  This is only useful in the standalone one
-question: |
-  Docket Number
-subquestion: |
-  If you know the docket number for this case, enter it below.
-fields:
-  - I do not know the docket number: dont_know_docket_number
-    datatype: yesno
-  - Docket number: docket_numbers[0]
-    hide if: dont_know_docket_number
-validation code: |
-  # docket_numbers.there_are_any = not dont_know_docket_number
-  if dont_know_docket_number:
-    docket_numbers[0] = ' '
-  docket_numbers.there_is_another = False
+# id: docket number
+# comment: |
+#   This is only useful in the standalone one
+# question: |
+#   Docket Number
+# subquestion: |
+#   If you know the docket number for this case, enter it below.
+# fields:
+#   - I do not know the docket number: dont_know_docket_number
+#     datatype: yesno
+#   - Docket number: docket_numbers[0]
+#     hide if: dont_know_docket_number
+# validation code: |
+#   # docket_numbers.there_are_any = not dont_know_docket_number
+#   if dont_know_docket_number:
+#     docket_numbers[0] = ' '
+#   docket_numbers.there_is_another = False
 ---
-code: |
-  docket_numbers.there_are_any = False
+# code: |
+#   docket_numbers.there_are_any = False
 ---
 id: attorney signature
 question: |
@@ -1087,7 +1080,6 @@ attachment:
   pdf template file: affidavit_disclosing_care_or_custody.pdf
   decimal places: 2
   fields:
-    - "docket_number": ${ docket_numbers[0] }
     - "user_name_full": ${ str(users[0]) }
     - "child1_address_on_one_line": ${ children_of_both.item(0).address.on_one_line(include_unit=True) if not confidential_address else ''}
     - "child2_address_on_one_line": ${ children_of_both.item(1).address.on_one_line(include_unit=True)  if not confidential_address else ''}
