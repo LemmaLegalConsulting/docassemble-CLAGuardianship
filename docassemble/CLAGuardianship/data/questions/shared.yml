@@ -36,3 +36,4 @@ fields:
 ---
 code: |
   users[0].mobile_number = DAEmpty()
+---

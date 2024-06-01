@@ -19,7 +19,7 @@ metadata:
   authors:
     - Pratibha Bharti
 ---
-mandatory: True
+# mandatory: True
 comment: |
   Global interview metadata
 variable name: interview_metadata["notarized_waiver"]

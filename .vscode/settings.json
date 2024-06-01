@@ -3,7 +3,11 @@
     "birthdate",
     "docassemble",
     "esign",
+    "geolocate",
+    "geolocated",
+    "Indigency",
     "kickout",
+    "OCAJ",
     "subquestion",
     "yesnomaybe",
     "yesnoradio"

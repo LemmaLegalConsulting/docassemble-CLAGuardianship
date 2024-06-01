@@ -3,8 +3,8 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
 ---
-objects:
-  - users: ALPeopleList.using(ask_number=True,target_number=1)
+# objects:
+  # - users: ALPeopleList.using(ask_number=True,target_number=1)
   # - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
 ---
 code: |
