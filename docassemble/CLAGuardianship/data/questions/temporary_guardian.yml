@@ -1,0 +1,283 @@
+---
+include:
+  - docassemble.AssemblyLine:al_package.yml
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+---
+metadata:
+  title: Verified Motion for Appointment of Temporary Guardian (MPC 340)
+  short title: Verified Motion for Appointment of Temporary Guardian (MPC 340)
+  subtitle: A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  description: |
+    A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  tags:
+    - "Family"
+    - "Domicile"
+  authors:
+    - Pratibha Bharti
+---
+objects:
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - children: ALPeopleList.using(ask_number=True,target_number=1)
+  - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+---
+sections:
+  - review_intro: "Introduction"
+---
+id: interview_order_Application_for_appointment
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = []
+  nav.set_section("review_intro")
+  users.gather()
+  if are_you_attorney:
+    users[0].address.address
+    users[0].phone_number
+    user_bbo
+  children.gather()
+  children[0].name
+  Division
+  docket_number
+  temporary_guardian_circumstances
+  harm_avoided
+  temporary_guardian_action
+  requested_guardians.gather()
+  guardian_Minor_serve_sureties
+  wants_specific_court_auth
+  wants_additional_request_to_court
+  signature_date
+  basic_questions_signature_flow
+  verified_motion_appointment_download
+
+  interview_order_verified_motion_appointment = True
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  Verified_Motion_Appointment_intro
+  interview_order_verified_motion_appointment
+  signature_date
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  verified_motion_appointment_download
+---
+code: |
+  requested_guardians[i].name.first
+  requested_guardians[i].complete = True
+---
+code: |
+  if len(requested_guardians.complete_elements()) >= 2:
+     requested_guardians.there_is_another = False
+  
+---
+id: Verified_Motion_Appointment_intro
+continue button field: Verified_Motion_Appointment_intro
+question: |
+  Verified Motion for Appointment of Temporary Guardian (MPC 340)
+subquestion: |
+  This interview will help you fill out an Verified Motion for Appointment of Temporary Guardian (MPC 340).
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+---
+id: are_you_attorney
+question: |
+  Are you the attorney for the person filing this?
+fields:
+  - no label: are_you_attorney
+    datatype: yesnoradio
+---
+id: BBO number
+question: |
+  If you are an attorney you need to give your BBO number.
+fields:
+  - "BBO number (if you are an attorney)": user_bbo
+    maxlength: 56
+---
+id: Who is this for
+question: |
+  Who are you filling out the application for?
+fields:
+  - First Name: children[0].name.first
+    required: True
+  - Middle Name: children[0].name.middle
+    required: False
+  - Last Name: children[0].name.last
+    required: True
+  - Suffix: children[0].name.suffix
+    required: False
+---
+id: Division
+question: |
+  Division
+fields:
+  - "Division": Division
+    maxlength: 27
+---
+id: temporary_guardian_circumstances
+question: |
+  What specific circumstances require the appointment of a temporary guardian?
+fields:
+  - no label: temporary_guardian_circumstances
+    input type: area
+---
+id: harm_avoided
+question: |
+  What specific harm is the petitioner trying to avoid by appointing a temporary guardian?
+fields:
+  - no label: harm_avoided
+    input type: area
+---
+id: temporary_guardian_action
+question: |
+  What specific actions does the petitioner believe a temporary guardian needs to take to avoid the harm?
+fields:
+  - no label: temporary_guardian_action
+    input type: area
+---
+id: guardian_Minor_serve_sureties
+question: |
+  Are you requesting the court to appoint the temporary guardian with or without sureties?
+subquestion: |
+   Someone who agrees to be financially responsible if the guardian mismanages the minor's assets.
+   
+   If you are requesting the appointment without sureties, you will need to explain why.
+fields:
+  - "Do you need a surety?": guardian_Minor_serve_sureties
+    datatype: yesnoradio
+  - "Explain why a surety isn't needed": reasons
+    input type: area
+    show if:
+      variable: guardian_Minor_serve_sureties
+      is: False
+---
+id: court authorization
+question: |
+  Is there any specific authorization you are requesting from the court for the temporary guardian?
+subquestion: |
+  For example, you might request that the temporary guardian be authorized to enroll the minor in school or to access the minor's medical records.
+fields:
+  - no label: wants_specific_court_auth
+    datatype: yesnoradio
+  - Specific Court Authorization: specific_court_authorization
+    input type: area
+    show if: wants_specific_court_auth
+---
+id: additional request
+question: |
+  Are there any other requests you have for the court?
+subquestion: |
+  For example, you might request that the court order the Department of Children and Families to conduct an investigation into the minor's situation.
+fields:
+  - no label: wants_additional_request_to_court
+    datatype: yesnoradio
+  - Additional Requests: additional_request_to_court
+    input type: area
+    show if: wants_additional_request_to_court
+---
+id: download verified_motion_appointment
+event: verified_motion_appointment_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('mpc_340_verified_motion_for_appointment_of_temporary_guardian'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - mpc_340_vmatg: ALDocument.using(title="MPC 340 verified motion for appointment of temporary guardian", filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", enabled=True, has_addendum=False, )
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[mpc_340_vmatg], filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[mpc_340_vmatg],  filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to deliver to court", enabled=True)
+
+---
+attachment:
+  - name: mpc_340_verified_motion_for_appointment_of_temporary_guardian
+    variable name: mpc_340_vmatg[i]
+    skip undefined: True
+    filename: mpc_340_verified_motion_for_appointment_of_temporary_guardian
+    pdf template file: mpc_340_verified_motion_for_appointment_of_temporary_guardian.pdf
+    fields:
+      - "docket_number": ${ docket_number }
+      - "trial_court_division": ${ Division }
+      - "children1_name_last": ${ children[0].name.last }
+      - "children1_name_first": ${ children[0].name.first }
+      - "children1_name_middle": ${ children[0].name.middle }
+      - "petition_filed": ${users[0].name}
+      - "users1_name_middle_initial": ${ users[0].name.middle }
+      - "users1_name_first": ${ users[0].name.first }
+      - "users1_name_last": ${ users[0].name.last }
+      - "temporary_guardian_circumstances": ${temporary_guardian_circumstances}
+      - "harm_avoided": ${harm_avoided}
+      - "temporary_guardian_action": ${temporary_guardian_action}
+      - "requested_temp_guardians1_name_first": ${requested_guardians[0].name.first}
+      - "requested_temp_guardians1_name_last": ${requested_guardians[0].name.last}
+      - "requested_temp_guardians1_name_middle": ${requested_guardians[0].name.middle}
+      - "requested_temp_guardians2_name_first": ${requested_guardians[1].name.first}
+      - "requested_temp_guardians2_name_middle": ${requested_guardians[1].name.middle}
+      - "requested_temp_guardians2_name_last": ${requested_guardians[1].name.last}
+      - "guardians_serve_with_sureties": ${True if guardian_Minor_serve_sureties else False}
+      - "guardians_serve_without_sureties": ${True if not guardian_Minor_serve_sureties else False}
+      - "minor_with": No
+      - "minor_has_no_estate": ${True if guardian_Minor_serve_sureties else False}
+      - "other_reason": ${True if not guardian_Minor_serve_sureties else False}
+      - "other_reason_explanation": ${reasons if not guardian_Minor_serve_sureties else ""}
+      - "other_box": No
+      - "wants_specific_court_auth": ${wants_specific_court_auth}
+      - "moving_party": No
+      - "specific_court_authorization": ${specific_court_authorization}
+      - "wants_additional_request_to_court": ${wants_additional_request_to_court}
+      - "court": No
+      - "additional_request_to_court": ${additional_request_to_court}
+      - "`21": something
+      - "users1_signature": ${ users[0].signature_if_final(i) }
+      - "users1_singature_date": ${ signature_date.format() }
+      - "attorneys1_name": ${users[0].name if are_you_attorney else ""}
+      - "attorneys1_address_address": ${users[0].address.address if are_you_attorney else ""}
+      - "attorneys1_address_unit": ${users[0].address.unit if are_you_attorney else ""}
+      - "attorneys1_address_city": ${users[0].address.city if are_you_attorney else ""}
+      - "attorneys1_address_state": ${users[0].address.state if are_you_attorney else ""}
+      - "attorneys1_address_zip": ${users[0].address.zip if are_you_attorney else ""}
+      - "attorneys1_phone": ${users[0].phone_number if are_you_attorney else ""}
+      - "attorneys1_bbo": ${user_bbo if are_you_attorney else ""}
+---
+
