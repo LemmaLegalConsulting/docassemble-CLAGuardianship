@@ -19,8 +19,8 @@ code: |
 
   interview_order_consent_to_nomination_by_a_minor = True
 ---
-code: |
-  users.there_is_another = False
+# code: |
+#   users.there_is_another = False
 ---
 code: |
   notarization_public.there_is_another = False
@@ -47,14 +47,14 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to appointment by minor", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
+  - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to Appointment by Minor", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
 ---
 attachment:
   - name: Motarized and verified
     filename: consent_to_nomination_by_a_minor
     variable name: consent_to_nomination_by_a_minor_attachment[i]
     skip undefined: True
-    pdf template file: mpc_441_notarized_and_verified_consent_to_nomination_by_a_minor.pdf
+    pdf template file: consent_to_nomination_by_a_minor.pdf
     fields:
       - "docket_number": ${ docket_number }
       - "trial_court_division": ${ trial_court.division }
@@ -117,4 +117,3 @@ attachment:
       - "users1_phone": ${children[0].phone_number}
       - "users1_name": ${children[0].name}
 ---
-

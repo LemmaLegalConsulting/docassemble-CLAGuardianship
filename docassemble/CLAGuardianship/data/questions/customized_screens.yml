@@ -41,6 +41,40 @@ fields:
     datatype: yesnoradio
     show if: parent_wants_lawyer
 ---
+################ Fee waiver ######################
+---
+code: |
+  fees['Filing fee'].waive = False
+  
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = who_is_making_petition == "interested_party" and wants_fee_waiver and is_indigent
+
+---
+################# Care and Custody Affidavit #########################
+---
+id: care or custody intro
+continue button field: affidavit_disclosing_care_or_custody_intro
+question: |
+  Affidavit Disclosing Care or Custody Proceedings
+subquestion: |
+  % if who_is_making_petition == "minor":
+  The next set of questions are about any other court cases that involve **you**.
+  % else:
+  The next set of questions are about any other court cases that involve **${ children.familiar() }**.
+  % endif
+
+  The court needs to know about any other cases to decide:
+
+  * Who needs to get notice of this case
+  * If there are any other court orders that might affect this case
+
+  The answer to these questions will be used to make your **Affidavit Disclosing Care or Custody Proceedings**.
+---
+objects:
+  - other_parties: DAEmpty
+---
 ################ Military affidavit ###################
 ---
 code: |

@@ -3,8 +3,10 @@ import sys
 from setuptools import setup, find_packages
 from fnmatch import fnmatchcase
 from distutils.util import convert_path
+
 standard_exclude = ('*.pyc', '*~', '.*', '*.bak', '*.swp*')
 standard_exclude_directories = ('.*', 'CVS', '_darcs', './build', './dist', 'EGG-INFO', '*.egg-info')
+
 def find_package_data(where='.', package='', exclude=standard_exclude, exclude_directories=standard_exclude_directories):
     out = {}
     stack = [(convert_path(where), '', package)]
@@ -40,6 +42,7 @@ def find_package_data(where='.', package='', exclude=standard_exclude, exclude_d
                     continue
                 out.setdefault(package, []).append(prefix+name)
     return out
+
 setup(name='docassemble.CLAGuardianship',
       version='1.1.1',
       description=('CLA Guardianship Interviews'),
