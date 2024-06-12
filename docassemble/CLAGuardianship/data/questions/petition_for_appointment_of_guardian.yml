@@ -1770,7 +1770,7 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
+  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True)
 ---
 code: |
   petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].label = "People with primary care or custody in the last 60 days"
@@ -1790,6 +1790,7 @@ objects:
       parental_consent_to_petition_attachment,
       affidavitofindigency_attachment,
       military_affidavit_bundle,
+      bond_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to download for your records",
@@ -1803,6 +1804,7 @@ objects:
       consent_to_nomination_by_a_minor_attachment,
       parental_consent_to_petition_attachment,
       military_affidavit_bundle,
+      bond_attachment,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",

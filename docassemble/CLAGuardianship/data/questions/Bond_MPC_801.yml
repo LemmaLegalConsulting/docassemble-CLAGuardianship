@@ -36,18 +36,21 @@ code: |
   children.gather()
   estimated_real_estate_value
   estimated_personal_estate_value
+  set_petitioner_as_fiduciary
+  set_first_requested_guardian_as_fiduciary
+  set_second_requested_guardian_as_fiduciary
   check_for_temp_guardianship_and_set_fiduciary_role
   courts.gather()
 
   interview_order_bond = True
 ---
 ###################### Main order ######################
-mandatory: True
 code: |
   interview_order_bond
   if esign:
     signature_date
   bond_download
+
 #################### Object/Code Blocks Start #####################
 ---
 code: |
@@ -56,37 +59,55 @@ code: |
   fiduciaries[i].complete = True
 ---
 code: |
-  fiduciaries[0].name.first = requested_guardians[0].name.first
-  fiduciaries[0].name.middle = requested_guardians[0].name.middle
-  fiduciaries[0].name.last = requested_guardians[0].name.last
-  fiduciaries[0].name.suffix = requested_guardians[0].name.suffix
-  fiduciaries[0].address.address = requested_guardians[0].address.address
-  fiduciaries[0].address.unit = requested_guardians[0].address.unit
-  fiduciaries[0].address.city = requested_guardians[0].address.city
-  fiduciaries[0].address.state = requested_guardians[0].address.state
-  fiduciaries[0].address.zip = requested_guardians[0].address.zip
+  if (who_is_making_petition == "interested_party") and petitioner_requesting_guardianship:
+    fiduciaries[0].name.first = users[0].name.first
+    fiduciaries[0].name.middle = users[0].name.middle
+    fiduciaries[0].name.last = users[0].name.last
+    fiduciaries[0].name.suffix = users[0].name.suffix
+    fiduciaries[0].address.address = users[0].address.address
+    fiduciaries[0].address.unit = users[0].address.unit
+    fiduciaries[0].address.city = users[0].address.city
+    fiduciaries[0].address.state = users[0].address.state
+    fiduciaries[0].address.zip = users[0].address.zip
+
+  set_petitioner_as_fiduciary = True
+---
+code: |
+  if len(requested_guardians.complete_elements()) > 0:
+    fiduciaries[0].name.first = requested_guardians[0].name.first
+    fiduciaries[0].name.middle = requested_guardians[0].name.middle
+    fiduciaries[0].name.last = requested_guardians[0].name.last
+    fiduciaries[0].name.suffix = requested_guardians[0].name.suffix
+    fiduciaries[0].address.address = requested_guardians[0].address.address
+    fiduciaries[0].address.unit = requested_guardians[0].address.unit
+    fiduciaries[0].address.city = requested_guardians[0].address.city
+    fiduciaries[0].address.state = requested_guardians[0].address.state
+    fiduciaries[0].address.zip = requested_guardians[0].address.zip
 
   set_first_requested_guardian_as_fiduciary = True
 ---
 code: |
-  fiduciaries[1].name.first = requested_guardians[1].name.first
-  fiduciaries[1].name.middle = requested_guardians[1].name.middle
-  fiduciaries[1].name.last = requested_guardians[1].name.last
-  fiduciaries[1].name.suffix = requested_guardians[1].name.suffix
-  fiduciaries[1].address.address = requested_guardians[1].address.address
-  fiduciaries[1].address.unit = requested_guardians[1].address.unit
-  fiduciaries[1].address.city = requested_guardians[1].address.city
-  fiduciaries[1].address.state = requested_guardians[1].address.state
-  fiduciaries[1].address.zip = requested_guardians[1].address.zip
+  if len(requested_guardians.complete_elements()) > 1:
+    fiduciaries[1].name.first = requested_guardians[1].name.first
+    fiduciaries[1].name.middle = requested_guardians[1].name.middle
+    fiduciaries[1].name.last = requested_guardians[1].name.last
+    fiduciaries[1].name.suffix = requested_guardians[1].name.suffix
+    fiduciaries[1].address.address = requested_guardians[1].address.address
+    fiduciaries[1].address.unit = requested_guardians[1].address.unit
+    fiduciaries[1].address.city = requested_guardians[1].address.city
+    fiduciaries[1].address.state = requested_guardians[1].address.state
+    fiduciaries[1].address.zip = requested_guardians[1].address.zip
 
   set_second_requested_guardian_as_fiduciary = True
 ---
 # NOTE: will need to review and make sure correct variable for temp guardianship interview used
 code: |
-  if interview_order_verified_motion_appointment:
-    fiduciary_role = "temporary guardian of minor"
-  else:
-    fiduciary_role = "permanent guardian of minor"
+  # if interview_order_verified_motion_appointment:
+  #   fiduciary_role = "temporary guardian of minor"
+  # else:
+  #   fiduciary_role = "permanent guardian of minor"
+
+  fiduciary_role = "permanent guardian of minor"
 
   check_for_temp_guardianship_and_set_fiduciary_role = True
 ---
@@ -97,9 +118,9 @@ continue button field: bond_intro
 question: |
   Bond
 subquestion: |
-  The bond ensures that the minor will receive compensation for financial harm if a guardian mishandles their estate.
+  The bond ensures that ${ children[0] } will receive compensation for financial harm if a guardian mishandles their estate.
 
-  For example, if a guardian uses money from the minor’s bank account to pay for their own personal expenses, the minor can use the bond to get back the money they lost.
+  For example, if a guardian uses money from ${ children[0].familiar() }'s bank account to pay for their own personal expenses, ${ children[0].familiar() } can use the bond to get that money back.
 ---
 id: Bond values
 question: |
@@ -134,22 +155,10 @@ fields:
       fiduciary[i].address_fields()
   - Phone number: fiduciary[i].phone_number
 ---
-code: |
-  personal_surety_count = 0
-  fiduciary_count = 0
-  for i in fiduciary:
-    fiduciary_count+=1
-  if bond_type == "With personal sureties":
-    for i in personal_surety:
-      personal_surety_count+=1
----
 #################### Attachment Blocks Start #####################
 ---
 objects:
-  - mpc_801_bond: ALDocument.using(title="Bond (MPC 801)", filename="mpc_801_bond.pdf", enabled=True, has_addendum=False, default_overflow_message=" (Continued in Attachment)")
----
-objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[mpc_801_bond], filename="Bond (MPC 801)", title="All forms to download for your records", enabled=True)
+  - bond_attachment: ALDocument.using(title="Bond (MPC 801)", filename="Bond (MPC 801)", enabled=True)
 ---
 id: download screen
 event: bond_download
@@ -167,7 +176,7 @@ question: |
 attachments:
   name: Bond (MPC 801)
   filename: Bond (MPC 801)
-  variable name: mpc_801_bond[i]
+  variable name: bond_attachment[i]
   skip undefined: True
   pdf template file: mpc_801_bond.pdf
   fields:
