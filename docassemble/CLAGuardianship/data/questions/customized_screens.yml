@@ -106,3 +106,64 @@ code: |
 ---
 code: |
   parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and (parent.agrees_to_guardianship or parent.agrees_to_guardianship == None) for parent in parents))
+---
+############# Temporary guardianship ########################
+---
+id: temporary guardian intro
+question: |
+  Do you need a temporary guardian for ${ children[0].familiar() }?
+subquestion: |
+  It can take time for a judge to appoint a guardian. If you
+  need a guardian right away, you can ask a judge for a temporary
+  guardian. A judge can make someone a temporary guardian in as little as 7 days.
+
+  The temporary guardian can be the same person as the permanent guardian. 
+
+  You can ask for a temporary guardian if waiting for a permanent guardian would risk 
+  **substantial harm** to the child's:
+
+  * health,
+  * safety, or
+  * wellbeing
+
+  And no other person has authority to act in the circumstances.
+
+  In some parts of Massachusetts, the judge will make you ask for
+  a temporary guardian even if you are able to wait. For that reason,
+  most people answer "yes".
+fields:
+  - Do you want the judge to appoint a temporary guardian?: requested_temporary_guardians.there_are_any
+    datatype: yesnoradio
+  - note: |
+      <h2 class="h4">Why do you need a temporary guardian?</h2>
+
+      Answer each of the following questions in a few sentences. It is OK to repeat
+      the same reasons that you wrote about why you need a **permanent** guardian.
+    show if: requested_temporary_guardians.there_are_any
+  - Why do you need a temporary guardian? Explain the specific circumstances.: temporary_guardian_circumstances
+    datatype: area
+    show if: requested_temporary_guardians.there_are_any
+  - What is the **harm** you are trying to avoid by appointing a temporary guardian?: harm_avoided
+    datatype: area
+    show if: requested_temporary_guardians.there_are_any
+  - What will the guardian be able to do to prevent the harm?: temporary_guardian_action
+    datatype: area
+    show if: requested_temporary_guardians.there_are_any
+---
+id: same guardian
+question: |
+  Who do you want to name as the ${ ordinal(i) } temporary guardian?
+subquestion: |
+  You can name the same person as the permanent guardian, or you can
+  name someone else.
+fields:
+  - Someone already named: requested_temporary_guardians[i]
+    datatype: object_radio
+    choices:
+      - requested_guardians
+    exclude:
+      - requested_temporary_guardians.complete_elements()
+    none of the above: Someone else
+    disable others: True
+  - code: |
+      requested_temporary_guardians[i].name_fields()
