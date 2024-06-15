@@ -9,6 +9,7 @@ include:
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
+  - temporary_guardian.yml
   - customized_screens.yml # Must come after the other includes
 ---
 metadata:
@@ -125,6 +126,8 @@ code: |
 
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
+  if requested_temporary_guardians.there_are_any:
+    interview_order_temporary_guardian
   wants_sureties_waiver
 
   nav.set_section("review_minors_guardianship")
@@ -824,6 +827,26 @@ subquestion: |
 fields:
   - I want permission to skip the **surety** requirement: wants_sureties_waiver
     datatype: yesnoradio
+  - I do not need a **surety** because: skip_surety_reasons_checklist
+    datatype: checkboxes
+    minlength: 1
+    none of the above: False
+    choices:
+      - ${ children[0].familiar() } does not have a significant amount of money or property: no_estate
+      - Other: other
+    show if:
+      variable: wants_sureties_waiver
+      is: True
+      code: |
+        requested_temporary_guardians.there_are_any
+  - Briefly explain: skip_surety_reasons
+    datatype: area
+    maxlength: 310
+    show if: 
+      variable: skip_surety_reasons_checklist["other"]
+      is: True
+      code: |
+        requested_temporary_guardians.there_are_any  
 ---
 id: other custodian during past 60 days
 question: |

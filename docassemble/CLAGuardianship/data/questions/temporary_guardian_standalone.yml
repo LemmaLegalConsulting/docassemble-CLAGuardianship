@@ -26,8 +26,12 @@ comment: |
 mandatory: True
 code: |
   Verified_Motion_Appointment_intro
-  interview_order_verified_motion_appointment
+  interview_order_temporary_guardian
   signature_date
+
+  basic_questions_signature_flow
+  verified_motion_appointment_download
+
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(
       persistent=True,
@@ -69,3 +73,22 @@ subquestion: |
   1. Sample language, to be filled later.
 
   2. Sample language, to be filled later.
+---
+id: download verified_motion_appointment
+event: verified_motion_appointment_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('mpc_340_verified_motion_for_appointment_of_temporary_guardian'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100

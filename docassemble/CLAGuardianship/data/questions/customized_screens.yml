@@ -150,12 +150,16 @@ fields:
     datatype: area
     show if: requested_temporary_guardians.there_are_any
 ---
+sets:
+  - requested_temporary_guardians[i].name.first
 id: same guardian
 question: |
   Who do you want to name as the ${ ordinal(i) } temporary guardian?
 subquestion: |
+  % if i == 0:
   You can name the same person as the permanent guardian, or you can
   name someone else.
+  % endif
 fields:
   - Someone already named: requested_temporary_guardians[i]
     datatype: object_radio
