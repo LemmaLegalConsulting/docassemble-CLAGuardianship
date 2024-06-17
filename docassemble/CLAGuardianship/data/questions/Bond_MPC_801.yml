@@ -125,12 +125,20 @@ subquestion: |
 id: Bond values
 question: |
   Bond values
+subquestion: |
+  You will need to give the court the total value of both ${ children[0].familiar() }'s personal estate and real estate in US dollars. 
+  
+  If you are not sure about either value, give your **best estimate**.
 fields:
-  - Estimated Value of Real Estate: estimated_real_estate_value
-    datatype: number
+  - What is the total value of ${ children[0].familiar() }'s **real estate**?: estimated_real_estate_value
+    datatype: currency
+    help: |
+      Includes land and anything *attached* to the land, such as houses and other types of buildings.
     required: False
-  - Estimated Value of Personal Estate: estimated_personal_estate_value
-    datatype: number
+  - What is the total value of ${ children[0].familiar() }'s **personal estate**?: estimated_personal_estate_value
+    datatype: currency
+    help: |
+      Anything that is *not* real estate, such as bank accounts, furniture, cars, etc.  
     required: False
 ---
 id: fiduciaries contact information
