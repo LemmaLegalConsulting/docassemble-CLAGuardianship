@@ -98,7 +98,8 @@ code: |
       set_signing_attorney
 
   # uncomment for standalone
-  need_past_address_appendix
+  check_multiple_previous_addresses
+  # need_past_address_appendix
   # need_children_appendix
   need_other_parties_appendix
 
@@ -146,6 +147,16 @@ code: |
   signing_attorney.address.zip = attorneys[0].address.zip
 
   set_signing_attorney = True
+---
+code: |
+  multiple_previous_addresses = False
+
+  for child in children_of_both:
+    if len(child.previous_addresses) > 1:
+      multiple_previous_addresses = True
+      break
+
+  check_multiple_previous_addresses = True
 ---
 #################### Override Blocks Start #####################
 ---
@@ -949,13 +960,13 @@ code: |
     child.letter = number_to_letter(index+1)
   assigned_letters = True
 ---
-code: |
-  need_past_address_appendix_temp = False
-  for child in children_of_both:
-    child.too_many_previous_addresses = len(child.previous_addresses) > 2
-    if len(child.previous_addresses) > 2:
-      need_past_address_appendix_temp = True
-  need_past_address_appendix = need_past_address_appendix_temp
+# code: |
+#   need_past_address_appendix_temp = False
+#   for child in children_of_both:
+#     child.too_many_previous_addresses = len(child.previous_addresses) > 2
+#     if len(child.previous_addresses) > 2:
+#       need_past_address_appendix_temp = True
+#   need_past_address_appendix = need_past_address_appendix_temp
 ---
 code: |
   other_care_custody_proceedings[i].put_on_appendix = False
@@ -1044,10 +1055,6 @@ code: |
   affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].label = "Children (continued)"
 
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[0].previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[1].previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[2].previous_addresses'].overflow_trigger = 2
-
   affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[0].other_parties'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[1].other_parties'].overflow_trigger = 3
@@ -1081,9 +1088,28 @@ attachment:
   decimal places: 2
   fields:
     - "user_name_full": ${ str(users[0]) }
-    - "child1_address_on_one_line": ${ children_of_both.item(0).address.on_one_line(include_unit=True) if not confidential_address else ''}
-    - "child2_address_on_one_line": ${ children_of_both.item(1).address.on_one_line(include_unit=True)  if not confidential_address else ''}
-    - "child3_address_on_one_line": ${ children_of_both.item(2).address.on_one_line(include_unit=True)  if not confidential_address else ''}
+
+    - child1_address_on_one_line: |
+        % if confidential_address:
+        See Section 10.
+        % else:
+        ${ children_of_both.item(0).address.on_one_line(include_unit=True) }
+        % endif
+
+    - child2_address_on_one_line: |
+        % if confidential_address:
+        See Section 10.
+        % else:
+        ${ children_of_both.item(1).address.on_one_line(include_unit=True) }
+        % endif
+
+    - child3_address_on_one_line: |
+        % if confidential_address:
+        See Section 10.
+        % else:
+        ${ children_of_both.item(2).address.on_one_line(include_unit=True) }
+        % endif
+
     - "user_address_on_one_line": ${ users[0].address.on_one_line(include_unit=True)  if not confidential_address else ''}
     - "user_name_full__1": ${ str(users[0]) }
     - "child1_address_street": ${ children_of_both.item(0).address.line_one() }
@@ -1103,9 +1129,40 @@ attachment:
     - "child2_name_last_first": ${ children_of_both.item(1).name.lastfirst() }
     - "child3_name_last_first": ${ children_of_both.item(2).name.lastfirst() }
     - "confidential_address": ${ confidential_address }
-    - "child1_past_addresses_on_one_line": ${ children_of_both.item(0).previous_addresses if not confidential_address else '' }
-    - "child2_past_addresses_on_one_line": ${ children_of_both.item(1).previous_addresses if not confidential_address else '' }
-    - "child3_past_addresses_on_one_line": ${ children_of_both.item(2).previous_addresses if not confidential_address else '' }
+
+    - child1_past_addresses_on_one_line: |
+        % if (not confidential_address) and (len(children_of_both.item(0).previous_addresses) > 1):
+        See addendum.
+        % elif (not confidential_address) and len(children_of_both.item(0).previous_addresses) == 1:
+        ${ children_of_both.item(0).previous_addresses.item(0) }
+        % elif confidential_address and len(children_of_both.item(0).previous_addresses) > 0:
+        See Section 10.
+        % else:
+        ${ '' }
+        % endif
+    
+    - child2_past_addresses_on_one_line: |
+        % if (not confidential_address) and (len(children_of_both.item(1).previous_addresses) > 1):
+        See addendum.
+        % elif (not confidential_address) and (len(children_of_both.item(1).previous_addresses) == 1):
+        ${ children_of_both.item(1).previous_addresses.item(0) }
+        % elif confidential_address and len(children_of_both.item(1).previous_addresses) > 0:
+        See Section 10.
+        % else:
+        ${ '' }
+        % endif
+
+    - child3_past_addresses_on_one_line: |
+        % if (not confidential_address) and (len(children_of_both.item(2).previous_addresses) > 1):
+        See addendum.
+        % elif (not confidential_address) and (len(children_of_both.item(2).previous_addresses) == 1):
+        ${ children_of_both.item(2).previous_addresses.item(0) }
+        % elif confidential_address and len(children_of_both.item(2).previous_addresses) > 0:
+        See Section 10.
+        % else:
+        ${ '' }
+        % endif
+
     - "has_participated_custody_case": ${ has_participated_custody_case }
     - "has_not_participated_custody_case": ${ not has_participated_custody_case }
     - "know_of_other_custody_case": ${ know_of_other_custody_case }
@@ -1139,12 +1196,34 @@ attachment:
     - "month": ${ month }
     - "year": ${ year }
     - "attorney_for_juvenile_address_on_one_line": ${ signing_attorney.address.on_one_line(include_unit=True) if needs_attorney_signature else '' }
-    - "child1_past_addresses_1": ${ children_of_both.item(0).previous_addresses.item(0).on_one_line() if confidential_address else '' }
-    - "child1_past_addresses_2": ${ children_of_both.item(0).previous_addresses.item(1).on_one_line() if confidential_address else '' }
-    - "child2_past_addresses_1": ${ children_of_both.item(1).previous_addresses.item(0).on_one_line() if confidential_address else '' }
-    - "child2_past_addresses_2": ${ children_of_both.item(1).previous_addresses.item(1).on_one_line() if confidential_address else '' }
-    - "child3_past_addresses_1": ${ children_of_both.item(2).previous_addresses.item(0).on_one_line() if confidential_address else '' }
-    - "child3_past_addresses_2": ${ children_of_both.item(2).previous_addresses.item(1).on_one_line() if confidential_address else '' }
+
+    - child1_past_addresses_section_10: |
+        % if confidential_address and len(children_of_both.item(0).previous_addresses) > 1:
+        See Confidential Addendum.
+        % elif confidential_address and len(children_of_both.item(0).previous_addresses) == 1:
+        ${ children_of_both.item(0).previous_addresses.item(0) }
+        % else:
+        ${ '' }
+        % endif
+
+    - child2_past_addresses_section_10: |
+        % if confidential_address and len(children_of_both.item(1).previous_addresses) > 1:
+        See Confidential Addendum.
+        % elif confidential_address and len(children_of_both.item(1).previous_addresses) == 1:
+        ${ children_of_both.item(1).previous_addresses.item(0) }
+        % else:
+        ${ '' }
+        % endif
+
+    - child3_past_addresses_section_10: |
+        % if confidential_address and len(children_of_both.item(2).previous_addresses) > 1:
+        See Confidential Addendum.
+        % elif confidential_address and len(children_of_both.item(2).previous_addresses) == 1:
+        ${ children_of_both.item(2).previous_addresses.item(0) }
+        % else:
+        ${ '' }
+        % endif
+
     - "attorney_for_children_1": ${ str(attorneys_for_children.item(0)) +  ' (' + str(attorneys_for_children.item(0).represented_children) + ')' if defined('attorneys_for_children[0]') else ''}
     - "attorney_for_children_2": ${ str(attorneys_for_children.item(1)) +  ' (' + str(attorneys_for_children.item(1).represented_children) + ')' if defined('attorneys_for_children[1]') else ''}
     - "attorney_for_children_3": ${ str(attorneys_for_children.item(2)) +  ' (' + str(attorneys_for_children.item(2).represented_children) + ')' if defined('attorneys_for_children[2]') else ''}
