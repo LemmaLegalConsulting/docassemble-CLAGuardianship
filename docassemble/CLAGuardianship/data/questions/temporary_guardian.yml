@@ -154,7 +154,7 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - motion_temporary_guardian_attachment: ALDocument.using(title="Petition for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, )
+  - motion_temporary_guardian_attachment: ALDocument.using(title="Motion for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, )
 ---
 code: |
   motion_temporary_guardian_attachment.enabled = True
