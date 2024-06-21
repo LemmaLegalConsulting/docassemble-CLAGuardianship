@@ -10,9 +10,6 @@ code: |
   file_date = today()
   is_objection = False
 ---
-code: |
-  appearance_as_attorney = form_filled_by_attorney
----
 ########### Application for appointment of counsel ##########
 ---
 # TODO: need to add back in questions about the parent
@@ -54,7 +51,7 @@ code: |
 ---
 ################# Care and Custody Affidavit #########################
 ---
-id: care or custody intro
+id: care or custody intro customized
 continue button field: affidavit_disclosing_care_or_custody_intro
 question: |
   Affidavit Disclosing Care or Custody Proceedings
@@ -85,7 +82,7 @@ code: |
   # affidavit and the petition.
   # user = petitioner in the petition, and
   # user should be "child" in the military affidavit
-  additional_parties = ALPeopleList(elements=[parent for parent in parents if not parent.is_deceased] + children + users + other_custodians)
+  additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
 template: military_affidavit_case_name
 content: |
@@ -108,6 +105,9 @@ code: |
   parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and (parent.agrees_to_guardianship or parent.agrees_to_guardianship == None) for parent in parents))
 ---
 ############# Temporary guardianship ########################
+---
+code: |
+  motion_temporary_guardian_attachment.enabled = requested_temporary_guardians.there_are_any
 ---
 id: temporary guardian intro
 question: |

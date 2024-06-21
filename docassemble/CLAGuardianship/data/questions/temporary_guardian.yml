@@ -1,20 +1,18 @@
 ---
+include:
+  - shared.yml
+---
 objects:
   - users: ALPeopleList.using(ask_number=True,target_number=1)
   - children: ALPeopleList.using(ask_number=True,target_number=1)
   - requested_temporary_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
-
 ---
 id: interview_order_Application_for_appointment
 code: |
   # Set the allowed courts for this interview
   allowed_courts = []
-  nav.set_section("review_intro")
   users.gather()
-  if are_you_attorney:
-    users[0].address.address
-    users[0].phone_number
-    user_bbo
+  attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
   children.gather()
   children[0].name
   trial_court.division
@@ -73,29 +71,16 @@ subquestion: |
 
   2. Sample language, to be filled later.
 ---
-id: are_you_attorney
-question: |
-  Are you the attorney for the person filing this?
-fields:
-  - no label: are_you_attorney
-    datatype: yesnoradio
-  - "BBO number (if you are an attorney in Massachusetts)": user_bbo
-    required: False
-    maxlength: 56
-    show if: are_you_attorney
----
+sets:
+  - children[0].name.first
+  - children[0].name.middle
+  - children[0].name.last
 id: Who is this for
 question: |
-  Who are you filling out the application for?
+  Who is the minor that needs the guardian?
 fields:
-  - First Name: children[0].name.first
-    required: True
-  - Middle Name: children[0].name.middle
-    required: False
-  - Last Name: children[0].name.last
-    required: True
-  - Suffix: children[0].name.suffix
-    required: False
+  - code: |
+      children[0].name_fields()
 ---
 id: temporary_guardian_circumstances
 question: |
@@ -169,26 +154,26 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - mpc_340_vmatg: ALDocument.using(title="MPC 340 verified motion for appointment of temporary guardian", filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", has_addendum=True, )
+  - motion_temporary_guardian_attachment: ALDocument.using(title="Petition for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, )
 ---
 code: |
-  mpc_340_vmatg.enabled = True
+  motion_temporary_guardian_attachment.enabled = True
 ---
 code: |
-  mpc_340_vmatg.overflow_fields["temporary_guardian_circumstances"].overflow_trigger = 240
-  mpc_340_vmatg.overflow_fields["temporary_guardian_circumstances"].label = "The nature of the circumstances requiring the appointment of a temporary guardian are:"
-  mpc_340_vmatg.overflow_fields["harm_avoided"].overflow_trigger = 240
-  mpc_340_vmatg.overflow_fields["harm_avoided"].label = "The particular harm sought to be avoided is:"
-  mpc_340_vmatg.overflow_fields["temporary_guardian_action"].overflow_trigger = 240
-  mpc_340_vmatg.overflow_fields["temporary_guardian_action"].label = "The actions which will need to be taken by a Temporary Guardian to avoid the harm are:"
-  mpc_340_vmatg.overflow_fields.gathered = True
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].label = "The nature of the circumstances requiring the appointment of a temporary guardian are:"
+  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].label = "The particular harm sought to be avoided is:"
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].label = "The actions which will need to be taken by a Temporary Guardian to avoid the harm are:"
+  motion_temporary_guardian_attachment.overflow_fields.gathered = True
 ---
 attachment:
-  - name: mpc_340_verified_motion_for_appointment_of_temporary_guardian
-    variable name: mpc_340_vmatg[i]
+  - name: motion_temporary_guardian
+    variable name: motion_temporary_guardian_attachment[i]
     skip undefined: True
-    filename: mpc_340_verified_motion_for_appointment_of_temporary_guardian
-    pdf template file: mpc_340_verified_motion_for_appointment_of_temporary_guardian.pdf
+    filename: motion_temporary_guardian
+    pdf template file: motion_temporary_guardian.pdf
     fields:
       - "trial_court_division": ${ trial_court.division }
       - "children1_name_last": ${ children[0].name.last }
@@ -198,9 +183,9 @@ attachment:
       - "users1_name_middle_initial": ${ users[0].name.middle }
       - "users1_name_first": ${ users[0].name.first }
       - "users1_name_last": ${ users[0].name.last }
-      - "temporary_guardian_circumstances": ${ mpc_340_vmatg.safe_value("temporary_guardian_circumstances") }
-      - "harm_avoided": ${ mpc_340_vmatg.safe_value("harm_avoided") }
-      - "temporary_guardian_action": ${ mpc_340_vmatg.safe_value("temporary_guardian_action") }
+      - "temporary_guardian_circumstances": ${ motion_temporary_guardian_attachment.safe_value("temporary_guardian_circumstances") }
+      - "harm_avoided": ${ motion_temporary_guardian_attachment.safe_value("harm_avoided") }
+      - "temporary_guardian_action": ${ motion_temporary_guardian_attachment.safe_value("temporary_guardian_action") }
       - "requested_temp_guardians1_name_first": ${requested_temporary_guardians.item(0).name.first}
       - "requested_temp_guardians1_name_last": ${requested_temporary_guardians.item(0).name.last}
       - "requested_temp_guardians1_name_middle": ${requested_temporary_guardians.item(0).name.middle}
@@ -231,13 +216,12 @@ attachment:
       - "additional_request_to_court": ${additional_request_to_court}
       - "users1_signature": ${ users[0].signature_if_final(i) }
       - "users1_singature_date": ${ signature_date.format() }
-      - "attorneys1_name": ${users[0].name if are_you_attorney else ""}
-      - "attorneys1_address_address": ${users[0].address.address if are_you_attorney else ""}
-      - "attorneys1_address_unit": ${users[0].address.unit if are_you_attorney else ""}
-      - "attorneys1_address_city": ${users[0].address.city if are_you_attorney else ""}
-      - "attorneys1_address_state": ${users[0].address.state if are_you_attorney else ""}
-      - "attorneys1_address_zip": ${users[0].address.zip if are_you_attorney else ""}
-      - "attorneys1_phone": ${users[0].phone_number if are_you_attorney else ""}
-      - "attorneys1_bbo": ${user_bbo if are_you_attorney else ""}
+      - "attorneys1_name": ${attorneys if form_filled_by_attorney else ""}
+      - "attorneys1_address_address": ${attorneys[0].address.address if form_filled_by_attorney else ""}
+      - "attorneys1_address_unit": ${attorneys[0].address.unit if form_filled_by_attorney else ""}
+      - "attorneys1_address_city": ${attorneys[0].address.city if form_filled_by_attorney else ""}
+      - "attorneys1_address_state": ${attorneys[0].address.state if form_filled_by_attorney else ""}
+      - "attorneys1_address_zip": ${attorneys[0].address.zip if form_filled_by_attorney else ""}
+      - "attorneys1_phone": ${attorneys[0].phone_number if form_filled_by_attorney else ""}
+      - "attorneys1_bbo": ${attorneys[0].bbo if form_filled_by_attorney else ""}
 ---
-

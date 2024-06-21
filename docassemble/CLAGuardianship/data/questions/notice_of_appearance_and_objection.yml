@@ -2,14 +2,11 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
+  - shared.yml
 ---
 # objects:
   # - users: ALPeopleList.using(ask_number=True,target_number=1)
   # - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
----
-code: |
-  if appearance_as_attorney:
-    attorneys.there_are_any = True
 ---
 #################### Interview order #####################
 id: interview_order_notice_of_appearance_and_objection
@@ -18,15 +15,11 @@ code: |
   allowed_courts = ["Probate and Family Court"]
   nav.set_section("review_notice_of_appearance_and_objection")
 
-  appearance_as_attorney
+  attorneys.there_are_any
   users.gather()
   users[0].address.address
   users[0].phone_number
-  if appearance_as_attorney:
-    attorneys.gather()
-    attorneys[0].address.address
-    attorneys[0].phone_number
-    bbo
+  attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
   set_parts(subtitle=str(users))
   children[0].name.first
   case_name
@@ -66,7 +59,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if appearance_as_attorney:
+  % if form_filled_by_attorney:
   What is your client's name?
   % else:
   What is your name?
@@ -88,7 +81,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   What is your client's address?
   % else:
   What is your address?
@@ -106,14 +99,14 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   What is your client's phone number?
   % else:
   What is your phone number?
   % endif
 
 subquestion: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   Enter your client's **primary phone number**, if able.
   % else:
   Enter your **primary phone number**, if able.
@@ -191,7 +184,7 @@ question: |
   Are you an attorney who is helping someone else file this document?
 
 fields: 
-  - I am: appearance_as_attorney
+  - I am: attorneys.there_are_any
     datatype: radio
     choices:
       - "Filing this document for myself": False
@@ -277,7 +270,7 @@ code: |
 id: persons signature
 
 question: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   ${ attorneys[0].name }, please sign below
   % else:
   ${ users[0].name }, please sign below
@@ -285,7 +278,7 @@ question: |
 
 signature: users[0].signature
 under: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   ${ attorneys[0].name }
   % else:
   ${ users[0].name }
@@ -442,8 +435,8 @@ attachment:
     - "case_name": ${ case_name }
     - "petition": Appointment of Guardian
     - "file_date": ${ file_date.format() }
-    - "appearance_for_myself": ${ not appearance_as_attorney }
-    - "appearance_as_attorney": ${ appearance_as_attorney }
+    - "appearance_for_myself": ${ not form_filled_by_attorney }
+    - "form_filled_by_attorney": ${ form_filled_by_attorney }
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }

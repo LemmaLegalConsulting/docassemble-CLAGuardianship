@@ -251,7 +251,7 @@ id: form_filled_by_attorney
 question: |
   Are you an attorney for someone in this case?
 fields:
-  - I am: form_filled_by_attorney
+  - I am: attorneys.there_are_any
     datatype: radio
     choices:
       - An attorney in this case: True
@@ -259,7 +259,10 @@ fields:
   - BBO number (for Massachusetts attorneys): bbo
     maxlength: 56
     required: False
-    show if: form_filled_by_attorney
+    show if: attorneys.there_are_any
+---
+code: |
+  form_filled_by_attorney = bool(len(attorneys))    
 ---
 id: your name
 sets:

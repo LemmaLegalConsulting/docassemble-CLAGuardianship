@@ -135,15 +135,16 @@ code: |
 #################### Object/Code Blocks Start #####################
 ---
 code: |
-  signing_attorney.name.first = attorneys[0].name.first
-  signing_attorney.name.last = attorneys[0].name.last
-  signing_attorney.name.middle = attorneys[0].name.middle
-  signing_attorney.name.suffix = attorneys[0].name.suffix
-  signing_attorney.address.address = attorneys[0].address.address
-  signing_attorney.address.unit = attorneys[0].address.unit
-  signing_attorney.address.city = attorneys[0].address.city
-  signing_attorney.address.state = attorneys[0].address.state
-  signing_attorney.address.zip = attorneys[0].address.zip
+  if len(attorneys):
+    signing_attorney.name.first = attorneys[0].name.first
+    signing_attorney.name.last = attorneys[0].name.last
+    signing_attorney.name.middle = attorneys[0].name.middle
+    signing_attorney.name.suffix = attorneys[0].name.suffix
+    signing_attorney.address.address = attorneys[0].address.address
+    signing_attorney.address.unit = attorneys[0].address.unit
+    signing_attorney.address.city = attorneys[0].address.city
+    signing_attorney.address.state = attorneys[0].address.state
+    signing_attorney.address.zip = attorneys[0].address.zip
 
   set_signing_attorney = True
 ---
@@ -1157,8 +1158,6 @@ attachment:
     - "user_signature": ${ f"/s/ {users[0]}" if esign else "" }
 ---
 id: care or custody intro
-comment: |
-  This question is used to introduce your interview. Please customize
 continue button field: affidavit_disclosing_care_or_custody_intro
 question: |
   Affidavit Disclosing Care or Custody Proceedings
@@ -1166,7 +1165,7 @@ subquestion: |
   As part of the petition for guardianship, the court needs to know about any
   other cases involving the care or custody of your children. This includes
   cases where you, the other parent, or someone else has been involved in a
-  court case about the care or custody of your children. This information helps
+  court case about the care or custody of your children.
 
   If your children have been involved in court cases about their custody or care, 
   then you must submit an Affidavit Disclosing Care or Custody Proceeding. 

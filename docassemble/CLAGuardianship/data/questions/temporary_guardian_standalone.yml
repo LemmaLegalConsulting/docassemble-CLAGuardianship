@@ -44,8 +44,8 @@ code: |
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[mpc_340_vmatg], filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to download for your records", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[mpc_340_vmatg],  filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to deliver to court", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[motion_temporary_guardian_attachment], filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[motion_temporary_guardian_attachment],  filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to deliver to court", enabled=True)
 ---
 id: Verified_Motion_Appointment_intro
 continue button field: Verified_Motion_Appointment_intro
