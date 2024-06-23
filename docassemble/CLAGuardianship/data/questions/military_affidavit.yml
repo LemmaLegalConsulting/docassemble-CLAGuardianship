@@ -56,6 +56,7 @@ code: |
   docket_numbers
   has_used_scra_site
   signature_date
+  military_affidavit_case_name
   interview_order_military_affidavit = True
 ---
 code: |
@@ -561,6 +562,7 @@ attachment:
   variable name: military_affidavit_attachment[i]
   skip undefined: True
   pdf template file: military_affidavit.pdf
+  # editable: False
   fields:
       - "docket_number": ${ docket_numbers }      
       - "court_department_district": ${trial_court.department == "District Court"}
@@ -572,7 +574,19 @@ attachment:
       - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "trial_court_division": ${ trial_court.division }
       - "petitioners": |
-          ${ str(military_affidavit_case_name) }
+          % if defined("military_affidavit_case_name"):
+          ${ military_affidavit_case_name }
+          % else:
+            % if user_ask_role == "plaintiff":
+            % if len(other_parties):
+          ${ users }
+            % else:
+          In the interests of ${ users }
+            % endif
+            % else:
+          ${ other_parties }
+            % endif
+          % endif
       - "respondents": |
           % if user_ask_role == "defendant":
           ${ users }
@@ -613,15 +627,3 @@ attachment:
 ---
 code: |
   military_affidavit_bundle.enabled = True
----
-template: military_affidavit_case_name
-content: |
-  % if user_ask_role == "plaintiff":
-  % if len(other_parties):
-  ${ users }
-  % else:
-  In the interests of ${ users }
-  % endif
-  % else:
-  ${ other_parties }
-  % endif

@@ -10,7 +10,7 @@ include:
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
-  - customized_screens.yml # Must come after the other includes
+  - customized_screens.yml
 ---
 metadata:
   title: >-
@@ -162,6 +162,7 @@ code: |
   military_affidavit_intro
   knows_status_already
   interview_order_military_affidavit
+  military_affidavit_case_name
 
   if who_is_making_petition == "interested_party":
     nav.set_section("section_fee_waiver")

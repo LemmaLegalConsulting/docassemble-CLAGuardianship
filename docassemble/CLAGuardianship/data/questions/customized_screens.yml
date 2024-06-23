@@ -84,9 +84,8 @@ code: |
   # user should be "child" in the military affidavit
   additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
-template: military_affidavit_case_name
-content: |
-  In the interests of ${ children[0] }
+code: |
+  military_affidavit_case_name = f"In the Interests of { children[0].name_full() }"
 ---
 code: |
   other_parties.there_are_any = False
