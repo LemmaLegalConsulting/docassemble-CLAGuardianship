@@ -37,3 +37,48 @@ fields:
 code: |
   users[0].mobile_number = DAEmpty()
 ---
+---
+id: attorneys there_are_any
+question: |
+  Are you the attorney for the person making this petition?
+subquestion: |
+  
+  <div class="alert alert-info">
+    <p>
+      <i class="fas fa-info-circle"></i> If you are the person asking for the petition
+       and you already have an attorney, <strong>stop now.</strong> 
+       Your attorney should make the petition for you.
+    </p>
+  </div>
+fields:
+  - Are you the attorney?: attorneys.there_are_any
+    datatype: radio
+    choices:
+      - Yes, I am the attorney: True
+      - No, I am the person making the petition: False
+---
+id: attorney information
+sets:
+  - attorneys[0].name.first
+  - attorneys[0].name.last
+  - attorneys[0].name.middle
+  - attorneys[0].name.suffix
+  - attorneys[0].address.address
+  - attorneys[0].address.unit
+  - attorneys[0].address.city
+  - attorneys[0].address.state
+  - attorneys[0].address.zip
+  - attorneys[0].phone_number
+question: |
+  Tell us about yourself (the attorney)
+fields:
+  - code: |
+      attorneys[0].name_fields()
+  - code: |
+      attorneys[0].address_fields()
+  - Primary phone number: attorneys[0].phone_number
+  - BBO number (if you are an attorney in Massachusetts): attorneys[0].bbo
+    required: False
+---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))    

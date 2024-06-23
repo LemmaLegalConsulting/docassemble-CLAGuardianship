@@ -9,7 +9,8 @@ include:
   - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
-  - customized_screens.yml # Must come after the other includes
+  - temporary_guardian.yml
+  - customized_screens.yml
 ---
 metadata:
   title: >-
@@ -125,6 +126,8 @@ code: |
 
   if ((who_is_making_petition == "interested_party") and (not petitioner_requesting_guardianship)) or (who_is_making_petition == "minor"):
     requested_guardians.gather()
+  if requested_temporary_guardians.there_are_any:
+    interview_order_temporary_guardian
   wants_sureties_waiver
 
   nav.set_section("review_minors_guardianship")
@@ -159,6 +162,7 @@ code: |
   military_affidavit_intro
   knows_status_already
   interview_order_military_affidavit
+  military_affidavit_case_name
 
   if who_is_making_petition == "interested_party":
     nav.set_section("section_fee_waiver")
@@ -175,9 +179,6 @@ code: |
   petition_for_appointment_of_guardian_download
 ---
 #################### Object/Code Blocks Start #####################
----
-code: |  
-  form_filled_by_attorney = bool(len(attorneys))
 ---
 code: |
   children[i].name.first
@@ -824,6 +825,26 @@ subquestion: |
 fields:
   - I want permission to skip the **surety** requirement: wants_sureties_waiver
     datatype: yesnoradio
+  - I do not need a **surety** because: skip_surety_reasons_checklist
+    datatype: checkboxes
+    minlength: 1
+    none of the above: False
+    choices:
+      - ${ children[0].familiar() } does not have a significant amount of money or property: no_estate
+      - Other: other
+    show if:
+      variable: wants_sureties_waiver
+      is: True
+      code: |
+        requested_temporary_guardians.there_are_any
+  - Briefly explain: skip_surety_reasons
+    datatype: area
+    maxlength: 310
+    show if: 
+      variable: skip_surety_reasons_checklist["other"]
+      is: True
+      code: |
+        requested_temporary_guardians.there_are_any  
 ---
 id: other custodian during past 60 days
 question: |
@@ -1177,47 +1198,6 @@ fields:
     show if:
       variable: wants_additional_request
       is: True
----
-id: attorneys there_are_any
-question: |
-  Are you the attorney for the person making this petition?
-subquestion: |
-  
-  <div class="alert alert-info">
-    <p>
-      <i class="fas fa-info-circle"></i> If you are the person asking for the petition
-       and you already have an attorney, <strong>stop now.</strong> 
-       Your attorney should make the petition for you.
-    </p>
-  </div>
-fields:
-  - Are you the attorney?: attorneys.there_are_any
-    datatype: radio
-    choices:
-      - Yes, I am the attorney: True
-      - No, I am the person making the petition: False
----
-id: attorney information
-sets:
-  - attorneys[0].name.first
-  - attorneys[0].name.last
-  - attorneys[0].name.middle
-  - attorneys[0].name.suffix
-  - attorneys[0].address.address
-  - attorneys[0].address.unit
-  - attorneys[0].address.city
-  - attorneys[0].address.state
-  - attorneys[0].address.zip
-  - attorneys[0].phone_number
-question: |
-  Tell us about yourself (the attorney)
-fields:
-  - code: |
-      attorneys[0].name_fields()
-  - code: |
-      attorneys[0].address_fields()
-  - Primary phone number: attorneys[0].phone_number
-  - BBO number: attorneys[0].bbo
 ---
 id: preview petition_for_appointment_of_guardian
 question: |
@@ -1777,6 +1757,7 @@ code: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[
       petition_for_appointment_of_guardian_post_interview_instructions,
+      motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
@@ -1791,6 +1772,7 @@ objects:
       enabled=True
       )
   - al_court_bundle: ALDocumentBundle.using(elements=[
+      motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
       notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,

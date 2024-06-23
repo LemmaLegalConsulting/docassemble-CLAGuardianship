@@ -1,0 +1,94 @@
+---
+include:
+  - docassemble.AssemblyLine:al_package.yml
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.ALMassachusetts:al_massachusetts.yml
+---
+metadata:
+  title: Verified Motion for Appointment of Temporary Guardian (MPC 340)
+  short title: Verified Motion for Appointment of Temporary Guardian (MPC 340)
+  subtitle: A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  description: |
+    A form used to ask Massachusetts courts for a fee waiver, and its supplement, which gives the court detailed information about finances
+  tags:
+    - "Family"
+    - "Domicile"
+  authors:
+    - Pratibha Bharti
+---
+sections:
+  - review_intro: "Introduction"
+---
+###################### Main order ######################
+comment: |
+  This block includes the logic for standalone interviews.
+  Delete mandatory: True to include in another interview
+mandatory: True
+code: |
+  Verified_Motion_Appointment_intro
+  interview_order_temporary_guardian
+  signature_date
+
+  basic_questions_signature_flow
+  verified_motion_appointment_download
+
+  # Store anonymous data for analytics / statistics
+  store_variables_snapshot(
+      persistent=True,
+      data={
+          "zip": showifdef("users[0].address.zip"),
+          "reached_interview_end": True,
+      },
+  )
+  verified_motion_appointment_download
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[motion_temporary_guardian_attachment], filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[motion_temporary_guardian_attachment],  filename="mpc_340_verified_motion_for_appointment_of_temporary_guardian", title="All forms to deliver to court", enabled=True)
+---
+id: Verified_Motion_Appointment_intro
+continue button field: Verified_Motion_Appointment_intro
+question: |
+  Verified Motion for Appointment of Temporary Guardian (MPC 340)
+subquestion: |
+  This interview will help you fill out an Verified Motion for Appointment of Temporary Guardian (MPC 340).
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+---
+id: download verified_motion_appointment
+event: verified_motion_appointment_download
+question: |
+  All done
+subquestion: |
+  Thank you ${users}. Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('mpc_340_verified_motion_for_appointment_of_temporary_guardian'), label='Edit answers', color='info') }
+
+
+  ${ al_user_bundle.download_list_html() }
+
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+
+progress: 100

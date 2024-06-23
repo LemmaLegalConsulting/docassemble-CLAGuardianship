@@ -1,0 +1,227 @@
+---
+include:
+  - shared.yml
+---
+objects:
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
+  - children: ALPeopleList.using(ask_number=True,target_number=1)
+  - requested_temporary_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+---
+id: interview_order_Application_for_appointment
+code: |
+  # Set the allowed courts for this interview
+  allowed_courts = []
+  users.gather()
+  attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
+  children.gather()
+  children[0].name
+  trial_court.division
+  temporary_guardian_circumstances
+  harm_avoided
+  temporary_guardian_action
+  requested_temporary_guardians.gather()
+  wants_sureties_waiver
+  wants_specific_court_auth
+  wants_additional_request_to_court
+
+  interview_order_temporary_guardian = True
+---
+code: |
+  requested_temporary_guardians[i].name.first
+  requested_temporary_guardians[i].complete = True
+---
+id: requested_temporary_guardians there_is_another
+question: |
+  Do you want to name another temporary guardian?
+fields:
+  - no label: requested_temporary_guardians.there_is_another
+    datatype: yesnoradio
+---
+code: |
+  if len(requested_temporary_guardians.complete_elements()) >= 2:
+     requested_temporary_guardians.there_is_another = False
+---
+code: |
+  requested_temporary_guardians.there_are_any = True # Default
+---
+id: Verified_Motion_Appointment_intro
+continue button field: Verified_Motion_Appointment_intro
+question: |
+  Verified Motion for Appointment of Temporary Guardian (MPC 340)
+subquestion: |
+  This interview will help you fill out an Verified Motion for Appointment of Temporary Guardian (MPC 340).
+
+  You can use this tool if:
+
+  * Sample language, to be filled later.
+
+  * Sample language, to be filled later.
+
+  **Before you get started**, please gather:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+
+  3. Sample language, to be filled later.
+
+  **When you are finished**, you will need to:
+
+  1. Sample language, to be filled later.
+
+  2. Sample language, to be filled later.
+---
+sets:
+  - children[0].name.first
+  - children[0].name.middle
+  - children[0].name.last
+id: Who is this for
+question: |
+  Who is the minor that needs the guardian?
+fields:
+  - code: |
+      children[0].name_fields()
+---
+id: temporary_guardian_circumstances
+question: |
+  Why do you need a temporary guardian?
+subquestion: |
+  Answer each of the following questions in a few sentences.
+fields:
+  - Why do you need a temporary guardian? Explain the specific circumstances.: temporary_guardian_circumstances
+    datatype: area
+    show if: wants_temporary_guardian
+  - What is the **harm** you are trying to avoid by appointing a temporary guardian?: harm_avoided
+    datatype: area
+    show if: wants_temporary_guardian
+  - What will the guardian be able to do to prevent the harm?: temporary_guardian_action
+    datatype: area
+    show if: wants_temporary_guardian
+---
+id: sureties waiver
+question: |
+  Waiving the **surety** requirement
+subquestion: |
+  When a judge appoints a guardian, they require the guardian to sign a **bond**
+  to the court and name someone as a **surety**. The bond is a personal guarantee. 
+  It is a promise that the guardian will manage the money and property of the ward responsibly.
+
+  The **surety** is a person who promises to pay the court if the guardian does not manage the money
+  or property the way that they should. The surety can be someone other than the guardian.
+
+  [More about surety bonds](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment)
+  (opens in a new tab).
+
+  When the guardian is for a minor, the surety requirement is often waived, or skipped.
+  This is because the guardian does not have control over the minor's money or property.
+
+  You can ask the judge to skip the surety requirement now.
+fields:
+  - I want permission to skip the **surety** requirement: wants_sureties_waiver
+    datatype: yesnoradio
+  - I do not need a **surety** because: skip_surety_reasons_checklist
+    datatype: checkboxes
+    choices:
+      - ${ children[0].familiar() } does not have a significant amount of money or property: no_estate
+      - Other: other
+    show if: wants_sureties_waiver
+  - Briefly explain: skip_surety_reasons
+    datatype: area
+    maxlength: 310
+    show if: 
+      variable: skip_surety_reasons_checklist["other"]
+      is: True
+---
+id: court authorization
+question: |
+  Will the temporary guardian need any special authority from the court?
+subquestion: |
+  For example:
+
+  * To access medical records
+  * To make decisions about school or medical care
+fields:
+  - The temporary guardian needs special authority: wants_specific_court_auth
+    datatype: yesnoradio
+  - The temporary guardian needs authority to (explain): specific_court_authorization
+    input type: area
+    show if: wants_specific_court_auth
+  - Is there anything **else** you need the court to do with the request for a temporary guardian?: wants_additional_request_to_court
+    datatype: yesnoradio
+  - I also ask that the court: additional_request_to_court
+    input type: area
+    show if: wants_additional_request_to_court
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - motion_temporary_guardian_attachment: ALDocument.using(title="Motion for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, )
+---
+code: |
+  motion_temporary_guardian_attachment.enabled = True
+---
+code: |
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].label = "The nature of the circumstances requiring the appointment of a temporary guardian are:"
+  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].label = "The particular harm sought to be avoided is:"
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].label = "The actions which will need to be taken by a Temporary Guardian to avoid the harm are:"
+  motion_temporary_guardian_attachment.overflow_fields.gathered = True
+---
+attachment:
+  - name: motion_temporary_guardian
+    variable name: motion_temporary_guardian_attachment[i]
+    skip undefined: True
+    filename: motion_temporary_guardian
+    pdf template file: motion_temporary_guardian.pdf
+    fields:
+      - "trial_court_division": ${ trial_court.division }
+      - "children1_name_last": ${ children[0].name.last }
+      - "children1_name_first": ${ children[0].name.first }
+      - "children1_name_middle": ${ children[0].name.middle }
+      - "petition_filed": ${users[0].name}
+      - "users1_name_middle_initial": ${ users[0].name.middle }
+      - "users1_name_first": ${ users[0].name.first }
+      - "users1_name_last": ${ users[0].name.last }
+      - "temporary_guardian_circumstances": ${ motion_temporary_guardian_attachment.safe_value("temporary_guardian_circumstances") }
+      - "harm_avoided": ${ motion_temporary_guardian_attachment.safe_value("harm_avoided") }
+      - "temporary_guardian_action": ${ motion_temporary_guardian_attachment.safe_value("temporary_guardian_action") }
+      - "requested_temp_guardians1_name_first": ${requested_temporary_guardians.item(0).name.first}
+      - "requested_temp_guardians1_name_last": ${requested_temporary_guardians.item(0).name.last}
+      - "requested_temp_guardians1_name_middle": ${requested_temporary_guardians.item(0).name.middle}
+      - "requested_temp_guardians2_name_first": ${requested_temporary_guardians.item(1).name.first}
+      - "requested_temp_guardians2_name_middle": ${requested_temporary_guardians.item(1).name.middle}
+      - "requested_temp_guardians2_name_last": ${requested_temporary_guardians.item(1).name.last}
+      - "guardians_serve_with_sureties": ${ not wants_sureties_waiver }
+      - "guardians_serve_without_sureties": ${ wants_sureties_waiver }
+      - "minor_with": No
+      - "minor_has_no_estate": |
+          % if wants_sureties_waiver:
+          ${ skip_surety_reasons_checklist["no_estate"] }
+          % endif
+      - "other_reason": |
+          % if wants_sureties_waiver:
+          ${ skip_surety_reasons_checklist["other"] }
+          % endif
+      - "other_reason_explanation": |
+          % if wants_sureties_waiver and skip_surety_reasons_checklist["other"]:
+          ${skip_surety_reasons }
+          % endif
+      - "other_box": No
+      - "wants_specific_court_auth": ${wants_specific_court_auth}
+      - "moving_party": No
+      - "specific_court_authorization": ${specific_court_authorization}
+      - "wants_additional_request_to_court": ${wants_additional_request_to_court}
+      - "court": No
+      - "additional_request_to_court": ${additional_request_to_court}
+      - "users1_signature": ${ users[0].signature_if_final(i) }
+      - "users1_singature_date": ${ signature_date.format() }
+      - "attorneys1_name": ${attorneys if form_filled_by_attorney else ""}
+      - "attorneys1_address_address": ${attorneys[0].address.address if form_filled_by_attorney else ""}
+      - "attorneys1_address_unit": ${attorneys[0].address.unit if form_filled_by_attorney else ""}
+      - "attorneys1_address_city": ${attorneys[0].address.city if form_filled_by_attorney else ""}
+      - "attorneys1_address_state": ${attorneys[0].address.state if form_filled_by_attorney else ""}
+      - "attorneys1_address_zip": ${attorneys[0].address.zip if form_filled_by_attorney else ""}
+      - "attorneys1_phone": ${attorneys[0].phone_number if form_filled_by_attorney else ""}
+      - "attorneys1_bbo": ${attorneys[0].bbo if form_filled_by_attorney else ""}
+---

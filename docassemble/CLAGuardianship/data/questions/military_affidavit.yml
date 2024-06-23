@@ -56,6 +56,7 @@ code: |
   docket_numbers
   has_used_scra_site
   signature_date
+  military_affidavit_case_name
   interview_order_military_affidavit = True
 ---
 code: |
@@ -251,7 +252,7 @@ id: form_filled_by_attorney
 question: |
   Are you an attorney for someone in this case?
 fields:
-  - I am: form_filled_by_attorney
+  - I am: attorneys.there_are_any
     datatype: radio
     choices:
       - An attorney in this case: True
@@ -259,7 +260,10 @@ fields:
   - BBO number (for Massachusetts attorneys): bbo
     maxlength: 56
     required: False
-    show if: form_filled_by_attorney
+    show if: attorneys.there_are_any
+---
+code: |
+  form_filled_by_attorney = bool(len(attorneys))    
 ---
 id: your name
 sets:
@@ -558,6 +562,7 @@ attachment:
   variable name: military_affidavit_attachment[i]
   skip undefined: True
   pdf template file: military_affidavit.pdf
+  # editable: False
   fields:
       - "docket_number": ${ docket_numbers }      
       - "court_department_district": ${trial_court.department == "District Court"}
@@ -569,7 +574,19 @@ attachment:
       - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "trial_court_division": ${ trial_court.division }
       - "petitioners": |
-          ${ str(military_affidavit_case_name) }
+          % if defined("military_affidavit_case_name"):
+          ${ military_affidavit_case_name }
+          % else:
+            % if user_ask_role == "plaintiff":
+            % if len(other_parties):
+          ${ users }
+            % else:
+          In the interests of ${ users }
+            % endif
+            % else:
+          ${ other_parties }
+            % endif
+          % endif
       - "respondents": |
           % if user_ask_role == "defendant":
           ${ users }
@@ -610,15 +627,3 @@ attachment:
 ---
 code: |
   military_affidavit_bundle.enabled = True
----
-template: military_affidavit_case_name
-content: |
-  % if user_ask_role == "plaintiff":
-  % if len(other_parties):
-  ${ users }
-  % else:
-  In the interests of ${ users }
-  % endif
-  % else:
-  ${ other_parties }
-  % endif
