@@ -78,10 +78,10 @@ data:
   - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
   - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+  - review_military_affidavit: Military affidavit
   - section_fee_waiver: Fee waiver
     hidden: |
       showifdef("who_is_making_petition") == "minor"
-  - review_military_affidavit: Military affidavit
   #- review_bond: Bond
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
@@ -1133,12 +1133,18 @@ fields:
 id: has conservatorship case or petition
 question: |
   % if who_is_making_petition == "minor":
-  Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
+  Do you have a conservator or will you ask the court for one?
   % else:
-  Does ${ children.familiar() } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
+  Does ${ children.familiar() } have a conservator or will they ask the court for one?
   % endif
 fields:
-  - no label: has_conservator_case_or_petition
+  - label: |
+      % if who_is_making_petition == "minor":
+      I have a conservator or I will file a petition for one
+      % else:
+      ${ children.familiar() } has a conservator or will file a petition for one
+      % endif
+    field: has_conservator_case_or_petition
     datatype: yesnoradio
 ---
 id: minor assets there_are_any
