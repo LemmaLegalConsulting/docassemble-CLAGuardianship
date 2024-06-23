@@ -789,19 +789,25 @@ fields:
 id: petitioner requesting guardianship
 question: |
   % if form_filled_by_attorney:
-  Does the petitioner want to ask the court to appoint them as a guardian for ${ children.familiar() }?
+  Does ${ users[0] } want to be the guardian for ${ children.familiar() }?
   % else:
-  Do you want to ask the court to appoint you as a guardian for ${ children.familiar() }?
-  % endif
-subquestion: |
-  % if form_filled_by_attorney:
-  **DO NOT** select **Yes** if the petitioner(s) are investigation or have any criminal record regarding the abuse or neglect of a child.
-  % else:
-  **DO NOT** select **Yes** if you are under investigation or have any criminal record regarding the abuse or neglect of a child.
+  Do you want to be the guardian for ${ children.familiar() }?
   % endif
 fields:
   - no label: petitioner_requesting_guardianship
     datatype: yesnoradio
+  - label: |
+      % if form_filled_by_attorney:
+      Petitioner is not under investigation and does not have any criminal record regarding the abuse or neglect of a child
+      % else:
+      I am not under investigation and I do not have any criminal record regarding the abuse or neglect of a child: 
+      % endif
+    field: petitioner_not_under_investigation
+    datatype: yesno
+    show if: petitioner_requesting_guardianship
+validation code: |
+  if petitioner_requesting_guardianship and not petitioner_not_under_investigation:
+    validation_error('The petitioner is not eligible to be a guardian if they are currently being investigated or have a record of past abuse or neglect of a child')
 ---
 id: sureties waiver
 question: |
