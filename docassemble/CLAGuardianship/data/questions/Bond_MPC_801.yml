@@ -31,7 +31,6 @@ objects:
 #################### Interview order #####################
 id: interview_order_bond
 code: |
-  bond_intro
   users.gather()
   children.gather()
   estimated_real_estate_value
@@ -40,7 +39,6 @@ code: |
   set_first_requested_guardian_as_fiduciary
   set_second_requested_guardian_as_fiduciary
   check_for_temp_guardianship_and_set_fiduciary_role
-  courts.gather()
 
   interview_order_bond = True
 ---
