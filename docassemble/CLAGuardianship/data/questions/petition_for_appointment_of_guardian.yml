@@ -18,9 +18,9 @@ modules:
 ---
 metadata:
   title: >-
-    Petition for Appointment of Guardian of Minor (MPC 140)
+    Get a guardian for a minor
   short title: >-
-    MPC 140
+    Minor Guardianship
   description: |-
     If you are or if you know a child who needs a responsible adult to make decisions
     for them other than their parent or their current guardian, you can use this interview 
@@ -397,13 +397,18 @@ id: waiving_cost
 question: |
   You may qualify for a fee waiver
 subquestion: |
-  There is no fee to ask for a guardian. But you may need to pay to **serve** 
-  (give) the papers to the other people who need to know about this case.
+  There is no filing fee to ask for a guardian. 
+  
+  But you may need to pay:
+  
+  * A $15 citation fee
+  * And a fee to **serve** (give) the papers to the other people who need to know about this case,
+    or to publish notice if you cannot find them to serve them in person.
 
   The judge may also want to know your income to decide if you can afford to
   guarantee the **surety bond**.
 
-  If you earn under a certain amount, you can ask the court to help pay to
+  If you earn under a certain amount, you can ask the court to help pay the citation fee,
   serve the papers and to waive the surety bond.
 fields:
   - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
