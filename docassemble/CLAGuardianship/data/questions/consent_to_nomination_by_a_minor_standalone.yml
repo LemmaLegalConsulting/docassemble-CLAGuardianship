@@ -13,9 +13,9 @@ include:
 ---
 metadata:
   title: |
-    MPC 441 Notarized And Verified Consent To Nomination By Minor
+    Minor Consent to Appointment of a Guardian
   short title: |
-    MPC 441 Notarized And Verified Consent To Nomination By Minor
+    Minor Consent to a Guardian
   tags:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
@@ -41,15 +41,6 @@ data:
     - "FA-04-00-00-00"
   typical role: "unknown"
   generate download screen: True
----
-metadata:
-  title: |
-    Consent to Nomination by a Minor
-  short title: |
-    Consent to Nomination by a Minor
-  authors:
-    - Pratibha Bharti
-    - Quinten Steenhuis
 ---
 mandatory: True
 code: |
