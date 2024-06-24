@@ -23,7 +23,7 @@ metadata:
     - Pratibha Bharti
     - Quinten Steenhuis
 ---
-# mandatory: True
+mandatory: True
 comment: |
   Global interview metadata
 variable name: interview_metadata["consent_to_nomination_by_a_minor"]
@@ -51,7 +51,7 @@ metadata:
     - Pratibha Bharti
     - Quinten Steenhuis
 ---
-# mandatory: True
+mandatory: True
 code: |
   interview_order_consent_to_nomination_by_a_minor  
   notarized_and_verified_download

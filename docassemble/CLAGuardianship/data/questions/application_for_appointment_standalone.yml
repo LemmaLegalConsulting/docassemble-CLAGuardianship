@@ -55,7 +55,7 @@ sections:
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   al_intro_screen
   Application_for_appointment_intro

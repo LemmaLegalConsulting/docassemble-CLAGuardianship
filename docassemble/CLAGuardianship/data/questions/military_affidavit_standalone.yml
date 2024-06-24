@@ -20,7 +20,7 @@ objects:
 code: |
   interview_metadata['main_interview_key'] =  'military_affidavit'
 ---
-# mandatory: True
+mandatory: True
 comment: |
   Global interview metadata
 variable name: interview_metadata["military_affidavit"]
@@ -63,7 +63,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   military_affidavit_intro
   nav.set_section("review_military_affidavit")
