@@ -1,0 +1,226 @@
+include:
+  - petition_for_appointment_of_guardian.yml
+  - shared.yml
+  - docassemble.AssemblyLine:assembly_line.yml
+---
+metadata:
+  title: Bond MPC 801
+  short title: Bond
+  subtitle: Bond
+  description: |
+    The Bond is used to establish a bond for individuals appointed as fiduciaries—such as personal representatives or trustees—of an estate.
+  tags:
+    - "Family"
+    - "Domicile"
+---
+code: |
+  github_repo_name = 'docassemble-CLAGuardianship'
+---
+features:
+  labels above fields: True
+---
+code: |
+  AL_DEFAULT_COUNTRY = "US"
+---
+code: |
+  AL_DEFAULT_STATE = "MA"
+---
+objects:
+  - fiduciaries: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+---
+#################### Interview order #####################
+id: interview_order_bond
+code: |
+  users.gather()
+  children.gather()
+  estimated_real_estate_value
+  estimated_personal_estate_value
+  set_petitioner_as_fiduciary
+  set_first_requested_guardian_as_fiduciary
+  set_second_requested_guardian_as_fiduciary
+  check_for_temp_guardianship_and_set_fiduciary_role
+
+  interview_order_bond = True
+---
+###################### Main order ######################
+code: |
+  interview_order_bond
+  if esign:
+    signature_date
+  bond_download
+
+#################### Object/Code Blocks Start #####################
+---
+code: |
+  fiduciaries[i].name.first
+  fiduciaries[i].address.address
+  fiduciaries[i].complete = True
+---
+code: |
+  if (who_is_making_petition == "interested_party") and petitioner_requesting_guardianship:
+    fiduciaries[0].name.first = users[0].name.first
+    fiduciaries[0].name.middle = users[0].name.middle
+    fiduciaries[0].name.last = users[0].name.last
+    fiduciaries[0].name.suffix = users[0].name.suffix
+    fiduciaries[0].address.address = users[0].address.address
+    fiduciaries[0].address.unit = users[0].address.unit
+    fiduciaries[0].address.city = users[0].address.city
+    fiduciaries[0].address.state = users[0].address.state
+    fiduciaries[0].address.zip = users[0].address.zip
+
+  set_petitioner_as_fiduciary = True
+---
+code: |
+  if len(requested_guardians.complete_elements()) > 0:
+    fiduciaries[0].name.first = requested_guardians[0].name.first
+    fiduciaries[0].name.middle = requested_guardians[0].name.middle
+    fiduciaries[0].name.last = requested_guardians[0].name.last
+    fiduciaries[0].name.suffix = requested_guardians[0].name.suffix
+    fiduciaries[0].address.address = requested_guardians[0].address.address
+    fiduciaries[0].address.unit = requested_guardians[0].address.unit
+    fiduciaries[0].address.city = requested_guardians[0].address.city
+    fiduciaries[0].address.state = requested_guardians[0].address.state
+    fiduciaries[0].address.zip = requested_guardians[0].address.zip
+
+  set_first_requested_guardian_as_fiduciary = True
+---
+code: |
+  if len(requested_guardians.complete_elements()) > 1:
+    fiduciaries[1].name.first = requested_guardians[1].name.first
+    fiduciaries[1].name.middle = requested_guardians[1].name.middle
+    fiduciaries[1].name.last = requested_guardians[1].name.last
+    fiduciaries[1].name.suffix = requested_guardians[1].name.suffix
+    fiduciaries[1].address.address = requested_guardians[1].address.address
+    fiduciaries[1].address.unit = requested_guardians[1].address.unit
+    fiduciaries[1].address.city = requested_guardians[1].address.city
+    fiduciaries[1].address.state = requested_guardians[1].address.state
+    fiduciaries[1].address.zip = requested_guardians[1].address.zip
+
+  set_second_requested_guardian_as_fiduciary = True
+---
+# NOTE: will need to review and make sure correct variable for temp guardianship interview used
+code: |
+  # if interview_order_verified_motion_appointment:
+  #   fiduciary_role = "temporary guardian of minor"
+  # else:
+  #   fiduciary_role = "permanent guardian of minor"
+
+  fiduciary_role = "permanent guardian of minor"
+
+  check_for_temp_guardianship_and_set_fiduciary_role = True
+---
+#################### Question Blocks Start #####################
+---
+id: bond intro
+continue button field: bond_intro
+question: |
+  Bond
+subquestion: |
+  The bond ensures that ${ children[0] } will receive compensation for financial harm if a guardian mishandles their estate.
+
+  For example, if a guardian uses money from ${ children[0].familiar() }'s bank account to pay for their own personal expenses, ${ children[0].familiar() } can use the bond to get that money back.
+---
+id: Bond values
+question: |
+  Bond values
+subquestion: |
+  You will need to give the court the total value of both ${ children[0].familiar() }'s personal estate and real estate in US dollars. 
+  
+  If you are not sure about either value, give your **best estimate**.
+fields:
+  - What is the total value of ${ children[0].familiar() }'s **real estate**?: estimated_real_estate_value
+    datatype: currency
+    help: |
+      Includes land and anything *attached* to the land, such as houses and other types of buildings.
+    required: False
+  - What is the total value of ${ children[0].familiar() }'s **personal estate**?: estimated_personal_estate_value
+    datatype: currency
+    help: |
+      Anything that is *not* real estate, such as bank accounts, furniture, cars, etc.  
+    required: False
+---
+id: fiduciaries contact information
+sets:
+  - fiduciaries[1].name.first
+  - fiduciaries[1].name.middle
+  - fiduciaries[1].name.last
+  - fiduciaries[1].name.suffix
+  - fiduciaries[i].address.address
+  - fiduciaries[i].address.unit
+  - fiduciaries[i].address.city
+  - fiduciaries[i].address.state
+  - fiduciaries[i].address.zip
+  - fiduciaries[i].address.country
+  - fiduciaries[i].phone_number
+question: |
+  ${ ordinal(i).capitalize() } Fiduciary contact information
+fields:
+  - code: |
+      fiduciaries[i].name_fields()
+  - code: |
+      fiduciary[i].address_fields()
+  - Phone number: fiduciary[i].phone_number
+---
+#################### Attachment Blocks Start #####################
+---
+objects:
+  - bond_attachment: ALDocument.using(title="Bond (MPC 801)", filename="Bond (MPC 801)", enabled=True)
+---
+id: download screen
+event: bond_download
+question: |
+  Thank you  Your form is ready to download and deliver.
+
+  View, download and send your form below. Click the "Edit answers" button to fix any mistakes.
+
+  ${ action_button_html(url_action('review_form'), label='Edit answers', color='info') }
+
+  ${ al_user_bundle.download_list_html() }
+
+  ${ al_user_bundle.send_button_html(show_editable_checkbox=False) }
+---
+attachments:
+  name: Bond (MPC 801)
+  filename: Bond (MPC 801)
+  variable name: bond_attachment[i]
+  skip undefined: True
+  pdf template file: mpc_801_bond.pdf
+  fields:
+    - "trial_court_division": ${ trial_court.division }
+
+    - "children1_name_first__1": ${ children[0].name.first }
+    - "children1_name_middle__1": ${ children[0].name.middle }
+    - "children1_name_last__1": ${ children[0].name.last }
+    - "children1_name_first__2": ${ children[0].name.first }
+    - "children1_name_middle__2": ${ children[0].name.middle }
+    - "children1_name_last__2": ${ children[0].name.last }
+
+    - "estimated_real_estate_value": ${ estimated_real_estate_value }
+    - "estimated_personal_estate_value": ${ estimated_personal_estate_value }
+
+    - "fiduciaries1_name_first": ${ fiduciaries[0].name.first }
+    - "fiduciaries1_name_middle": ${ fiduciaries[0].name.middle }
+    - "fiduciaries1_name_last": ${ fiduciaries[0].name.last }
+    - "fiduciaries1_address_address": ${ fiduciaries[0].address.address }
+    - "fiduciaries1_address_state": ${ fiduciaries[0].address.state }
+    - "fiduciaries1_address_unit": ${ fiduciaries[0].address.unit }
+    - "fiduciaries1_address_city": ${ fiduciaries[0].address.city }
+    - "fiduciaries1_address_zip": ${ fiduciaries[0].address.zip }
+    - "fiduciaries1_phone": ${ fiduciaries[0].phone_number }
+    - "fiduciaries2_name_first": ${ fiduciaries[1].name.first }
+    - "fiduciaries2_name_middle": ${ fiduciaries[1].name.middle }
+    - "fiduciaries2_name_last": ${ fiduciaries[1].name.last }
+    - "fiduciaries2_address_address": ${ fiduciaries[1].address.address }
+    - "fiduciaries2_address_state": ${ fiduciaries[1].address.state }
+    - "fiduciaries2_address_unit": ${ fiduciaries[1].address.unit }
+    - "fiduciaries2_address_city": ${ fiduciaries[1].address.city }
+    - "fiduciaries2_address_zip": ${ fiduciaries[1].address.zip }
+    - "fiduciaries2_phone": ${ fiduciaries[1].phone_number }
+
+    - "fiduciary_role": ${ fiduciary_role }
+
+    - "fiduciaries1_signature": ${ f"/s/ { fiduciaries[0]}" if esign else "" }
+    - "fiduciaries2_signature": ${ f"/s/ { fiduciaries[1]}" if esign else "" }
+    - "fiduciaries1_signature_date": ${ today() }
+    - "fiduciaries2_signature_date": ${ today() }
+---

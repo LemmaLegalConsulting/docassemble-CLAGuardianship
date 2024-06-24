@@ -504,11 +504,12 @@ code: |
 ---
 id: attorney signature
 question: |
-  Attorney Signature
-subquestion: |
-  Are you completing this form on behalf of someone who is a juvenile (under 18) or incompetent?
-fields: 
-  - Choose one: needs_attorney_signature
+  Affidavit Disclosing Care or Custody - Attorney Signature  
+fields:
+  - label: |
+      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent? 
+    field: needs_attorney_signature
+    label above field: True
     datatype: yesnoradio
 ---
 id: attorney signing address

@@ -3,6 +3,7 @@ include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
   - shared.yml
+  - Bond_MPC_801.yml
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
   - parental_consent_to_petition.yml
@@ -11,6 +12,9 @@ include:
   - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
   - customized_screens.yml
+---
+modules:
+  - docassemble.ALToolbox.al_income
 ---
 metadata:
   title: >-
@@ -57,7 +61,7 @@ objects:
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
-  - assets: DAList.using(object_type=DAObject, maximum_number=2, complete_attribute='complete')
+  - assets: ALAssetList.using(complete_attribute='complete')
 ---
 code: |
   enable_al_nav_sections = True
@@ -73,11 +77,12 @@ data:
   - review_minors_guardianship: History
   - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
+  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+  - review_military_affidavit: Military affidavit
   - section_fee_waiver: Fee waiver
     hidden: |
       showifdef("who_is_making_petition") == "minor"
-  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
-  - review_military_affidavit: Military affidavit
+  #- review_bond: Bond
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
 ---
@@ -129,6 +134,7 @@ code: |
   if requested_temporary_guardians.there_are_any:
     interview_order_temporary_guardian
   wants_sureties_waiver
+  interview_order_bond
 
   nav.set_section("review_minors_guardianship")
 
@@ -139,7 +145,8 @@ code: |
   nav.set_section("review_minor_assets")
   if (has_conservator_case_or_petition == False) and assets.there_are_any:
     assets.gather()
-    minor_assets_total_value
+    estimated_real_estate_value
+    estimated_personal_estate_value
   
   nav.set_section("review_additional_requests")
   wants_additional_request
@@ -236,14 +243,6 @@ code: |
 ---
 code: |
   attorneys.there_is_another = False
----
-code: |
-  if len(assets.complete_elements()) > 1:
-    minor_assets_total_value = assets[1].value + assets[0].value
-  elif len(assets.complete_elements()) > 0:
-    minor_assets_total_value = assets[0].value
-  else:
-    minor_assets_total_value = 0
 ---
 code: |
   if who_is_making_petition == "minor":
@@ -790,19 +789,25 @@ fields:
 id: petitioner requesting guardianship
 question: |
   % if form_filled_by_attorney:
-  Does the petitioner want to ask the court to appoint them as a guardian for ${ children.familiar() }?
+  Does ${ users[0] } want to be the guardian for ${ children.familiar() }?
   % else:
-  Do you want to ask the court to appoint you as a guardian for ${ children.familiar() }?
-  % endif
-subquestion: |
-  % if form_filled_by_attorney:
-  **DO NOT** select **Yes** if the petitioner(s) are investigation or have any criminal record regarding the abuse or neglect of a child.
-  % else:
-  **DO NOT** select **Yes** if you are under investigation or have any criminal record regarding the abuse or neglect of a child.
+  Do you want to be the guardian for ${ children.familiar() }?
   % endif
 fields:
   - no label: petitioner_requesting_guardianship
     datatype: yesnoradio
+  - label: |
+      % if form_filled_by_attorney:
+      Petitioner is not under investigation and does not have any criminal record regarding the abuse or neglect of a child
+      % else:
+      I am not under investigation and I do not have any criminal record regarding the abuse or neglect of a child: 
+      % endif
+    field: petitioner_not_under_investigation
+    datatype: yesno
+    show if: petitioner_requesting_guardianship
+validation code: |
+  if petitioner_requesting_guardianship and not petitioner_not_under_investigation:
+    validation_error('The petitioner is not eligible to be a guardian if they are currently being investigated or have a record of past abuse or neglect of a child')
 ---
 id: sureties waiver
 question: |
@@ -1128,25 +1133,37 @@ fields:
 id: has conservatorship case or petition
 question: |
   % if who_is_making_petition == "minor":
-  Do you have an existing conservatorship case or are you also filing a Petition for Appointment of Conservator?
+  Do you have a conservator or will you ask the court for one?
   % else:
-  Does ${ children.familiar() } have an existing conservatorship case or are they also filing a Petition for Appointment of Conservator?
+  Does ${ children.familiar() } have a conservator or will they ask the court for one?
   % endif
 fields:
-  - no label: has_conservator_case_or_petition
+  - label: |
+      % if who_is_making_petition == "minor":
+      I have a conservator or I will file a petition for one
+      % else:
+      ${ children.familiar() } has a conservator or will file a petition for one
+      % endif
+    field: has_conservator_case_or_petition
     datatype: yesnoradio
 ---
 id: minor assets there_are_any
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  Do you have any assets?
+  Do you have any assets, like a bank account or real estate?
   % else:
-  Does ${ children.familiar() } have any assets?
+  Does ${ children.familiar() } have any assets, like a bank account or real estate?
   % endif
 subquestion: |
-  Assets can include things like bank accounts, property, and anticipated income.
+  ${ collapse_template(explain_question_about_assets_template) }
 fields:
-  - no label: assets.there_are_any
+  - label: |
+      % if who_is_making_petition == "minor":
+      I have assets
+      % else:
+      ${ children.familiar() } has assets
+      % endif
+    field: assets.there_are_any
     datatype: yesnoradio
 validation code: |
   if assets.there_are_any:
@@ -1154,32 +1171,68 @@ validation code: |
   else:
     minor_has_assets_no = True
 ---
+variable name: asset_terms
+data: !!omap
+  - bank account: Bank account
+  - real estate: Real estate
+  - pension or retirement account: Pension or retirement account
+  - jewelry or other valuable personal property: Jewelry or other valuable personal property
+---
+template: explain_question_about_assets_template
+subject: |
+  Why does the judge need to know?
+content: |
+  A guardian for a minor usually cannot make decisions
+  about the child's property unless they are also appointed
+  as a **conservator**. But the judge still needs to know
+  about things that the minor owns.
+
+  If the minor owns a lot of valuable things, usually more than
+  $5,000 worth, the judge may decide that the guardian needs
+  to pay or guarantee a bond to the court.
+---
+code: |
+  assets[i].source
+  assets[i].market_value
+  assets[i].complete = True
+---
 id: minor asset information
-sets:
-  - assets[i].description
-  - assets[i].value
 question: |
-  Tell us about the ${ ordinal(i) } asset you want to include in the petition.
+  % if who_is_making_petition == "minor":
+  Tell us about your ${ ordinal(i) } asset
+  % else:
+  Tell us about ${ children.familiar() }'s ${ ordinal(i) } asset
+  % endif
 subquestion: |
+  You can add as many assets as you have, one at a time, even 
+  if you have multiple of one kind of asset.
+
+  % if i > 0:
+  So far you have told us about:
+
+  % for item in assets.complete_elements():
+    * ${ item.source } worth ${ currency(item.market_value) }
+  % endfor
+  % else:
   **DO NOT** list bank account numbers or Social Security numbers.
+  % endif
 fields:
-  - Provide a brief description: assets[i].description
-    input type: area
+  - What kind of asset is it?: assets[i].source
+    datatype: radio
+    code: asset_terms
+  - Describe (without an account number): assets[i].description
     maxlength: 85
-  - What is the asset's total value?: assets[i].value
+    help: |
+      For example: My checking account at Bank of America
+  - How much is this asset worth?: assets[i].market_value
     datatype: currency
     min: 0
-    currency symbol: $
-validation code: |
-  if len(assets.complete_elements()) > 0:
-    assets.there_is_another = False
----
-id: minor assets there_is_another
-question: |
-  Do you want to add another asset to the petition?
-fields:
-  - no label: assets.there_is_another
+  - I have another asset to list: assets.there_is_another
     datatype: yesnoradio
+---
+code: |
+  estimated_real_estate_value = assets.market_value(source="real estate")
+  estimated_personal_estate_value = assets.market_value(exclude_source="real estate")
 ---
 id: additional request
 question: |
@@ -1232,7 +1285,7 @@ subquestion: |
 
   Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
   % elif form_filled_by_attorney and (len(users.complete_elements()) < 2):
-  This tool can put "*/s/ ${ users[0] }*" and where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
+  This tool can put "*/s/ ${ users[0] }*" where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
 
   Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
   % else:
@@ -1611,10 +1664,6 @@ review:
     button: |
       **guardians1 relationship to minor**:
       ${ guardians[0].relationship_to_minor }
-  - Edit: minor_assets_total_value
-    button: |
-      **Minor assets total value**:
-      ${ currency(minor_assets_total_value) }
   - Edit: attorneys.revisit
     button: |
       **Attorneys**
@@ -1745,11 +1794,14 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_appointment_of_guardian_post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_appointment_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True, )
+  - petition_for_appointment_of_guardian_attachment: ALDocument.using(title="Petition for Appointment of Guardian of a Minor", filename="petition_for_appointment_of_guardian", enabled=True, has_addendum=True)
 ---
 code: |
   petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].label = "People with primary care or custody in the last 60 days"
   petition_for_appointment_of_guardian_attachment.overflow_fields["other_custodians"].overflow_trigger = 2
+
+  petition_for_appointment_of_guardian_attachment.overflow_fields["assets"].label = "Assets"
+  petition_for_appointment_of_guardian_attachment.overflow_fields["assets"].overflow_trigger = 2
 
   petition_for_appointment_of_guardian_attachment.overflow_fields.gathered = True
 ---
@@ -1766,6 +1818,7 @@ objects:
       parental_consent_to_petition_attachment,
       affidavitofindigency_attachment,
       military_affidavit_bundle,
+      bond_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to download for your records",
@@ -1780,6 +1833,7 @@ objects:
       consent_to_nomination_by_a_minor_attachment,
       parental_consent_to_petition_attachment,
       military_affidavit_bundle,
+      bond_attachment,
       affidavitofindigency_attachment,
       ],
       filename="petition_for_appointment_of_guardian",
@@ -1957,13 +2011,22 @@ attachment:
     - "guardians1_address_unit": ${ guardians[0].address.unit }
     - "guardians1_phone": ${ phone_number_formatted(guardians[0].phone_number) }
     - "guardians1_relationship_to_minor": ${ guardians[0].relationship_to_minor }
-    - "children1_assets1_description": ${ assets[0].description }
-    - "children1_assets1_value": ${ currency(assets[0].value) }
-    - "children1_assets2_description": ${ assets[1].description }
-    - "children1_assets2_value": ${ currency(assets[1].value) }
-    - "minor_has_assets_yes": ${ minor_has_assets_yes }
-    - "minor_has_assets_no": ${ minor_has_assets_no }
-    - "minor_assets_total_value": ${ currency(minor_assets_total_value) }
+    - "children1_assets1_description": |
+        % if len(assets) > 0:
+        ${ assets[0].description}
+        % endif
+    - "children1_assets1_value": |
+        ${ currency(assets.item(0).market_value) }
+    - "children1_assets2_description": |
+        % if len(assets) > 2:
+        [See addendum]
+        % endif
+        ${ assets[1].description}
+    - "children1_assets2_value": |
+        ${ currency(assets.item(1).market_value) }
+    - "minor_has_assets_yes": ${ len(assets) > 0 }
+    - "minor_has_assets_no": ${ not len(assets) }
+    - "minor_assets_total_value": ${ currency(assets.market_value()) }
     # It's a signature: test which file version this is; leave empty unless it's the final version)
     - "signature_date": ${ signature_date if esign else "" }
     - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
