@@ -51,10 +51,10 @@ code: |
   github_repo_name = 'docassemble-CLAGuardianship'
 ---
 code: |
-  interview_short_title = "File a petition for the appointment of a guardian of a minor"
+  interview_short_title = "Ask the court for a guardian for a minor"
 ---
 code: |
-  al_form_type = "other"
+  al_form_type = "starts_case"
 ---
 objects:
   - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
@@ -159,6 +159,7 @@ comment: |
   Delete mandatory: True to include in another interview
 mandatory: True
 code: |
+  al_intro_screen
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
   interview_order_notice_of_appearance_and_objection
@@ -423,33 +424,39 @@ continue button field: petition_for_appointment_of_guardian_intro
 question: |
   Ask the court for a guardian for a minor
 subquestion: |
-  This interview will help you make a "Petition for the Appointment of a Guardian of a Minor (MPC 140),"
-  and additional forms that are filed with the petition.
+  A guardian for a minor is an adult who gets permission from a judge to make decisions for 
+  someone who is under 18.
 
-  A guardian is an adult who gets permission from a judge to make decisions for a minor.
-  A minor is someone who is under 18.
+  This interview will help you make a "Petition for the Appointment of a Guardian of a Minor (MPC 140),"
+  and more forms that are filed with the petition.
 
   You can use this interview if you are **either**:
 
   * An adult who cares about a minor's well-being; **or**
   * A minor who is 14 or older.
 
-  **Before you get started**, please gather:
+  <h2 class="h4">Before you get started</h2>
+  
+  Please gather:
 
   1. Information about the minor's parents, including name, contact information, and whether they are living.
   1. Information about anyone **else** who has taken care of the minor over the last 60 days.
   2. Information about any bank accounts and other property that the minor owns.
+  1. Information about **other court cases** that have to do with the minor.
   1. Your own financial information, unless you are the minor.
 
-  **When you are finished**
+  You should also find out if:
+
+  * The minor, or
+  * The minor's parents
+
+  agree to getting a guardian.
+
+  <h2 class="h4">When you are finished</h2>
 
   You need to print and file the documents that this interview makes with the court.
 
   Some of the documents may need to be signed in front of a notary public.
-  You may also need or want the signatures of:
-
-  * The minor, if they are 14 or older
-  * The minor's parents, if they are still living
 
   Most people take about 20 minutes to finish this interview.
 ---
