@@ -2,11 +2,14 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
-  - shared.yml
 ---
 # objects:
   # - users: ALPeopleList.using(ask_number=True,target_number=1)
   # - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
+---
+code: |
+  if appearance_as_attorney:
+    attorneys.there_are_any = True
 ---
 #################### Interview order #####################
 id: interview_order_notice_of_appearance_and_objection
@@ -15,11 +18,15 @@ code: |
   allowed_courts = ["Probate and Family Court"]
   nav.set_section("review_notice_of_appearance_and_objection")
 
-  attorneys.there_are_any
+  appearance_as_attorney
   users.gather()
   users[0].address.address
   users[0].phone_number
-  attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
+  if appearance_as_attorney:
+    attorneys.gather()
+    attorneys[0].address.address
+    attorneys[0].phone_number
+    bbo
   set_parts(subtitle=str(users))
   children[0].name.first
   case_name
@@ -36,15 +43,15 @@ id: Notice_of_Appearance_and_Objection
 continue button field: notice_of_appearance_and_objection_intro
 
 question: |
-  Appearance (and objection) in a guardianship case
+  Appearance and objection for a parent in a guardianship of a (minor/child) case
 subquestion: |
-  If someone has filed a case in court for the guardianship of your child, you can use this form to 
-  let the court know you want the court to hear what you have to say.
+  If someone has filed for a guardianship of your child, you have the right to be part of the case.
 
-  The document that this interview makes is called a "Notice of Appearance and Objection."
+  This interview can help you make a “Notice of Appearance and Objection.”
 
-  If you disagree with the guardianship, you can also explain why to the court. Your explanation
-  will go into an "affidavit." This interview also helps you make the affidavit, if you need it.
+  You can use this form to tell the court you want to be involved in the case and if you disagree with the guardianship.
+  
+  If you disagree with the guardianship, you can explain why to the court. Your explanation will go into a document called an “Affidavit.” This interview also helps you make the affidavit.”
 
   It takes most people between 10-15 minutes to finish this interview.
 ---
@@ -59,7 +66,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney:
   What is your client's name?
   % else:
   What is your name?
@@ -81,7 +88,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney == True:
   What is your client's address?
   % else:
   What is your address?
@@ -99,14 +106,14 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney == True:
   What is your client's phone number?
   % else:
   What is your phone number?
   % endif
 
 subquestion: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney == True:
   Enter your client's **primary phone number**, if able.
   % else:
   Enter your **primary phone number**, if able.
@@ -184,14 +191,13 @@ question: |
   Are you an attorney who is helping someone else file this document?
 
 fields: 
-  - I am: attorneys.there_are_any
+  - I am: appearance_as_attorney
     datatype: radio
     choices:
       - "Filing this document for myself": False
       - "A lawyer and will be filing this document for my client": True
 ---
 id: Objection
-
 question: |
   Do you **object** (disagree) with the appointment of a guardian in this case?
 
@@ -205,11 +211,11 @@ fields:
 
       ${ collapse_template(objections_explanation_template) }
 
-      You must sign your objection under the pains and penalties of perjury. That means a judge
-      can punish you if you say something that you know is not true.
+      You must sign your objection under the pains and penalties of perjury. This means that you are swearing that everything you wrote is true. 
+      A judge can punish you if you lie in your objection. Lying will also affect if a judge believes you later on.
 
-      If you aren't ready for your explanation yet, you can still file this objection. You must file
-      your explanation with the court within 30 days of the return date.
+      If you aren’t ready to make your explanation now, you can still file your objection now. However, you must file your explanation with the court within 30 days of the return date.
+      
     show if: is_objection
   - I will write my explanation: ready_to_make_affidavit
     datatype: radio
@@ -237,7 +243,6 @@ content: |
   For example, you may disagree because:
 
   * ${ children[0].familiar() } does not need a guardian
-  * The person who wants to be the guardian is not the right person to take care of ${ children[0].familiar() }
   * The person who wants to be the guardian has a conflict of interest or may not
     manage ${ children[0].familiar() }'s money properly
 ---
@@ -270,7 +275,7 @@ code: |
 id: persons signature
 
 question: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney == True:
   ${ attorneys[0].name }, please sign below
   % else:
   ${ users[0].name }, please sign below
@@ -278,7 +283,7 @@ question: |
 
 signature: users[0].signature
 under: |
-  % if form_filled_by_attorney:
+  % if appearance_as_attorney == True:
   ${ attorneys[0].name }
   % else:
   ${ users[0].name }
@@ -435,8 +440,8 @@ attachment:
     - "case_name": ${ case_name }
     - "petition": Appointment of Guardian
     - "file_date": ${ file_date.format() }
-    - "appearance_for_myself": ${ not form_filled_by_attorney }
-    - "form_filled_by_attorney": ${ form_filled_by_attorney }
+    - "appearance_for_myself": ${ not appearance_as_attorney }
+    - "appearance_as_attorney": ${ appearance_as_attorney }
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }
