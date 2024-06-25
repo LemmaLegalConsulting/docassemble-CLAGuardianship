@@ -5,9 +5,9 @@ include:
 ---
 metadata:
   title: >-
-    Caregiver Authorization Affidavit
+    Caregiver authorization affidavit
   short title: >-
-    Caregiver Authorization Affidavit
+    Caregiver authorization
   description: |-
     This interview helps someone in Massachusetts give permission to someone to 
     take care of their child.
@@ -36,7 +36,7 @@ code: |
   github_repo_name =  'docassemble-CaregiverAuthorizationAffidavit'
 ---
 code: |
-  interview_short_title = "Give permission to someone to take care of your child"
+  interview_short_title = "Give permission to someone to make educational and medical decisions for your child"
 ---
 code: |
   al_form_type = "other_form" 
@@ -75,7 +75,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-mandatory: True
+# mandatory: True
 code: |
   al_intro_screen
   caregiver_authorization_affidavit_intro
@@ -96,18 +96,21 @@ continue button field: caregiver_authorization_affidavit_intro
 question: |
   Caregiver authorization affidavit
 subquestion: |
-  This interview will help you give permission to someone to take care of your child (someone under
-  18).
-  At the end of the interview, you will be able to download and print your **affidavit**,
-  which confirms that you are giving permission to someone to take care of your child.
-
-  The permission include decisions about:
+  This interview helps you give permission to someone to make medical or educational decisions for your child (someone under 18). 
+   This permission is given through a legal document called a Caregiver Authorization 
+   Affidavit. This document allows you to have another person help make decisions, who is 
+   called a caregiver. You can still make decisions after you give permission to a caregiver.
+   The caregiver can’t make a decision they know you disagree with.
+   At the end of the interview, you will be able to download and print the completed 
+   Caregiver Authorization Affidavit.
+ 
+  The permission can include decisions about:
 
   1. Health care, and
   1. Education
   
-  You need the name, phone number, and address of the person you are authorizing to 
-  finish this interview.
+  You need the name, phone number, and address of the person you are authorizing to finish this 
+  interview.
   
   When you are finished, you will need to:
   
@@ -136,6 +139,8 @@ sets:
 id: What best describes you
 question: |
   Who do you want to give permission to?
+subquestion: |
+  You can choose any adult living with your child to be a caregiver. However, you can’t choose someone who has already lost their parental rights to your child.
 fields:
   - code: |
       authorized_persons[0].name_fields()
@@ -211,15 +216,11 @@ id: What are the limits of your permission
 question: |
   What are the limits of your permission?
 subquestion: |
-  You can limit both:
+  You can decide how much power you want the caregiver to have. You can limit both:
 
-  1. Length of the permission, and
+  1. The length of the permission, and
   2. The powers of the caregiver
 
-  You must choose an ending date for the permission. You can choose any date up to **2 years** from today.
-  Limiting the powers is optional. If you do not write a limit, the caregiver
-  will have permission to make all decisions about healthcare and education for the length
-  of the permission.
 fields:
   - "When does your permission end?": expiration_of_authorization
     datatype: date
@@ -231,13 +232,30 @@ fields:
       min: |
         You cannot choose a day that is today or in the past.
   - note: |
-      **Limiting the caregiver's powers**
+      **Length of Caregiver's Permission** 
+      
+      First, you must choose a date for the caregiver's permission to end. The permission 
+      can last for up to **two years** from the date that the affidavit is signed.
+      You can also end this permission sooner if you need by sending the caregiver a written
+      note. Limiting the powers is optional. If you do not write a limit, the caregiver
+      will have permission to make all decisions about healthcare and education for the length
+      of the permission. 
+      
+      When do you want the caregiver’s permission to expire?
+      
+      **Limits to the Caregiver's Permission**
 
-      You can give permission for the caregiver to do anything you can do. You can also 
-      **limit** what the caregiver can do. For example, you can stop the caregiver from making
-      some medical decisions.
+      Second, you may decide what specific things you do not want the caregiver to do. 
+      For example, you could write that the caregiver is not allowed to make decisions 
+      about your child’s mental health treatment. You don’t have to limit the 
+      caregiver’s permission.
+      **limit** what the caregiver can do. For example, you can stop the caregiver 
+      from making some medical decisions. If you don’t, the caregiver will have permission 
+      to make all decisions about your child’s healthcare and education. You can always 
+      change what permission the caregiver has later by sending the caregiver a written note.
 
-      What are the limits of your permission?
+      What decisions do you not want the caregiver to make for your child?
+      
   - "The caregiver is not permitted to do the following: (optional)": excluded_powers
     input type: area
     required: False
