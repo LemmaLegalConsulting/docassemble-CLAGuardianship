@@ -90,7 +90,9 @@ code: |
   gals_investigators
   removed_other_people_duplicates
 
-  impound_affidavit
+  if other_care_custody_proceedings.includes_adoption():
+    ask_impound_affidavit
+    set_impound_affidavit  
   day # uncomment for standalone
 
   if form_filled_by_attorney:
@@ -301,7 +303,12 @@ id: child has another past address
 question: |
   Has ${children[i]} lived anywhere else in the last 2 years?
 subquestion: |
-  So far you have told us about ${comma_and_list(children[i].previous_addresses.elements)}
+  So far you have told us about: 
+  
+  % for address in children[i].previous_addresses:
+    - ${ address }
+
+  % endfor
 yesno: children[i].previous_addresses.there_is_another
 ---
 reconsider: True
@@ -432,10 +439,18 @@ fields:
     default: USA
 
 ---
+# code: |
+#   # Ask the user if they want the affidavit impounded ONLY if they have an
+#   # adoption case listed on the form. Otherwise not relevant
+#   impound_affidavit = False if not other_care_custody_proceedings.includes_adoption() else ask_impound_affidavit
+---
 code: |
-  # Ask the user if they want the affidavit impounded ONLY if they have an
-  # adoption case listed on the form. Otherwise not relevant
-  impound_affidavit = False if not other_care_custody_proceedings.includes_adoption() else ask_impound_affidavit
+  if ask_impound_affidavit == True:
+    impound_affidavit = True
+  else:
+    impound_affidavit = False
+
+  set_impound_affidavit = True
 ---
 id: adoption privacy
 question: |
@@ -913,7 +928,11 @@ subquestion: |
   % else:
   ${len(other_care_custody_proceedings.elements)} case: 
   % endif
-  ${comma_and_list(other_care_custody_proceedings.elements)}.
+
+  % for proceeding in other_care_custody_proceedings:
+    - ${ proceeding }
+
+  % endfor
 yesno: other_care_custody_proceedings.there_is_another
 ---
 reconsider: True
@@ -1110,7 +1129,7 @@ attachment:
         ${ children_of_both.item(2).address.on_one_line(include_unit=True) }
         % endif
 
-    - "user_address_on_one_line": ${ users[0].address.on_one_line(include_unit=True)  if not confidential_address else ''}
+    - "user_address_on_one_line": ${ users[0].address.on_one_line(include_unit=True) if not confidential_address else '' }
     - "user_name_full__1": ${ str(users[0]) }
     - "child1_address_street": ${ children_of_both.item(0).address.line_one() }
     - "child1_address_city_state_zip": ${ children_of_both.item(0).address.line_two() }
@@ -1118,6 +1137,14 @@ attachment:
     - "child2_address_city_state_zip": ${ children_of_both.item(1).address.line_two() }
     - "child3_address_street": ${ children_of_both.item(2).address.line_one() }
     - "child3_address_city_state_zip": ${ children_of_both.item(2).address.line_two() }
+
+    - "child1_address_street_confidential": ${ children_of_both.item(0).address.line_one() if confidential_address else '' }
+    - "child1_address_city_state_zip_confidential": ${ children_of_both.item(0).address.line_two() if confidential_address else '' }
+    - "child2_address_street_confidential": ${ children_of_both.item(1).address.line_one() if confidential_address else '' }
+    - "child2_address_city_state_zip_confidential": ${ children_of_both.item(1).address.line_two() if confidential_address else '' }
+    - "child3_address_street_confidential": ${ children_of_both.item(2).address.line_one() if confidential_address else ''}
+    - "child3_address_city_state_zip_confidential": ${ children_of_both.item(2).address.line_two() if confidential_address else '' }
+
     - "user_address_on_one_line__2": ${ users[0].address.on_one_line(include_unit=True) }
     - "case_name": ${ case_name }
     - "court_division_bmc": ${ showifdef('trial_court.division_bmc') }
