@@ -20,7 +20,6 @@ code: |
   al_form_type = "existing_case" 
 ---
 objects:
-  - users: ALPeopleList.using(there_are_any=True)
   - other_parties: ALPeopleList
   - additional_parties: ALPeopleList
   - serving_parties: ALPeopleList
@@ -247,20 +246,6 @@ subquestion: |
 
   If this is correct, click the button below to continue.
 continue button field: confirm_not_serving_parties
----
-id: form_filled_by_attorney
-question: |
-  Are you an attorney for someone in this case?
-fields:
-  - I am: attorneys.there_are_any
-    datatype: radio
-    choices:
-      - An attorney in this case: True
-      - A party to the case: False
-  - BBO number (for Massachusetts attorneys): bbo
-    maxlength: 56
-    required: False
-    show if: attorneys.there_are_any
 ---
 code: |
   form_filled_by_attorney = bool(len(attorneys))    

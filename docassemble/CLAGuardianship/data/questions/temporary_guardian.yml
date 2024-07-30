@@ -3,7 +3,6 @@ include:
   - shared.yml
 ---
 objects:
-  - users: ALPeopleList.using(ask_number=True,target_number=1)
   - children: ALPeopleList.using(ask_number=True,target_number=1)
   - requested_temporary_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
 ---

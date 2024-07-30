@@ -7,6 +7,7 @@ objects:
   - users: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
   - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
   - guardians: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - attorneys: ALPeopleList.using(complete_attribute="complete")
   - other_parties: ALPeopleList.using(there_are_any=False)
 ---
@@ -17,6 +18,9 @@ code: |
   x.name.first
   x.address.address
   x.complete = True
+---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))   
 ---
 #################### Object Blocks End #####################
 ---
@@ -30,13 +34,8 @@ fields:
     maxlength: 25
     required: False
 ---
-#################### Question Blocks End #####################
----
-#################### Attachment Blocks Start #####################
----
 code: |
   users[0].mobile_number = DAEmpty()
----
 ---
 id: attorneys there_are_any
 question: |
@@ -80,5 +79,20 @@ fields:
   - BBO number (if you are an attorney in Massachusetts): attorneys[0].bbo
     required: False
 ---
-code: |  
-  form_filled_by_attorney = bool(len(attorneys))    
+id: users there_is_another
+question: |
+  % if form_filled_by_attorney:
+  Is anyone else making this Petition with your client?
+  % else:
+  Is anyone else making this Petition with you?
+  % endif
+fields:
+  - no label: users.there_is_another
+    datatype: yesnoradio
+--- 
+#################### Question Blocks End #####################
+---
+#################### Attachment Blocks Start #####################
+---
+#################### Attachment Blocks End #####################
+---
