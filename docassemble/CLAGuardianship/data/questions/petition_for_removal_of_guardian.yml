@@ -45,7 +45,7 @@ code: |
   al_form_type = "other"
 ---
 objects:
-  - responsible_parents: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+  - responsible_parents: ALPeopleList.using(ask_number=True, maximum_number=2, complete_attribute="complete")
   - guardian_successors: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
 ---
 depends on:
@@ -88,17 +88,15 @@ code: |
   else:
     set_user_to_minor
 
-  petitioner_goals
-  minor_adopted
-  has_attachment
-  bio_parents_can_resume_responsibilities
-
   nav.set_section("review_guardian_information")
   guardians.gather()
 
   nav.set_section("review_requests")
+  bio_parents_can_resume_responsibilities
+  set_responsible_parents_target_number
   if bio_parents_can_resume_responsibilities:
     responsible_parents.gather()
+
   if petitioner_goals == "name_someone_new":
     guardian_successors.gather()
 
@@ -196,6 +194,10 @@ code: |
   attorneys.there_is_another = False
 ---
 code: |
+  if len(guardians.complete_elements()) > 0:
+    guardians.there_is_another = False
+---
+code: |
   if who_is_making_petition == "minor":
     users[0].name.first = children[0].name.first
     users[0].name.last = children[0].name.last
@@ -222,6 +224,15 @@ code: |
     users.there_is_another = False
   
   set_number_of_petitioners = True
+---
+code: |
+  if bio_parents_can_resume_responsibilities:
+    if responsible_parents_target_number == 'one_parent':
+      responsible_parents.target_number = 1
+    elif responsible_parents_target_number == 'both_parents':
+      responsible_parents.target_number = 2
+
+  set_responsible_parents_target_number = True
 ---
 #################### Object Blocks End #####################
 ---
@@ -401,14 +412,15 @@ sets:
   - guardians[i].appointment_date
 question: |
   % if len(guardians.complete_elements()) < 1:
-  Tell us about the minor's current guardian(s)
+  Tell us about ${ children[0].familiar() }'s current guardian(s)
   % else:
-  Tell us about the second guardian
+  Tell us about ${ children[0].familiar() }'s other guardian
   % endif
 subquestion: |
   % if len(guardians.complete_elements()) < 1:
-  You can add up to two guardians in this petition. Start by telling us 
-  about the first guardian.
+  You can add up to two guardians to this petition.
+
+  **If ${ children[0].familiar() } has more than one guardian**, you will get the chance to add them after this screen.  
   % endif
 fields:
   - code: |
@@ -417,33 +429,34 @@ fields:
       guardians[i].address_fields()
   - Phone number: guardians[i].phone_number
     datatype: al_international_phone
-  - When was this person appointed as a guardian for the minor?: guardians[i].appointment_date
+  - When was this person appointed as ${ children[0].familiar() }'s guardian?: guardians[i].appointment_date
     datatype: date
     required: True
 ---
 id: guardians there_is_another
 question: |
-  Was a second guardian appointed for ${ children[0] }?
+  Does ${ children[0].familiar() } have another guardian?
 fields:
   - no label: guardians.there_is_another
     datatype: yesnoradio
 ---
-code: |
-  if len(guardians.complete_elements()) > 0:
-    guardians.there_is_another = False
----
-id: Reasons for removing the child s guardian s
+id: Reasons for removing guardian
 question: |
-  % if petitioner_goals == "remove":
-  Why do you want to remove the guardian?
+  % if len(guardians.complete_elements()) < 2:
+  Why do you want to remove ${ children[0].familiar() }'s guardian?
   % else:
-  Why do you want to replace the guardian?
+  Why do you want to remove ${ children[0].familiar() }'s guardians?
   % endif
 subquestion: |
   Check all reasons that apply.
 fields:
-  - ${ children[0].familiar() }'s parents are able to take care of them now: bio_parents_can_resume_responsibilities
+  - ${ children[0].familiar() }'s parents are able to care for them now: bio_parents_can_resume_responsibilities
     datatype: yesno
+  - Which parents are now able to care for ${ children[0].familiar() }?: responsible_parents_target_number
+    choices:
+      - One parent: one_parent
+      - Both parents: both_parents
+    show if: bio_parents_can_resume_responsibilities
   - Explain why: why_parents_can_resume_responsibility
     datatype: area
     show if: bio_parents_can_resume_responsibilities
@@ -456,46 +469,38 @@ fields:
     show if: has_attachment
 validation code: |
   if not (bio_parents_can_resume_responsibilities or minor_adopted or has_attachment):
-    validation_error("You have to select at least one reason", field="has_attachment")
+    validation_error("Select at least one reason", field="has_attachment")
 ---
-code: |
-  responsible_parents.there_are_any = bio_parents_can_resume_responsibilities
-  responsible_parents.there_is_another = False
----
+id: responsible parent information
 sets:
-  - responsible_parents[0].name.first
-  - responsible_parents[0].name.last
-id: about the responsible parents
+  - responsible_parents[i].name.first
+  - responsible_parents[i].name.last
+  - responsible_parents[i].name.middle
+  - responsible_parents[i].name.suffix
+  - responsible_parents[i].address.address
+  - responsible_parents[i].address.unit
+  - responsible_parents[i].address.city
+  - responsible_parents[i].address.state
+  - responsible_parents[i].address.zip
+  - responsible_parents[i].address.country
+  - responsible_parents[i].phone_number
+  - responsible_parents[i].appointment_date
 question: |
-  Which parent will be taking responsibility for the child again?
+  ${ capitalize(ordinal(i)) } parent resuming responsibility for ${ children[0].familiar() }
 fields:
-  - ${ children[0].familiar() } should go back to being taken care of by: who_will_be_responsible
-    datatype: radio
-    choices:
-      - 1 parent: one
-      - Both parents: both
-  - note: |
-      <h2 class="h4">Information about parent 1</h2>
   - code: |
-      responsible_parents[0].name_fields()
+      responsible_parents[i].name_fields()
   - code: |
-      responsible_parents[0].address_fields()
-  - Phone number: responsible_parents[0].phone_number
+      responsible_parents[i].address_fields()
+  - Phone number: responsible_parents[i].phone_number
     datatype: al_international_phone
-  - note: |
-      <h2 class="h4">Information about parent 2</h2>
-    show if:
-      variable: who_will_be_responsible
-      is: both
-  - code: |
-      responsible_parents[1].name_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
-  - code: |
-      responsible_parents[1].address_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
-  - Phone number: responsible_parents[1].phone_number
-    datatype: al_international_phone
-    show if:
-      variable: who_will_be_responsible
-      is: both
+---
+# id: responsible_parent there_is_another
+# question: |
+#   Add another parent
+# fields:
+#   - Is there another parent that can resume responsibility for ${ children[0].familiar() }?: responsible_parents.there_is_another
+#     datatype: yesnoradio
 ---
 id: Attorney's information
 question: |
