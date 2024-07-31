@@ -1274,27 +1274,6 @@ continue button field: petition_for_appointment_of_guardian_preview_question
 code: |
   signature_fields = [user.attr_name('signature') for user in users]
 ---
-id: electronic signature question
-question: |
-  Electronic Signature
-subquestion: |
-  % if form_filled_by_attorney and (len(users.complete_elements()) > 1):
-  This tool can put "*/s/ ${ users[0] }*" and "*/s/ ${ users[1] }*" where the petitioners would sign their names so they do not have to sign the form by hand. The court will accept these as their signatures.
-
-  Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
-  % elif form_filled_by_attorney and (len(users.complete_elements()) < 2):
-  This tool can put "*/s/ ${ users[0] }*" where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
-
-  Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
-  % else:
-  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
-
-  Otherwise, you will need to print your forms and sign them by hand.
-  % endif
-fields:
-  - Would you like to add your electronic signature to your form?: esign
-    datatype: yesnoradio
----
 #################### Review Blocks Start #####################
 ---
 id: petition for appointment of guardian review screen

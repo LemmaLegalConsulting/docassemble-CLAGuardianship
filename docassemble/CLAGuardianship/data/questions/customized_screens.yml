@@ -82,7 +82,15 @@ code: |
   # affidavit and the petition.
   # user = petitioner in the petition, and
   # user should be "child" in the military affidavit
-  additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
+
+  if interview_order_petition_for_removal_of_guardian:
+    if len(responsible_parents.complete_elements()) > 0:
+      diff_set = set(responsible_parents.difference(parents))
+      additional_parties = ALPeopleList(elements=diff_set.union(children + guardians))
+    else:
+      additional_parties = ALPeopleList(elements=set().union(children + guardians))
+  elif interview_order_petition_for_appointment_of_guardian:
+    additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
 code: |
   military_affidavit_case_name = f"In the Interests of { children[0].name_full() }"
