@@ -46,8 +46,7 @@ code: |
   set_fee_waiver_defaults = True
 ---
 code: |
-  affidavitofindigency_attachment.enabled = who_is_making_petition == "interested_party" and wants_fee_waiver and is_indigent
-
+  affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
 ---
 ################# Care and Custody Affidavit #########################
 ---
@@ -84,11 +83,7 @@ code: |
   # user should be "child" in the military affidavit
 
   if interview_order_petition_for_removal_of_guardian:
-    if len(responsible_parents.complete_elements()) > 0:
-      diff_set = set(responsible_parents.difference(parents))
-      additional_parties = ALPeopleList(elements=diff_set.union(children + guardians))
-    else:
-      additional_parties = ALPeopleList(elements=set().union(children + guardians))
+    additional_parties = ALPeopleList(elements=set().union(children + guardians))
   elif interview_order_petition_for_appointment_of_guardian:
     additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---

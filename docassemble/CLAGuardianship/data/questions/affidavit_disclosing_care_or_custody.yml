@@ -504,10 +504,10 @@ code: |
 ---
 id: attorney signature
 question: |
-  Affidavit Disclosing Care or Custody - Attorney Signature  
+  Affidavit Disclosing Care or Custody - Attorney Signature
 fields:
   - label: |
-      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent? 
+      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent?
     field: needs_attorney_signature
     label above field: True
     datatype: yesnoradio
@@ -1075,7 +1075,7 @@ attachment:
 ---
 attachment:
   variable name: affidavit_of_care_or_custody_attachment[i]
-  skip undefined: False
+  skip undefined: True
   name: Affidavit of Care
   filename: Affidavit_of_Care
   # editable: False
@@ -1186,3 +1186,4 @@ code: |
   year
   trigger_aff_care_or_custody_computed_variables = True
 ---
+

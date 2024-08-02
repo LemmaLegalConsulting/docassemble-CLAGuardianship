@@ -96,7 +96,6 @@ code: |
   set_responsible_parents_target_number
   if bio_parents_can_resume_responsibilities:
     responsible_parents.gather()
-  set_users_to_parents
 
   if not bio_parents_can_resume_responsibilities:
     if guardian_successors.there_are_any: 
@@ -123,7 +122,7 @@ code: |
   interview_order_military_affidavit
   military_affidavit_case_name
 
-  if who_is_making_petition == "interested_party":
+  if who_is_making_petition != 'minor':
     nav.set_section("section_fee_waiver")
     if wants_fee_waiver:
       set_fee_waiver_defaults
@@ -242,23 +241,7 @@ code: |
   set_responsible_parents_target_number = True
 ---
 code: |
-  if who_is_making_petition == 'parent':
-    parents[0].name.first = users[0].name.first
-    parents[0].name.last = users[0].name.last
-    parents[0].name.middle = users[0].name.middle
-    parents[0].name.suffix = users[0].name.suffix
-    parents[0].is_deceased = False
-    parents[0].complete = True
-    if parents_making_petition == 'both':
-      parents[1].name.first = users[1].name.first
-      parents[1].name.last = users[1].name.last
-      parents[1].name.middle = users[1].name.middle
-      parents[1].name.suffix = users[1].name.suffix
-      parents[1].is_deceased = False
-      parents[1].complete = True
-    parents.gathered = True
-  
-  set_users_to_parents = True
+  affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
 ---
 #################### Object Blocks End #####################
 ---
