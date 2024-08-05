@@ -127,6 +127,13 @@ code: |
     if wants_fee_waiver:
       set_fee_waiver_defaults
       ask_affidavit_questions
+  
+    if not form_filled_by_attorney:
+      if who_is_making_petition == 'parent':
+        parent_wants_lawyer
+        if parents_making_petition == 'both':
+          relationship_to_minor
+        set_parent_relationship
 
   nav.set_section("section_download_petition")
   if esign:
@@ -242,6 +249,22 @@ code: |
 ---
 code: |
   affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
+---
+code: |
+  Application_for_appointment_attachment.enabled = parent_wants_lawyer
+---
+code: |
+  if parents_making_petition == 'father':
+    want_counsel_for_father = True
+  elif parents_making_petition == 'mother':
+    want_counsel_for_mother = True
+  elif parents_making_petition == 'both':
+    if relationship_to_minor == 'father':
+      want_counsel_for_father = True
+    elif relationship_to_minor == 'mother':
+      want_counsel_for_mother = True
+  
+  set_parent_relationship = True
 ---
 #################### Object Blocks End #####################
 ---
@@ -388,6 +411,15 @@ fields:
 
       You do not need to explain why you want this petition 
       in this box.
+---
+id: relationship to minor
+question: |
+  What is your relationship to ${ children.familiar() }?
+fields:
+  - I am ${ children.familiar() }'s: relationship_to_minor
+    choices:
+      - Father: father
+      - Mother: mother
 ---
 id: choose a court
 question: |
