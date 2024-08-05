@@ -214,10 +214,6 @@ code: |
   attorneys.there_is_another = False
 ---
 code: |
-  if len(guardian_successors.complete_elements()) > 1:
-    guardian_successors.there_is_another = False
----
-code: |
   if who_is_making_petition == "minor":
     users[0].name.first = children[0].name.first
     users[0].name.last = children[0].name.last
@@ -496,10 +492,28 @@ sets:
   - guardian_successors[i].name.middle
   - guardian_successors[i].name.suffix
 question: |
-  Tell us about the ${ ordinal(i) } new guardian for ${ children.familiar() }
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Tell us about the ${ ordinal(i) } new guardian you want for yourself
+  % else:
+  Tell us about the ${ ordinal(i) } new guardian you want for ${ children.familiar() }
+  % endif
 fields:
   - code: |
       guardian_successors[i].name_fields()
+validation code: |
+  if len(guardian_successors.complete_elements()) > 0:
+    guardian_successors.there_is_another = False
+---
+id: guardian_successors there_is_another
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Do you want to ask for a second new guardian for yourself?
+  % else:
+  Do you want to ask for a second new guardian for ${ children.familiar() }?
+  % endif
+fields:
+  - Choose one: guardian_successors.there_is_another
+    datatype: yesnoradio
 ---
 id: guardian_successors there_are_any
 question: |
@@ -589,7 +603,7 @@ question: |
 subquestion: |
   Check all reasons that apply.
 fields:
-  - ${ f"My parents" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else children[0].familiar().possessive('parents') } are able to care for ${ f"me" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"them" } now: bio_parents_can_resume_responsibilities
+  - ${ f"My parents" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"{children[0].familiar()}'s parents" } are able to care for ${ f"me" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"them" } now: bio_parents_can_resume_responsibilities
     datatype: yesno
   - How many?: responsible_parents_target_number
     choices:
@@ -959,7 +973,7 @@ attachment:
 ---
 code: |
   petition_for_removal_of_guardian.overflow_fields["my_interest_is"].label = "Continued from Section 1 - Nature of petitioner's interest:"
-  petition_for_removal_of_guardian.overflow_fields["my_interest_is"].overflow_trigger = 240
+  petition_for_removal_of_guardian.overflow_fields["my_interest_is"].overflow_trigger = 180
   petition_for_removal_of_guardian.overflow_fields["why_parents_can_resume_responsibility"].label = "Continued from Section 3 - Parents can resume parental responsibilities:"
   petition_for_removal_of_guardian.overflow_fields["why_parents_can_resume_responsibility"].overflow_trigger = 340
   petition_for_removal_of_guardian.overflow_fields["other_reason_for_removal"].label = "Continued from Section 3 - Other:"
@@ -1070,7 +1084,7 @@ attachment:
     - "attorneys1_phone": ${ attorneys[0].phone_number }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - my_interest_is: |
-        % if petitioner_is_interested_party:
+        % if who_is_making_petition == 'interested_person':
         ${ petition_for_removal_of_guardian.safe_value('my_interest_is') }
         % else:
         ${ "" }
