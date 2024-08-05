@@ -1164,15 +1164,32 @@ question: |
   Affidavit Disclosing Care or Custody Proceedings
 subquestion: |
   As part of the petition for guardianship, the court needs to know about any
-  other cases involving the care or custody of your children. This includes
-  cases where you, the other parent, or someone else has been involved in a
-  court case about the care or custody of your children.
+  other cases involving the care or custody of 
+  % if (who_is_making_petition == 'parent'):
+  your children. This includes cases where you, another parent, or someone else 
+  has been involved in a court case about the care or custody of 
+  ${ children[0].familiar() }.
 
-  If your children have been involved in court cases about their custody or care, 
-  then you must submit an Affidavit Disclosing Care or Custody Proceeding. 
-  The main purpose of this form is to find out about any open or closed cases 
-  related to the care and/or custody of your children. This helps the court get a 
-  better picture of your childrens' situations.
+  If ${ children[0].familiar() } has been involved in any court cases about their 
+  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
+  Proceeding*.
+
+  This helps the court find out about any open or closed cases related to the care 
+  and/or custody of ${ children[0].familiar() } and get a better picture of their
+  situation.
+  % else:
+  ${ children[0].familiar() }. This includes cases where you, 
+  ${ children[0].familiar() }'s parents, or someone else has been involved in a
+  court case about the care or custody of ${ children[0].familiar() }.
+
+  If ${ children[0].familiar() } has been involved in any court cases about their 
+  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
+  Proceeding*.
+
+  This helps the court find out about any open or closed cases related to the care 
+  and/or custody of ${ children[0].familiar() } and get a better picture of their
+  situation.
+  % endif
 ---
 code: |
   # Trigger computed values
@@ -1186,4 +1203,3 @@ code: |
   year
   trigger_aff_care_or_custody_computed_variables = True
 ---
-
