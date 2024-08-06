@@ -46,7 +46,6 @@ code: |
 ---
 objects:
   - responsible_parents: ALPeopleList.using(ask_number=True, maximum_number=2, complete_attribute="complete")
-  - guardian_successors: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
 ---
 depends on:
   - who_is_making_petition
@@ -103,8 +102,11 @@ code: |
     responsible_parents.gather()
 
   if not bio_parents_can_resume_responsibilities:
-    if guardian_successors.there_are_any: 
-      guardian_successors.gather()
+    if requested_guardians.there_are_any: 
+      requested_guardians.gather()
+  
+  if requested_temporary_guardians.there_are_any:
+    interview_order_temporary_guardian
 
   interview_order_petition_for_removal_of_guardian = True
 ---
@@ -204,8 +206,8 @@ code: |
   attorneys[i].complete = True
 ---
 code: |
-  guardian_successors[i].name.first
-  guardian_successors[i].complete = True
+  requested_guardians[i].name.first
+  requested_guardians[i].complete = True
 ---
 code: |
   children.there_is_another = False
@@ -274,6 +276,9 @@ code: |
       want_counsel_for_mother = True
 
   set_parent_relationship = True
+---
+code: |
+  petitioner_requesting_guardianship = False
 ---
 #################### Object Blocks End #####################
 ---
@@ -485,12 +490,12 @@ fields:
     maxlength: 25
     required: False
 ---
-id: guardian_successor information
+id: requested_guardians information
 sets:
-  - guardian_successors[i].name.first
-  - guardian_successors[i].name.last
-  - guardian_successors[i].name.middle
-  - guardian_successors[i].name.suffix
+  - requested_guardians[i].name.first
+  - requested_guardians[i].name.last
+  - requested_guardians[i].name.middle
+  - requested_guardians[i].name.suffix
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Tell us about the ${ ordinal(i) } new guardian you want for yourself
@@ -499,12 +504,12 @@ question: |
   % endif
 fields:
   - code: |
-      guardian_successors[i].name_fields()
+      requested_guardians[i].name_fields()
 validation code: |
-  if len(guardian_successors.complete_elements()) > 0:
-    guardian_successors.there_is_another = False
+  if len(requested_guardians.complete_elements()) > 0:
+    requested_guardians.there_is_another = False
 ---
-id: guardian_successors there_is_another
+id: requested_guardians there_is_another
 question: |
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   Do you want to ask for a second new guardian for yourself?
@@ -512,19 +517,19 @@ question: |
   Do you want to ask for a second new guardian for ${ children.familiar() }?
   % endif
 fields:
-  - Choose one: guardian_successors.there_is_another
+  - Choose one: requested_guardians.there_is_another
     datatype: yesnoradio
 ---
-id: guardian_successors there_are_any
+id: requested_guardians there_are_any
 question: |
   New guardians
 subquestion: |
   You can ask the court to name **up to two people** as new guardians for ${ children.familiar() }.
 fields:
-  - Do you want someone else to be ${ children.familiar() }'s new guardian?: guardian_successors.there_are_any
+  - Do you want someone else to be ${ children.familiar() }'s new guardian?: requested_guardians.there_are_any
     datatype: yesnoradio
 ---
-id: guardian_successors there_is_another
+id: requested_guardians there_is_another
 question: |
   Add another new guardian?
 fields:
@@ -756,11 +761,11 @@ review:
     button: |
       **Has attachment**:
       ${ word(yesno(has_attachment)) }
-  - Edit: guardian_successors.revisit
+  - Edit: requested_guardians.revisit
     button: |
       **Guardian successors**
 
-      % for item in guardian_successors:
+      % for item in requested_guardians:
         * ${ item }
       % endfor
   - Edit: attorneys.revisit
@@ -864,16 +869,16 @@ edit:
   - phone_number
 confirm: True
 ---
-continue button field: guardian_successors.revisit
+continue button field: requested_guardians.revisit
 question: |
-  Edit guardian_successors
+  Edit requested_guardians
 subquestion: |
-  ${ guardian_successors.table }
+  ${ requested_guardians.table }
 
-  ${ guardian_successors.add_action() }
+  ${ requested_guardians.add_action() }
 ---
-table: guardian_successors.table
-rows: guardian_successors
+table: requested_guardians.table
+rows: requested_guardians
 columns:
   - Name: |
       row_item.name.full() if defined("row_item.name.first") else ""
@@ -960,9 +965,6 @@ objects:
       enabled=True
       )
 ---
-# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
-# used for "preview" and "final" keys, and logic in the template checks the value of
-# `i` to show or hide the user's signature
 attachment:
   name: Post-interview-Instructions
   filename: petition_for_removal_of_guardian_next_steps
@@ -1057,12 +1059,12 @@ attachment:
     - "responsible_parents2_phone": ${ responsible_parents[1].phone_number }
     - "minor_adopted": ${ minor_adopted }
     - "has_attachment": ${ has_attachment }
-    - "guardian_successors1_name_middle_initial": ${ guardian_successors[0].name.middle_initial() }
-    - "guardian_successors1_name_last": ${ guardian_successors[0].name.last }
-    - "guardian_successors1_name_first": ${ guardian_successors[0].name.first }
-    - "guardian_successors2_name_middle_initial": ${ guardian_successors[1].name.middle_initial() }
-    - "guardian_successors2_name_last": ${ guardian_successors[1].name.last }
-    - "guardian_successors2_name_first": ${ guardian_successors[1].name.first }
+    - "guardian_successors1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
+    - "guardian_successors1_name_last": ${ requested_guardians[0].name.last }
+    - "guardian_successors1_name_first": ${ requested_guardians[0].name.first }
+    - "guardian_successors2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
+    - "guardian_successors2_name_last": ${ requested_guardians[1].name.last }
+    - "guardian_successors2_name_first": ${ requested_guardians[1].name.first }
     - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
     - "users1_signature_date": ${ today() }
     - "users2_signature": |
