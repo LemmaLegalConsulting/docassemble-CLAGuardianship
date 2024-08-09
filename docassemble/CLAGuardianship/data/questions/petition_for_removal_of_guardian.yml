@@ -101,6 +101,7 @@ code: |
   if bio_parents_can_resume_responsibilities:
     responsible_parents.gather()
 
+  parents_cancel_requested_guardians
   if not bio_parents_can_resume_responsibilities:
     if requested_guardians.there_are_any: 
       requested_guardians.gather()
@@ -279,6 +280,12 @@ code: |
 ---
 code: |
   petitioner_requesting_guardianship = False
+---
+code: |
+  if bio_parents_can_resume_responsibilities:
+    requested_guardians.there_are_any = False
+  
+  parents_cancel_requested_guardians = True
 ---
 #################### Object Blocks End #####################
 ---

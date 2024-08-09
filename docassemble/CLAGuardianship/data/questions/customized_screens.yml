@@ -166,7 +166,7 @@ fields:
   - Someone already named: requested_temporary_guardians[i]
     datatype: object_radio
     choices:
-      - requested_guardians if not petitioner_requesting_guardianship else []
+      - requested_guardians if ((not petitioner_requesting_guardianship) or (not bio_parents_can_resume_responsibilities)) else []
       - users if petitioner_requesting_guardianship else []
     exclude:
       - requested_temporary_guardians.complete_elements()
