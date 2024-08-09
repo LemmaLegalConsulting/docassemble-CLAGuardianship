@@ -14,7 +14,7 @@ code: |
   github_repo_name =  'docassemble-MilitaryAffidavit'
 ---
 code: |
-  interview_short_title = "File a military affidavit"
+  interview_short_title = "Tell the court whether any of the people in your case have served in the military"
 ---
 code: |
   al_form_type = "existing_case" 

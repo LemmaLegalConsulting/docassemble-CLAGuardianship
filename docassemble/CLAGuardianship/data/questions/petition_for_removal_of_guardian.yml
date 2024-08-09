@@ -39,7 +39,7 @@ code: |
   github_repo_name = 'docassemble-PetitionForRemovalOfGuardianOfMinor'
 ---
 code: |
-  interview_short_title = "File a petition for the removal of a guardian of a minor"
+  interview_short_title = "Ask the court to remove a guardian for a minor"
 ---
 code: |
   al_form_type = "other"
@@ -155,13 +155,10 @@ continue button field: petition_for_removal_of_guardian_intro
 question: |
   Ask the court to remove a guardian for a minor
 subquestion: |
-  A guardian for a minor is an adult who gets permission from a judge to make decisions for 
-  someone who is under 18.
-
-  This interview will help you make a "Petition for the Removal of a Guardian of a Minor (MPC 240),"
-  and more forms that are filed with the petition.
-
-  You can use this interview to ask the court to remove or name a new guardian if:
+  This form can help you if you are involved in a guardianship case for a minor and 
+  believe that the minor's {guardian} should be replaced or removed.
+  
+  You can use this form to end the guardianship or to replace the guardian if:
 
     * you or a child you know has a court-appointed guardian, **and** 
     * you have a reason for the guardian to be removed or replaced.
@@ -184,6 +181,9 @@ subquestion: |
   Some of the documents may need to be signed in front of a notary public.
 
   Most people take about 20 minutes to finish this interview.
+terms:
+  guardian: |
+    A guardian for a minor is an adult who gets permission from a judge to make decisions for someone who is under 18.
 ---
 #################### Object Blocks Start #####################
 ---
@@ -491,11 +491,14 @@ fields:
 ---
 id: docket number
 question: |
-  What is your case number?
+  What is your docket number?
 fields:
-  - Case number: docket_number
+  - Docket number: docket_number
     maxlength: 25
     required: False
+    help: |
+      If there is already a case for the guardianship of the minor, the docket number will written on the court papers. If you
+      don't have a docket number, or can't find one, you can leave this blank.
 ---
 id: requested_guardians information
 sets:

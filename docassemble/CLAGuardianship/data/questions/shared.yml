@@ -28,9 +28,9 @@ code: |
 ---
 id: docket number
 question: |
-  What is your case number?
+  What is your docket number?
 fields:
-  - Case number: docket_number
+  - Docket number: docket_number
     maxlength: 25
     required: False
 ---
