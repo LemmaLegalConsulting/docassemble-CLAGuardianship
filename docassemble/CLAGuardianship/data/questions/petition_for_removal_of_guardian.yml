@@ -1120,3 +1120,7 @@ attachment:
 ---
 #################### Attachment Blocks End #####################
 ---
+########### Customized screens #################################
+---
+code: |
+  additional_parties = ALPeopleList(elements=set().union(children + guardians))
