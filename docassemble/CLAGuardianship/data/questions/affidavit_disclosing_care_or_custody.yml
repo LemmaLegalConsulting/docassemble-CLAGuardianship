@@ -33,7 +33,7 @@ code: |
   github_repo_name = 'docassemble-CLAGuardianship'
 ---
 code: |
-  interview_short_title = "File an Affidavit Disclosing Care or Custody Proceeding"
+  interview_short_title = "Tell the court about any cases or proceedings about the care and custody of a minor"
 ---
 code: |
   al_form_type = "other"
@@ -504,10 +504,10 @@ code: |
 ---
 id: attorney signature
 question: |
-  Affidavit Disclosing Care or Custody - Attorney Signature  
+  Affidavit Disclosing Care or Custody - Attorney Signature
 fields:
   - label: |
-      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent? 
+      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent?
     field: needs_attorney_signature
     label above field: True
     datatype: yesnoradio
@@ -609,7 +609,7 @@ fields:
     datatype: combobox
     code: |
       sorted((set([str(y) for y in all_courts.filter_courts(["District Court","Boston Municipal Court", "Probate and Family Court", "Superior Court", "Juvenile Court"])])))
-  - Docket number or case number: other_care_custody_proceedings[i].docket_number
+  - Docket number: other_care_custody_proceedings[i].docket_number
     required: False
   - Which children were involved in this case?: other_care_custody_proceedings[i].children
     datatype: object_checkboxes
@@ -1075,7 +1075,7 @@ attachment:
 ---
 attachment:
   variable name: affidavit_of_care_or_custody_attachment[i]
-  skip undefined: False
+  skip undefined: True
   name: Affidavit of Care
   filename: Affidavit_of_Care
   # editable: False
@@ -1164,15 +1164,32 @@ question: |
   Affidavit Disclosing Care or Custody Proceedings
 subquestion: |
   As part of the petition for guardianship, the court needs to know about any
-  other cases involving the care or custody of your children. This includes
-  cases where you, the other parent, or someone else has been involved in a
-  court case about the care or custody of your children.
+  other cases involving the care or custody of 
+  % if (who_is_making_petition == 'parent'):
+  your children. This includes cases where you, another parent, or someone else 
+  has been involved in a court case about the care or custody of 
+  ${ children[0].familiar() }.
 
-  If your children have been involved in court cases about their custody or care, 
-  then you must submit an Affidavit Disclosing Care or Custody Proceeding. 
-  The main purpose of this form is to find out about any open or closed cases 
-  related to the care and/or custody of your children. This helps the court get a 
-  better picture of your childrens' situations.
+  If ${ children[0].familiar() } has been involved in any court cases about their 
+  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
+  Proceeding*.
+
+  This helps the court find out about any open or closed cases related to the care 
+  and/or custody of ${ children[0].familiar() } and get a better picture of their
+  situation.
+  % else:
+  ${ children[0].familiar() }. This includes cases where you, 
+  ${ children[0].familiar() }'s parents, or someone else has been involved in a
+  court case about the care or custody of ${ children[0].familiar() }.
+
+  If ${ children[0].familiar() } has been involved in any court cases about their 
+  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
+  Proceeding*.
+
+  This helps the court find out about any open or closed cases related to the care 
+  and/or custody of ${ children[0].familiar() } and get a better picture of their
+  situation.
+  % endif
 ---
 code: |
   # Trigger computed values

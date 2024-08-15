@@ -70,10 +70,6 @@ code: |
   docket_number
 
   interview_order_consent_to_nomination_by_a_minor = True
-
----
-# code: |
-#   users.there_is_another = False
 ---
 code: |
   notarization_public.there_is_another = False
@@ -179,12 +175,12 @@ fields:
 id: docket number
 question: |
   % if who_is_making_petition == "minor":
-  What is your case number?
+  What is your docket number?
   % else:
-  What is ${ children[0].name }'s case number?
+  What is ${ children[0].name }'s docket number?
   % endif
 fields:
-  - Case number: docket_number
+  - Docket number: docket_number
 ---
 sets:
   - consented_guardians[i].name.first

@@ -7,7 +7,6 @@ include:
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
   - parental_consent_to_petition.yml
-  - notice_of_appearance_and_objection.yml
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
@@ -32,7 +31,8 @@ metadata:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
   authors:
-    - Court Forms Online
+    - Quinten Steenhuis
+    - Rami Lorca
   allowed_courts:
     - "Probate and Family Court"
   typical_role: "plaintiff"
@@ -58,7 +58,6 @@ code: |
 ---
 objects:
   - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
-  - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: ALAssetList.using(complete_attribute='complete')
@@ -157,12 +156,11 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-mandatory: True
+# mandatory: True
 code: |
   al_intro_screen
   petition_for_appointment_of_guardian_intro
   interview_order_petition_for_appointment_of_guardian
-  interview_order_notice_of_appearance_and_objection
   nav.set_section("review_affidavit_disclosing_care_or_custody")
   interview_order_affidavit_disclosing_care_or_custody
 
@@ -440,10 +438,10 @@ subquestion: |
   Please gather:
 
   1. Information about the minor's parents, including name, contact information, and whether they are living.
-  1. Information about anyone **else** who has taken care of the minor over the last 60 days.
-  2. Information about any bank accounts and other property that the minor owns.
-  1. Information about **other court cases** that have to do with the minor.
-  1. Your own financial information, unless you are the minor.
+  2. Information about anyone **else** who has taken care of the minor over the last 60 days.
+  3. Information about any bank accounts and other property that the minor owns.
+  4. Information about **other court cases** that have to do with the minor.
+  5. Your own financial information, unless you are the minor.
 
   You should also find out if:
 
@@ -530,17 +528,6 @@ fields:
           The child's parent or parents died and this is the court serving the county where their estate was probated
           % endif
         key: will_county
----
-id: users there_is_another
-question: |
-  % if form_filled_by_attorney:
-  Is anyone else making this Petition with your client?
-  % else:
-  Is anyone else making this Petition with you?
-  % endif
-fields:
-  - no label: users.there_is_another
-    datatype: yesnoradio
 ---
 id: how many parents
 question: |
@@ -1288,27 +1275,6 @@ continue button field: petition_for_appointment_of_guardian_preview_question
 code: |
   signature_fields = [user.attr_name('signature') for user in users]
 ---
-id: electronic signature question
-question: |
-  Electronic Signature
-subquestion: |
-  % if form_filled_by_attorney and (len(users.complete_elements()) > 1):
-  This tool can put "*/s/ ${ users[0] }*" and "*/s/ ${ users[1] }*" where the petitioners would sign their names so they do not have to sign the form by hand. The court will accept these as their signatures.
-
-  Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
-  % elif form_filled_by_attorney and (len(users.complete_elements()) < 2):
-  This tool can put "*/s/ ${ users[0] }*" where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
-
-  Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
-  % else:
-  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
-
-  Otherwise, you will need to print your forms and sign them by hand.
-  % endif
-fields:
-  - Would you like to add your electronic signature to your form?: esign
-    datatype: yesnoradio
----
 #################### Review Blocks Start #####################
 ---
 id: petition for appointment of guardian review screen
@@ -1823,7 +1789,6 @@ objects:
       petition_for_appointment_of_guardian_post_interview_instructions,
       motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
-      notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
       consent_to_nomination_by_a_minor_attachment,
@@ -1839,7 +1804,6 @@ objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[
       motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
-      notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
       consent_to_nomination_by_a_minor_attachment,

@@ -35,7 +35,7 @@ code: |
   github_repo_name =  'docassemble-NoticeOfAppearanceAndObjection'
 ---
 code: |
-  interview_short_title = "Complete a Notice of Appearance and Objection"
+  interview_short_title = "Tell the court you want to object to a proceeding about a minor's guardianship"
 ---
 code: |
   al_form_type = "other"
