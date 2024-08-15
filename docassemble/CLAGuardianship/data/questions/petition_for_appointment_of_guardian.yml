@@ -31,7 +31,8 @@ metadata:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
   authors:
-    - Court Forms Online
+    - Quinten Steenhuis
+    - Rami Lorca
   allowed_courts:
     - "Probate and Family Court"
   typical_role: "plaintiff"

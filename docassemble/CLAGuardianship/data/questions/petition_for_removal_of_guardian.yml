@@ -20,7 +20,8 @@ metadata:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
   authors:
-    - Court Forms Online
+    - Rami Lorca
+    - Quinten Steenhuis
   allowed_courts:
     - "Probate and Family Court"
   typical_role: "unknown"
@@ -47,22 +48,32 @@ code: |
 objects:
   - responsible_parents: ALPeopleList.using(ask_number=True, maximum_number=2, complete_attribute="complete")
 ---
-depends on:
-  - who_is_making_petition
+code: |
+  enable_al_nav_sections = True
+---
+reconsider: True
 variable name: al_nav_sections
-data:
-  - review_case_information: About the case
-  - review_petitioner_information: Petitioners
-  - review_guardian_information: Guardians
-  - review_requests: What you need
-  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+data from code:
+  - review_case_information: |
+      "About the case"
+  - review_petitioner_information: |
+      "Petitioners"
+  - review_guardian_information: |
+      "Guardians"
+  - review_requests: |
+      "What you need"
+  - review_affidavit_disclosing_care_or_custody: |
+      "Affidavit Disclosing Care or Custody Proceedings"
     hidden: |
       showifdef("who_is_making_petition") == "minor"
-  - review_military_affidavit: Military affidavit
-  - section_fee_waiver: Fee waiver
+  - review_military_affidavit: |
+      "Military affidavit"
+  - section_fee_waiver: |
+      "Fee waiver"
     hidden: |
       showifdef("who_is_making_petition") == "minor"
-  - review_petition_for_removal_of_guardian: Review your answers
+  - review_petition_for_removal_of_guardian: |
+      "Review your answers"
 ---
 #################### Interview order #####################
 comment: |
