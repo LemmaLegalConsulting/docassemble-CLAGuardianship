@@ -1,4 +1,38 @@
 ---
+objects:
+  - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
+  - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
+---
+id: requested guardians
+question: |
+  Is someone named in the petition to be appointed as a guardian?
+subquestion: |
+  In some cases, whoever files the petition to get a guardian for
+  a child will also ask the judge to make a specific person the
+  guardian.
+
+  They may have named up to 2 people to be the child's guardian.
+fields:
+  - Is someone named as the potential guardian in the petition?: requested_guardians.there_are_any
+    datatype: yesnoradio
+---
+id: requested guardian I
+sets:
+  - requested_guardians[i].name.first
+question: |
+  Who is the ${ ordinal(i)} person the petitioner asked the judge to make the child's guardian?
+subquestion: |
+  % if i > 0:
+  You have already told us about ${ requested_guardians.complete_elements() }.
+  % endif
+fields:
+  - code: |
+      requested_guardians[i].name_fields()
+---
+code: |
+  if requested_guardians.number_gathered() > 1:
+    requested_guardians.there_is_another = False
+---
 #################### Interview order #####################
 comment: |
   Controls order and branching logic for questions specific to this form
@@ -6,7 +40,6 @@ id: interview_order_notarized_waiver_and_consent
 code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
-  parental_consent_to_petition
   parents.gather()
   interested_person_relationship
   children[0].name.first
@@ -17,6 +50,7 @@ code: |
   # temporary_guardianship_duration
   # permanent_guardianship_duration
   # child_support_obligation
+  interview_order_parental_consent_to_petition = True
 ---
 id: interested_person_relationship
 question: |
@@ -50,22 +84,6 @@ fields:
 # fields:
 #   - Birthdate: children[0].birthdate
 #     datatype: Birthdate
----
-sets:
-  - requested_guardians[i].name.first
-  - requested_guardians[i].name.last
-  - requested_guardians[i].name.middle
-  - requested_guardians[i].name.suffix
-id: names of opposing parties
-question: |
-  Who are you requesting to be appointed as the child's ${ ordinal(i) } guardian(s)?
-fields:
-  - code: |
-      requested_guardians[i].name_fields()
----
-code: |
-  if len(requested_guardians.complete_elements()) >= 2:
-     requested_guardians.there_is_another = False
 
 ---
 id: temporary_guardianship_duration
@@ -115,7 +133,11 @@ attachment:
       - "user_is_parent": ${ any((not parent.is_deceased for parent in parents))  }
       - "interested_person_relationship": ""
       # - "user_is_father": ${ True if who_is_making_petition == 'father' else False  }
-      # - "user_is_interested_person": ${ True if who_is_making_petition == 'interested_party' else False  }
+      # display user_is_interested_person only when parent filling directly, not attached to the petition
+      - "user_is_interested_person": |
+          % if al_form_type == "other":
+          ${ True if showifdef("who_is_asking_to_participate") == 'interested_person' else False  }
+          % endif
       - "guardians1_name_first": ${ requested_guardians[0].name.first }
       - "guardians1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
       - "guardians1_name_last": ${ requested_guardians[0].name.last }

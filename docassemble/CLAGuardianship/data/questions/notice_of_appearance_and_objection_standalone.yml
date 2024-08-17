@@ -1,14 +1,23 @@
 ---
 include:
+  - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - notice_of_appearance_and_objection.yml
+  - parental_consent_to_petition.yml
+  - application_for_appointment.yml
+
 ---
 metadata:
   title: >-
-    Minor Guardianship Appearance and Objection
+    Parent's Consent or Objection to a Minor Guardianship
   short title: >-
-    Minor Guardianship Appearance & Objection
+    Parent's Consent or Objection to a Minor Guardianship
   description: |-
-    This interview helps someone in Massachusetts file a Notice of Appearance and Objection.
+    This interview helps a Massachusetts parent participate in a minor guardianship case by:
+
+    * Telling the court they disagree (object) to the guardianship, or
+    * Telling the court they agree (consent) to the guardianship.
+
+    It can also help the parent ask the judge to give them a lawyer for the case.
   tags:
     - "FA-04-00-00-00"
   authors:
@@ -35,7 +44,7 @@ code: |
   github_repo_name =  'docassemble-NoticeOfAppearanceAndObjection'
 ---
 code: |
-  interview_short_title = "Complete a Notice of Appearance and Objection"
+  interview_short_title = "Parent's Consent or Objection to a Minor Guardianship"
 ---
 code: |
   al_form_type = "other"
@@ -48,7 +57,10 @@ mandatory: True
 code: |
   al_intro_screen
   notice_of_appearance_and_objection_intro
-  interview_order_notice_of_appearance_and_objection
+  if main_choice in ["objection", "participate"]:
+    interview_order_notice_of_appearance_and_objection
+  else:
+    interview_order_parental_consent_to_petition
   basic_questions_signature_flow  
   signature_date
   # Store anonymous data for analytics / statistics
@@ -64,34 +76,169 @@ code: |
 code: |
   al_form_requires_digital_signature = False  
 ---
+id: Notice_of_Appearance_and_Objection
+continue button field: notice_of_appearance_and_objection_intro
+question: |
+  Participate as a parent in your child's guardianship case
+subquestion: |
+  If someone has filed a case in court for the guardianship of your child, you can use
+  this interview to say that you want to participate in the case or that you agree
+  to your child getting a guardian.
+
+  This interview can make up to 5 documents:
+
+  * A "Waiver and Consent" form, or
+  * A "Notice of Appearance and Objection", and
+  * An affidavit, if you disagree with the guardianship, and
+  * Optionally, a request to get an attorney to help you in court, and
+  * A fee waiver to show the judge if you can pay for the attorney.
+
+  The interview will help you decide which documents you need.
+
+  It takes most people between 10-15 minutes to finish this interview.
+---
+id: main triage
+question: |
+  What do you want to do?
+fields:
+  - label: |
+      % if form_filled_by_attorney:
+      My client is
+      % else:
+      I am
+      % endif
+    field: who_is_asking_to_participate
+    datatype: radio
+    choices:
+      - The **parent** of the child in the guardianship case: parent
+      - Someone **else** who cares about the child's wellbeing: interested_person
+  - label: |
+      % if form_filled_by_attorney:
+      And my client's relationship to the child is
+      % else:
+      And my relationship to the child is
+      % endif
+    field: interested_person_relationship
+    show if:
+      variable: who_is_asking_to_participate
+      is: interested_person
+    datatype: radio
+    choices:
+      - Legal guardian: legal guardian
+      - Grandparent: grandparent
+      - Step parent: step parent
+      - Adult sibling: adult sibling
+      - Sibling of parent: sibling of parent
+      - Friend: friend
+      - Other: other
+  - Other: interested_person_relationship_other
+    show if:
+      variable: interested_person_relationship
+      is: other
+  - label: |
+      % if form_filled_by_attorney:
+      And my client wants to
+      % else:
+      And I want the judge to know that I
+      % endif
+    field: main_choice
+    datatype: radio
+    choices:
+      - Disagree with the guardianship: objection
+      - Agree with the guardianship: agree
+      - Want to attend the hearing and be heard, but I do not agree or disagree: participate
+---
+code: |
+  is_objection = main_choice == "objection"
+---
+code: |
+  parents.there_are_any = who_is_asking_to_participate == "parent"
+---
+id: your explanation
+question: |
+  Why do you disagree with the guardianship?
+subquestion: |
+  If you are ready, you can explain **now** why you disagree with the guardianship petition in
+  the interests of ${ children[0].familiar() }. Your answer has to be based on facts that you know.
+
+  ${ collapse_template(objections_explanation_template) }
+
+  You must sign your objection under the pains and penalties of perjury. That means a judge
+  can punish you if you say something that you know is not true.
+
+  If you aren't ready for your explanation yet, you can still file this objection. You must file
+  your explanation with the court within 30 days of the return date.
+fields:
+  - I will write my explanation: ready_to_make_affidavit
+    datatype: radio
+    choices:
+      - Now: True
+      - By filing an affidavit within 30 days of the return date: False
+    show if: is_objection
+  - label: |
+      Write your explanation below, one reason per line. Include enough facts that you personally know
+      to help the judge decide. Your answers will become your **affidavit** to the court.
+    label above field: True
+    field: objection_reasons
+    datatype: area
+    rows: 7
+    show if: 
+      variable: ready_to_make_affidavit
+      is: True
+---
+id: childs name
 sets:
   - children[0].name.first
-id: Filing Date
-
 question: |
-  About the guardianship case
-
+  % if who_is_asking_to_participate == "interested_person" or form_filled_by_attorney:
+  About the child
+  % else:
+  About your child
+  % endif
 fields:
-  - "Date petition filed": file_date
-    datatype: date
-  - Docket (case) number: docket_number
-    required: False
-    help: |
-      The docket number is written on the court papers you saw. If you
-      do not have it, you can leave this blank.
   - note: |
-      <h2 class="h4">Name of protected person (the child)</h2>
+      <h2 class="h4">Child's name</h2>
   - code: |
       children[0].name_fields()
+  - note: |
+      <h2 class="h4">Child's birthdate</h2>
+  - Birthdate: children[0].birthdate
+    datatype: Birthdate
+validation code: |
+  if as_datetime(children[0].birthdate) < today().minus(years=18):
+    validation_error("Enter the birthdate of a minor under 18")
+---
+id: Filing Date
+question: |
+  About the guardianship case
+subquestion: |
+  Look at the court papers you have to answer these questions about
+  the guardianship case.
+
+  You can also use [masscourts.org](https://www.masscourts.org/):arrow-up-right-from-square: (opens in a new tab)
+fields:
+  - Court: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
+    under text: |
+      Usually the court in the county where your child lives.
+  - Date filed (optional): file_date
+    datatype: date
+    required: False
+  - Docket number (optional): docket_number
+    required: False
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(
       elements=[
-          notice_of_appearance_and_objection_Post_interview_instructions, 
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
+          parental_consent_to_petition_attachment,
+          Application_for_appointment_attachment,
+          affidavitofindigency_attachment,
+        ],
         filename="notice_of_appearance_and_objection", 
         title="All forms to download for your records", enabled=True
       )
@@ -99,7 +246,10 @@ objects:
       elements=[
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
+          parental_consent_to_petition_attachment,
+          Application_for_appointment_attachment,
+          affidavitofindigency_attachment,
+         ], 
         filename="notice_of_appearance_and_objection", 
         title="All forms to download for the court", enabled=True
       )
