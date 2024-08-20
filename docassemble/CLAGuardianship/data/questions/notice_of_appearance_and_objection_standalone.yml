@@ -31,6 +31,8 @@ metadata:
 ---
 objects:
   - children: ALPeopleList.using(ask_number=True,target_number=1)
+  - parents: ALPeopleList.using(auto_gather=True)
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -50,18 +52,54 @@ code: |
   al_form_type = "other"
 ---
 sections:
+  - section_starting: Get started
+  - section_choice: What do you want to do?
+  - section_about: About you
+  - section_child: About the child
+  - section_guardianship_case: About the guardianship case
+  - section_documents: Optional documents
   - review_notice_of_appearance_and_objection: Review your answers
+  - section_signature: Sign your forms
+  - section_download: Download and print your forms
 ---
 ###################### Main order ######################
 mandatory: True
 code: |
+  allowed_courts = ["Probate and Family Court"]
+  nav.set_section("section_starting")
   al_intro_screen
   notice_of_appearance_and_objection_intro
-  if main_choice in ["objection", "participate"]:
-    interview_order_notice_of_appearance_and_objection
+  nav.set_section("section_choice")
+  if main_choice in ("objection", "participate"):
+    nav.set_section("section_about")
+    attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
+    users.gather()
+    users[0].address.address
+    users[0].phone_number
+    nav.set_section("section_child")
+    children[0].name.first
+    nav.set_section("section_guardianship_case")
+    case_name
+    trial_court.division
+    docket_number
+    file_date
+    is_objection
+    if main_choice == "objection":
+      ready_to_make_affidavit
+    signature_date
+    if who_is_asking_to_participate == "parent":
+      nav.set_section("section_documents")
+      if waiver_fee:
+        interview_order_Application_for_appointment
+        is_indigent
   else:
+    nav.set_section("section_about")
     interview_order_parental_consent_to_petition
-  basic_questions_signature_flow  
+
+  nav.set_section("review_notice_of_appearance_and_objection")
+  review_notice_of_appearance_and_objection  
+  nav.set_section("section_signature")
+  esign
   signature_date
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(
@@ -72,6 +110,18 @@ code: |
       },
   )
   notice_of_appearance_and_objection_download
+---
+id: electronic signature question
+question: |
+  Electronic Signature
+subquestion: |
+  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
+
+  Otherwise, you will need to print your forms and sign them by hand.
+fields:
+  - Would you like to add your electronic signature to your form?: esign
+    datatype: yesnoradio
+
 ---
 code: |
   al_form_requires_digital_signature = False  
@@ -174,7 +224,6 @@ fields:
     choices:
       - Now: True
       - By filing an affidavit within 30 days of the return date: False
-    show if: is_objection
   - label: |
       Write your explanation below, one reason per line. Include enough facts that you personally know
       to help the judge decide. Your answers will become your **affidavit** to the court.
@@ -229,6 +278,42 @@ fields:
   - Docket number (optional): docket_number
     required: False
 ---
+########## Application for appointment of counsel ##########
+---
+code: |
+  Application_for_appointment_attachment.enabled = who_is_asking_to_participate == "parent" and waiver_fee
+---
+id: waiver fee
+question: |
+  Do you want the court to pay for a lawyer to help you at the hearing?
+subquestion: |
+  Normally, there is a fee of $150 to get a lawyer in a guardianship
+  case. You can ask the court to waive the fee if you cannot afford it.  
+
+  If you want the court to pay for a lawyer, you must fill out a fee waiver form.
+  We can help you make the fee waiver form too.
+fields: 
+  - I ask for permission not to pay the lawyer fee: waiver_fee
+    datatype: yesnoradio
+---
+################ Fee waiver ######################
+---
+code: |
+  fees['Filing fee'].waive = False
+  
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = who_is_asking_to_participate == main_choice in ("objection", "participate") and who_is_asking_to_participate =="parent" and waiver_fee and wants_fee_waiver and is_indigent
+---
+############## Appearance and objection ###############
+---
+code: |
+  notice_of_appearance_and_objection_attachment.enabled = main_choice in ("objection", "participate")
+---
+code: |
+  notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
+---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(
@@ -253,3 +338,10 @@ objects:
         filename="notice_of_appearance_and_objection", 
         title="All forms to download for the court", enabled=True
       )
+---
+code: |
+  consenting_parents = users
+---
+code: |
+  if attorneys.number_gathered() >= 1:
+    attorneys.there_is_another = False

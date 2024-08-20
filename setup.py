@@ -54,7 +54,7 @@ setup(name='docassemble.CLAGuardianship',
       url='https://courtformsonline.org',
       packages=find_packages(),
       namespace_packages=['docassemble'],
-      install_requires=['docassemble.AssemblyLine'],
+      install_requires=['docassemble.AssemblyLine', 'docassemble.ALToolbox>=0.11.0'],
       zip_safe=False,
       package_data=find_package_data(where='docassemble/CLAGuardianship/', package='docassemble.CLAGuardianship'),
      )

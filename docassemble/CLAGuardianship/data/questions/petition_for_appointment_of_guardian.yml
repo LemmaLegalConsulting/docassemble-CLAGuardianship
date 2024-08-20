@@ -1823,7 +1823,6 @@ objects:
       petition_for_appointment_of_guardian_post_interview_instructions,
       motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
-      notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
       consent_to_nomination_by_a_minor_attachment,
@@ -1839,7 +1838,6 @@ objects:
   - al_court_bundle: ALDocumentBundle.using(elements=[
       motion_temporary_guardian_attachment,
       petition_for_appointment_of_guardian_attachment,
-      notice_of_appearance_and_objection_attachment,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
       consent_to_nomination_by_a_minor_attachment,
