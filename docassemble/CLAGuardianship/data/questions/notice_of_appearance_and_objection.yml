@@ -13,7 +13,6 @@ id: interview_order_notice_of_appearance_and_objection
 code: |
   # Set the allowed courts for this interview
   allowed_courts = ["Probate and Family Court"]
-  nav.set_section("review_notice_of_appearance_and_objection")
 
   attorneys.there_are_any
   users.gather()
@@ -100,21 +99,16 @@ generic object: ALPeopleList
 
 question: |
   % if form_filled_by_attorney:
-  What is your client's phone number?
+  Client's contact information
   % else:
-  What is your phone number?
+  Your contact information
   % endif
-
-subquestion: |
-  % if form_filled_by_attorney:
-  Enter your client's **primary phone number**, if able.
-  % else:
-  Enter your **primary phone number**, if able.
-  % endif
-
 fields:
-  - no label: users[0].phone_number
+  - Phone number (optional): users[0].phone_number
     datatype: al_international_phone
+    required: False
+  - Email (optional): users[0].email
+    datatype: email
     required: False
 ---
 id: Filing Date
@@ -245,7 +239,7 @@ code: |
   addresses_to_search = [user.address for user in users.complete_elements()]
 ---
 id: notice of appearance and objection review screen
-event: review_notice_of_appearance_and_objection
+continue button field: review_notice_of_appearance_and_objection
 question: |
   Review your answers
 review:
@@ -307,14 +301,11 @@ columns:
       row_item.email if defined("row_item.email") else ""
   - Phone number: |
       row_item.phone_number if defined("row_item.phone_number") else ""
-  - Signature: |
-      row_item.signature if defined("row_item.signature") else ""
 edit:
   - name.last
   - address.zip
   - email
   - phone_number
-  - signature
 confirm: True
 ---
 continue button field: attorneys.revisit
@@ -359,8 +350,11 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - notice_of_appearance_and_objection_Post_interview_instructions: ALDocument.using(title="Instructions", filename="notice_of_appearance_and_objection_next_steps.docx", enabled=True, has_addendum=False)
-  - notice_of_appearance_and_objection_attachment: ALDocument.using(title="Notice of Appearance and Objection", filename="notice_of_appearance_and_objection", enabled=True, has_addendum=False, )
+  - notice_of_appearance_and_objection_attachment: ALDocument.using(title="Notice of Appearance and Objection", filename="notice_of_appearance_and_objection", has_addendum=False, )
   - notice_of_appearance_and_objection_affidavit_attachment: ALDocument.using(title="Affidavit and Objection", filename="Affidavit and Objection of ${ users[0]}", has_addendum=False)
+---
+code: |
+  notice_of_appearance_and_objection_attachment.enabled = True
 ---
 code: |
   notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit

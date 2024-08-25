@@ -33,7 +33,7 @@ code: |
 ---
 code: |
   # This controls the default state in address field questions
-  AL_DEFAULT_STATE = ""
+  AL_DEFAULT_STATE = "MA"
 ---
 code: |
   github_repo_name =  'docassemble-ApplicationForAppointment'

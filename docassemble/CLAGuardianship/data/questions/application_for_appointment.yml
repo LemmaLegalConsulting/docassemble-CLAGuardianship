@@ -5,9 +5,6 @@ comment: |
 id: interview_order_Application_for_appointment
 code: |
   # Set the allowed courts for this interview
-  allowed_courts = []
-  nav.set_section("review_Application_for_appointment")
-
   users.gather()
   children.gather()
   children[0].name
@@ -19,8 +16,6 @@ code: |
   users[0].address.address
   users[0].email
   users[0].phone_number
-  signature_date
-  basic_questions_signature_flow
   interview_order_Application_for_appointment = True
 ---
 id: Application_for_appointment
@@ -62,19 +57,17 @@ fields:
 ---
 id: Mother
 question: |
- What best describes your relationship to ${ children[0] }?
+  What best describes your relationship to ${ children[0] }?
 subquestion: |
-  I am ${ children[0].familiar() }'s
+  The answer to this question checks a box on the "application for 
+  appointment of counsel" form. An answer is not required.
+
+  I am ${ children[0].familiar() }'s 
 fields:
   - "Mother": want_counsel_for_mother
     datatype: yesno
   - "Father": want_counsel_for_father
     datatype: yesno
-validation code: |
-  if not (want_counsel_for_mother or want_counsel_for_father):
-    validation_error("Please select at least one option.")
-  elif (want_counsel_for_mother and want_counsel_for_father):
-    validation_error("Please select only one option.")
 ---
 id: preview Application_for_appointment
 question: |

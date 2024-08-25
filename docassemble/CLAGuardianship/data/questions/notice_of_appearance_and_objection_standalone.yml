@@ -1,14 +1,23 @@
 ---
 include:
+  - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - notice_of_appearance_and_objection.yml
+  - parental_consent_to_petition.yml
+  - application_for_appointment.yml
+
 ---
 metadata:
   title: >-
-    Minor Guardianship Appearance and Objection
+    Parent's Consent or Objection to a Minor Guardianship
   short title: >-
-    Minor Guardianship Appearance & Objection
+    Parent's Consent or Objection to a Minor Guardianship
   description: |-
-    This interview helps someone in Massachusetts file a Notice of Appearance and Objection.
+    This interview helps a Massachusetts parent participate in a minor guardianship case by:
+
+    * Telling the court they disagree (object) to the guardianship, or
+    * Telling the court they agree (consent) to the guardianship.
+
+    It can also help the parent ask the judge to give them a lawyer for the case.
   tags:
     - "FA-04-00-00-00"
   authors:
@@ -22,6 +31,8 @@ metadata:
 ---
 objects:
   - children: ALPeopleList.using(ask_number=True,target_number=1)
+  - parents: ALPeopleList.using(auto_gather=True)
+  - users: ALPeopleList.using(ask_number=True,target_number=1)
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -35,63 +46,321 @@ code: |
   github_repo_name =  'docassemble-NoticeOfAppearanceAndObjection'
 ---
 code: |
-  interview_short_title = "Tell the court you want to object to a proceeding about a minor's guardianship"
+  interview_short_title = "Parental Consent or Objection to a Minor Guardianship"
 ---
 code: |
   al_form_type = "other"
 ---
 sections:
-  - review_notice_of_appearance_and_objection: Review your answers
+  - section_starting: Get started
+  - section_choice: What do you want to do?
+  - section_about_you: About you
+  - section_child: About the child
+  - section_guardianship_case: About the guardianship case
+  - section_documents: Optional documents
+  - review_participate_in_guardianship: Review your answers
+  - section_signature: Sign your forms
+  - section_download: Download and print your forms
 ---
 ###################### Main order ######################
 mandatory: True
 code: |
+  allowed_courts = ["Probate and Family Court"]
+  nav.set_section("section_starting")
   al_intro_screen
   notice_of_appearance_and_objection_intro
-  interview_order_notice_of_appearance_and_objection
-  basic_questions_signature_flow  
+  nav.set_section("section_choice")
+  if main_choice in ("objection", "participate"):
+    nav.set_section("section_about_you")
+    attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
+    users.gather()
+    users[0].address.address
+    users[0].phone_number
+    nav.set_section("section_child")
+    children[0].name.first
+    nav.set_section("section_guardianship_case")
+    case_name
+    trial_court.division
+    docket_number
+    file_date
+    is_objection
+    if main_choice == "objection":
+      ready_to_make_affidavit
+    signature_date
+    if who_is_asking_to_participate == "parent":
+      nav.set_section("section_documents")
+      if waiver_fee:
+        interview_order_Application_for_appointment
+        is_indigent
+  else:
+    explain_notarization_requirement
+    nav.set_section("section_about_you")
+    users.gather()
+    interested_person_relationship
+    nav.set_section("section_child")
+    children[0].name.first
+    children[0].birthdate
+    nav.set_section("section_guardianship_case")
+    trial_court
+    docket_number
+    requested_guardians.gather() 
+
+  nav.set_section("review_participate_in_guardianship")
+  review_participate_in_guardianship  
+  nav.set_section("section_signature")
+  if main_choice in ("objection", "participate"):
+    esign # Need to notarize the consent
   signature_date
   # Store anonymous data for analytics / statistics
   store_variables_snapshot(
       persistent=True,
       data={
           "zip": showifdef("users[0].address.zip"),
+          "trial_court.division": showifdef("trial_court.division"),
           "reached_interview_end": True,
+          "main_choice": main_choice,
+          "atttorneys.there_are_any": showifdef("attorneys.there_are_any"),
+          "who_is_asking_to_participate": who_is_asking_to_participate,
+          "interested_person_relationship": showifdef("interested_person_relationship"),
+          "is_indigent": showifdef("is_indigent"),
+          "waiver_fee": showifdef("waiver_fee"),
       },
   )
+
+  nav.set_section("section_download")
   notice_of_appearance_and_objection_download
+---
+continue button field: explain_notarization_requirement
+id: explain_notarization_requirement
+question: |
+  You need to sign your form in front of a notary public
+decoration: stamp
+subquestion: |
+  Because you are agreeing to the guardianship, you need to **sign** your
+  form in front a notary public.
+
+  We will not get your signature yet. Do not sign it until you are in 
+  front of the notary public.
+
+  You may be able to find a notary for free at your bank, town hall, or local library.
+---
+id: electronic signature question
+question: |
+  Electronic Signature
+subquestion: |
+  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
+
+  Otherwise, you will need to print your forms and sign them by hand.
+fields:
+  - Would you like to add your electronic signature to your form?: esign
+    datatype: yesnoradio
+
 ---
 code: |
   al_form_requires_digital_signature = False  
 ---
+id: Notice_of_Appearance_and_Objection
+continue button field: notice_of_appearance_and_objection_intro
+question: |
+  Participate as a parent in your child's guardianship case
+subquestion: |
+  If someone has filed a case in court for the guardianship of your child, you can use
+  this interview to say that you want to participate in the case or that you agree
+  to your child getting a guardian.
+
+  This interview can make up to 5 documents:
+
+  * A "Waiver and Consent" form, or
+  * A "Notice of Appearance and Objection", and
+  * An affidavit, if you disagree with the guardianship, and
+  * Optionally, a request to get an attorney to help you in court, and
+  * A fee waiver to show the judge if you can pay for the attorney.
+
+  The interview will help you decide which documents you need.
+
+  It takes most people between 10-15 minutes to finish this interview.
+---
+id: main triage
+question: |
+  What do you want to do?
+fields:
+  - label: |
+      % if form_filled_by_attorney:
+      My client is
+      % else:
+      I am
+      % endif
+    field: who_is_asking_to_participate
+    datatype: radio
+    choices:
+      - The **parent** of the child in the guardianship case: parent
+      - Someone **else** who cares about the child's wellbeing: interested_person
+  - label: |
+      % if form_filled_by_attorney:
+      And my client's relationship to the child is
+      % else:
+      And my relationship to the child is
+      % endif
+    field: interested_person_relationship
+    show if:
+      variable: who_is_asking_to_participate
+      is: interested_person
+    datatype: radio
+    choices:
+      - Legal guardian: legal guardian
+      - Grandparent: grandparent
+      - Step parent: step parent
+      - Adult sibling: adult sibling
+      - Sibling of parent: sibling of parent
+      - Friend: friend
+      - Other: other
+  - Other: interested_person_relationship_other
+    show if:
+      variable: interested_person_relationship
+      is: other
+  - label: |
+      % if form_filled_by_attorney:
+      And my client wants to
+      % else:
+      And I want the judge to know that I
+      % endif
+    field: main_choice
+    datatype: radio
+    choices:
+      - Disagree with the guardianship: objection
+      - Agree with the guardianship: agree
+      - Want to attend the hearing and be heard, but I do not agree or disagree: participate
+---
+code: |
+  if who_is_asking_to_participate == "parent":
+    interested_person_relationship = "parent"
+---
+code: |
+  is_objection = main_choice == "objection"
+---
+code: |
+  parents.there_are_any = who_is_asking_to_participate == "parent"
+---
+id: your explanation
+question: |
+  Why do you disagree with the guardianship?
+subquestion: |
+  If you are ready, you can explain **now** why you disagree with the guardianship petition in
+  the interests of ${ children[0].familiar() }. Your answer has to be based on facts that you know.
+
+  ${ collapse_template(objections_explanation_template) }
+
+  You must sign your objection under the pains and penalties of perjury. That means a judge
+  can punish you if you say something that you know is not true.
+
+  If you aren't ready for your explanation yet, you can still file this objection. You must file
+  your explanation with the court within 30 days of the return date.
+fields:
+  - I will write my explanation: ready_to_make_affidavit
+    datatype: radio
+    choices:
+      - Now: True
+      - By filing an affidavit within 30 days of the return date: False
+  - label: |
+      Write your explanation below, one reason per line. Include enough facts that you personally know
+      to help the judge decide. Your answers will become your **affidavit** to the court.
+    label above field: True
+    field: objection_reasons
+    datatype: area
+    rows: 7
+    show if: 
+      variable: ready_to_make_affidavit
+      is: True
+---
+id: childs name
 sets:
   - children[0].name.first
-id: Filing Date
-
 question: |
-  About the guardianship case
-
+  % if who_is_asking_to_participate == "interested_person" or form_filled_by_attorney:
+  About the child
+  % else:
+  About your child
+  % endif
 fields:
-  - "Date petition filed": file_date
-    datatype: date
-  - Docket (case) number: docket_number
-    required: False
-    help: |
-      The docket number is written on the court papers you saw. If you
-      do not have it, you can leave this blank.
   - note: |
-      <h2 class="h4">Name of protected person (the child)</h2>
+      <h2 class="h4">Child's name</h2>
   - code: |
       children[0].name_fields()
+  - note: |
+      <h2 class="h4">Child's birthdate</h2>
+  - Birthdate: children[0].birthdate
+    datatype: Birthdate
+validation code: |
+  if as_datetime(children[0].birthdate) < today().minus(years=18):
+    validation_error("Enter the birthdate of a minor under 18")
+---
+id: Filing Date
+question: |
+  About the guardianship case
+subquestion: |
+  Look at the court papers you have to answer these questions about
+  the guardianship case.
+
+  You can also use [masscourts.org](https://www.masscourts.org/):arrow-up-right-from-square: (opens in a new tab)
+fields:
+  - Court: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
+    under text: |
+      Usually the court in the county where your child lives.
+  - Date filed (optional): file_date
+    datatype: date
+    required: False
+  - Docket number (optional): docket_number
+    required: False
+---
+########## Application for appointment of counsel ##########
+---
+code: |
+  Application_for_appointment_attachment.enabled = main_choice in ("objection", "participate") and who_is_asking_to_participate == "parent" and waiver_fee
+---
+id: waiver fee
+question: |
+  Do you want the court to pay for a lawyer to help you at the hearing?
+subquestion: |
+  Normally, there is a fee of $150 to get a lawyer in a guardianship
+  case. You can ask the court to waive the fee if you cannot afford it.  
+
+  If you want the court to pay for a lawyer, you must fill out a fee waiver form.
+  We can help you make the fee waiver form too.
+fields: 
+  - I ask for permission not to pay the lawyer fee: waiver_fee
+    datatype: yesnoradio
+---
+################ Fee waiver ######################
+---
+code: |
+  fees['Filing fee'].waive = False
+  
+  set_fee_waiver_defaults = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = who_is_asking_to_participate == main_choice in ("objection", "participate") and who_is_asking_to_participate =="parent" and waiver_fee and wants_fee_waiver and is_indigent
+---
+############## Appearance and objection ###############
+---
+code: |
+  notice_of_appearance_and_objection_attachment.enabled = main_choice in ("objection", "participate")
+---
+code: |
+  notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(
       elements=[
-          notice_of_appearance_and_objection_Post_interview_instructions, 
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
+          parental_consent_to_petition_attachment,
+          Application_for_appointment_attachment,
+          affidavitofindigency_attachment,
+        ],
         filename="notice_of_appearance_and_objection", 
         title="All forms to download for your records", enabled=True
       )
@@ -99,7 +368,91 @@ objects:
       elements=[
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
-        ], 
+          parental_consent_to_petition_attachment,
+          Application_for_appointment_attachment,
+          affidavitofindigency_attachment,
+         ], 
         filename="notice_of_appearance_and_objection", 
         title="All forms to download for the court", enabled=True
       )
+---
+code: |
+  consenting_parents = users
+---
+code: |
+  if attorneys.number_gathered() >= 1:
+    attorneys.there_is_another = False
+---
+---
+id: notice of appearance and objection review screen
+continue button field: review_participate_in_guardianship
+continue button label: Next
+question: |
+  Review your answers
+subquestion: |
+  Look over the answers you gave below. If you need to make any changes, click the "edit"
+  button next to the answer you want to change.
+
+  When you are ready, click the "next" button to keep going.
+review:
+  - Edit: main_choice
+    button: |
+      **What do you want to do?**
+      % if main_choice == "objection":
+      Disagree with the guardianship
+      % elif main_choice == "agree":
+      Agree with the guardianship
+      % elif main_choice == "participate":
+      Attend the hearing and be heard
+      % endif
+  - Edit: users.revisit
+    button: |
+      **About you**
+
+      ${ users[0].name_full() }
+
+  - Edit: children[0].name.first
+    button: |
+      **About the child**
+
+      ${ children[0].name_full() }
+
+      ${ children[0].birthdate } (age ${ children[0].age_in_years() })
+  - Edit: requested_guardians.revisit
+    button: |
+      **Guardians named on petition**
+
+      % for item in requested_guardians:
+        * ${ item }
+      % endfor
+  - Edit: docket_number
+    button: |
+      **Docket number**:
+      ${ docket_number }
+  - Edit: trial_court.division
+    button: |
+      **Court division**:
+      ${ trial_court.division }
+  - Edit: case_name
+    button: |
+      **Case name**:
+      ${ case_name }
+  - Edit: file_date
+    button: |
+      **Date filed**:
+      ${ file_date }
+  - Edit: signature_date
+    button: |
+      **Date of signature**:
+      ${ signature_date }
+  - Edit: attorneys.revisit
+    button: |
+      **Attorneys**
+
+      % for item in attorneys:
+        * ${ item }
+      % endfor
+  - Edit: bbo
+    button: |
+      **Bbo**:
+      ${ bbo }
