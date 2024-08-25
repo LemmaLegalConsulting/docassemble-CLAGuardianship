@@ -133,7 +133,7 @@ attachment:
           % if al_form_type == "starts_case":
           ${ any((not parent.is_deceased for parent in parents))  }
           % elif al_form_type == "other":
-          ${ True if who_is_making_petition == 'parent' else False  }
+          ${ True if who_is_asking_to_participate == 'parent' else False  }
           % endif
       # - "user_is_father": ${ True if who_is_making_petition == 'father' else False  }
       # display user_is_interested_person only when parent filling directly, not attached to the petition

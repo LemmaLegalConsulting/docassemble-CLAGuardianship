@@ -348,14 +348,11 @@ columns:
       row_item.email if defined("row_item.email") else ""
   - Phone number: |
       row_item.phone_number if defined("row_item.phone_number") else ""
-  - Signature: |
-      row_item.signature if defined("row_item.signature") else ""
 edit:
   - name.last
   - address.zip
   - email
   - phone_number
-  - signature
 confirm: True
 ---
 continue button field: attorneys.revisit
