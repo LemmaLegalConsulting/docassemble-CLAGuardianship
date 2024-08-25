@@ -40,7 +40,6 @@ id: interview_order_notarized_waiver_and_consent
 code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
-  parents.gather()
   interested_person_relationship
   children[0].name.first
   children[0].birthdate

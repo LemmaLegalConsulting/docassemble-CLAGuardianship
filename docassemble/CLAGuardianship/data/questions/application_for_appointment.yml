@@ -5,9 +5,6 @@ comment: |
 id: interview_order_Application_for_appointment
 code: |
   # Set the allowed courts for this interview
-  allowed_courts = []
-  nav.set_section("review_Application_for_appointment")
-
   users.gather()
   children.gather()
   children[0].name
@@ -19,8 +16,6 @@ code: |
   users[0].address.address
   users[0].email
   users[0].phone_number
-  signature_date
-  basic_questions_signature_flow
   interview_order_Application_for_appointment = True
 ---
 id: Application_for_appointment
@@ -188,7 +183,7 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - Application_for_appointment_Post_interview_instructions: ALDocument.using(title="Instructions", filename="Application_for_appointment_next_steps.docx", enabled=True, has_addendum=False)
-  - Application_for_appointment_attachment: ALDocument.using(title="Application for appointment", filename="Application_for_appointment", has_addendum=False, )
+  - Application_for_appointment_attachment: ALDocument.using(title="Application for appointment of Counsel", filename="Application_for_appointment", has_addendum=False, )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
 # used for "preview" and "final" keys, and logic in the template checks the value of 

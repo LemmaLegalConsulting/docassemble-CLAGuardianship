@@ -107,8 +107,15 @@ code: |
       data={
           "zip": showifdef("users[0].address.zip"),
           "reached_interview_end": True,
+          "main_choice": main_choice,
+          "who_is_asking_to_participate": who_is_asking_to_participate,
+          "interested_person_relationship": showifdef("interested_person_relationship"),
+          "is_indigent": showifdef("is_indigent"),
+          "waiver_fee": showifdef("waiver_fee"),
       },
   )
+
+  nav.set_section("section_download")
   notice_of_appearance_and_objection_download
 ---
 id: electronic signature question
@@ -197,6 +204,10 @@ fields:
       - Disagree with the guardianship: objection
       - Agree with the guardianship: agree
       - Want to attend the hearing and be heard, but I do not agree or disagree: participate
+---
+code: |
+  if who_is_asking_to_participate == "parent":
+    interested_person_relationship = "parent"
 ---
 code: |
   is_objection = main_choice == "objection"
