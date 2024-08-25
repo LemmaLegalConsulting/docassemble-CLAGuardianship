@@ -3,7 +3,6 @@ include:
   - shared.yml
 ---
 objects:
-  - users: ALPeopleList.using(ask_number=True,target_number=1)
   - children: ALPeopleList.using(ask_number=True,target_number=1)
   - requested_temporary_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
 ---
@@ -154,18 +153,22 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - motion_temporary_guardian_attachment: ALDocument.using(title="Motion for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, )
+  - motion_temporary_guardian_attachment: ALDocument.using(title="Motion for Temporary Guardian", filename="motion_temporary_guardian", has_addendum=True, default_overflow_message=" (Continued in Attachment)")
 ---
 code: |
   motion_temporary_guardian_attachment.enabled = True
 ---
 code: |
   motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].overflow_trigger = 240
-  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].label = "The nature of the circumstances requiring the appointment of a temporary guardian are:"
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_circumstances"].label = "The nature of the circumstances requiring the appointment of a temporary guardian are"
   motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].overflow_trigger = 240
-  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].label = "The particular harm sought to be avoided is:"
+  motion_temporary_guardian_attachment.overflow_fields["harm_avoided"].label = "The particular harm sought to be avoided is"
   motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].overflow_trigger = 240
-  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].label = "The actions which will need to be taken by a Temporary Guardian to avoid the harm are:"
+  motion_temporary_guardian_attachment.overflow_fields["temporary_guardian_action"].label = "The actions which will need to be taken by a Temporary Guardian to avoid the harm are"
+  motion_temporary_guardian_attachment.overflow_fields["specific_court_authorization"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["specific_court_authorization"].label = "The moving party further seeks specific court authorization"  
+  motion_temporary_guardian_attachment.overflow_fields["additional_request_to_court"].overflow_trigger = 240
+  motion_temporary_guardian_attachment.overflow_fields["additional_request_to_court"].label = "In addition, I request that the Court"    
   motion_temporary_guardian_attachment.overflow_fields.gathered = True
 ---
 attachment:
@@ -175,6 +178,7 @@ attachment:
     filename: motion_temporary_guardian
     pdf template file: motion_temporary_guardian.pdf
     fields:
+      - "docket_number": ${ docket_number }
       - "trial_court_division": ${ trial_court.division }
       - "children1_name_last": ${ children[0].name.last }
       - "children1_name_first": ${ children[0].name.first }
@@ -210,11 +214,11 @@ attachment:
       - "other_box": No
       - "wants_specific_court_auth": ${wants_specific_court_auth}
       - "moving_party": No
-      - "specific_court_authorization": ${specific_court_authorization}
+      - "specific_court_authorization": ${ motion_temporary_guardian_attachment.safe_value("specific_court_authorization") }
       - "wants_additional_request_to_court": ${wants_additional_request_to_court}
       - "court": No
-      - "additional_request_to_court": ${additional_request_to_court}
-      - "users1_signature": ${ users[0].signature_if_final(i) }
+      - "additional_request_to_court": ${ motion_temporary_guardian_attachment.safe_value("additional_request_to_court") }
+      - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
       - "users1_singature_date": ${ signature_date.format() }
       - "attorneys1_name": ${attorneys if form_filled_by_attorney else ""}
       - "attorneys1_address_address": ${attorneys[0].address.address if form_filled_by_attorney else ""}

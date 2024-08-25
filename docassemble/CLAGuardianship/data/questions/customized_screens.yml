@@ -46,8 +46,7 @@ code: |
   set_fee_waiver_defaults = True
 ---
 code: |
-  affidavitofindigency_attachment.enabled = who_is_making_petition == "interested_party" and wants_fee_waiver and is_indigent
-
+  affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
 ---
 ################# Care and Custody Affidavit #########################
 ---
@@ -81,7 +80,7 @@ code: |
   # note: inconsistency in how the user is referred to in the military
   # affidavit and the petition.
   # user = petitioner in the petition, and
-  # user should be "child" in the military affidavit
+  # user should be "child" in the military affidavit  
   additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
 code: |
@@ -163,7 +162,7 @@ fields:
   - Someone already named: requested_temporary_guardians[i]
     datatype: object_radio
     choices:
-      - requested_guardians if not petitioner_requesting_guardianship else []
+      - requested_guardians if ((not petitioner_requesting_guardianship) or (not bio_parents_can_resume_responsibilities)) else []
       - users if petitioner_requesting_guardianship else []
     exclude:
       - requested_temporary_guardians.complete_elements()

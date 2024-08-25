@@ -19,9 +19,6 @@ code: |
 
   interview_order_consent_to_nomination_by_a_minor = True
 ---
-# code: |
-#   users.there_is_another = False
----
 code: |
   notarization_public.there_is_another = False
 ---

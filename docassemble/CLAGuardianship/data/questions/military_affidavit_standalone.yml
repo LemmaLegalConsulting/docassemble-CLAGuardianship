@@ -11,6 +11,7 @@ metadata:
     Military Affidavit
   authors:
     - Pratibha Bharti
+    - Quinten Steenhuis
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:

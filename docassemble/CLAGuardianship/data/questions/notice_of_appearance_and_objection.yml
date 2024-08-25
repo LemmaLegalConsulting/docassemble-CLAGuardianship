@@ -111,53 +111,6 @@ fields:
     datatype: email
     required: False
 ---
-id: Attorney Name
-
-sets:
-  - attorneys[0].name.first
-  - attorneys[0].name.last
-  - attorneys[0].name.middle
-  - attorneys[0].name.suffix
-
-generic object: ALPeopleList
-
-question: |
-  What is your name?
-
-fields:
-  - code: |
-      attorneys[0].name_fields()
----
-id: Attorney Address
-
-sets:
-  - attorneys[0].address.address
-  - attorneys[0].address.unit
-  - attorneys[0].address.city
-  - attorneys[0].address.state
-  - attorneys[0].address.zip
-
-generic object: ALPeopleList
-
-question: |
-  What is your address?
-
-fields:
-  - code: |
-      attorneys[0].address_fields()
----
-id: Attorney Contact Information
-
-generic object: ALIndividual
-
-question: |
-  What is your primary phone number?
-
-fields:
-  - Phone number: attorneys[0].phone_number
-    datatype: al_international_phone
-    required: False
----
 id: Filing Date
 
 question: |

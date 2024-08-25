@@ -39,7 +39,7 @@ code: |
   github_repo_name =  'docassemble-ApplicationForAppointment'
 ---
 code: |
-  interview_short_title = "Apply for a lawyer"
+  interview_short_title = "Ask the court for a lawyer"
 ---
 code: |
   al_form_type = "other" 
