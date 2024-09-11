@@ -387,7 +387,7 @@ attachment:
     - "petition": Appointment of Guardian
     - "file_date": ${ file_date.format() }
     - "appearance_for_myself": ${ not form_filled_by_attorney }
-    - "appearance_as_attorney": ${ form_filled_by_attorney}
+    - "form_filled_by_attorney": ${ form_filled_by_attorney}
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }
