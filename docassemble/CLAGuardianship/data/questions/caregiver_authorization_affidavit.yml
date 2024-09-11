@@ -37,7 +37,7 @@ code: |
   github_repo_name =  'docassemble-CaregiverAuthorizationAffidavit'
 ---
 code: |
-  interview_short_title = "Give permission to someone to take care of your child"
+  interview_short_title = "Allow someone to make medical and educational decisions for your child"
 ---
 code: |
   al_form_type = "other_form" 
@@ -149,6 +149,9 @@ sets:
 id: What best describes you
 question: |
   Who do you want to give permission to?
+subquestion: |
+  You **cannot** name an adult who has had their
+  rights to take care of the child taken away by a court.
 fields:
   - code: |
       authorized_persons[0].name_fields()
