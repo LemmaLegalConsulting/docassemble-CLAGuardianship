@@ -2,6 +2,7 @@
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
+  - temporary_agent_affidavit.yml
 ---
 metadata:
   title: >-
@@ -36,7 +37,7 @@ code: |
   github_repo_name =  'docassemble-CaregiverAuthorizationAffidavit'
 ---
 code: |
-  interview_short_title = "Give permission to someone to make educational and medical decisions for your child"
+  interview_short_title = "Allow someone to make medical and educational decisions for your child"
 ---
 code: |
   al_form_type = "other_form" 
@@ -59,11 +60,17 @@ code: |
   user_role = "plaintiff"
   user_ask_role = "plaintiff"
   users.gather()
-  relationship_to_child 
+  relationship_to_child
   authorized_persons.gather()
   set_parts(subtitle=str(users))
   caregiver_relationship_to_child
+  if relationship_to_child == "parent" and other_parent:
+    parents.gather()
+    for parent in parents:
+      parent.address.address
+      parent.phone_number
   set_progress(25)
+  permission_kind
   expiration_of_authorization
   children.gather()
   users[0].phone_number
@@ -94,20 +101,23 @@ code: |
 id: Caregiver_authorization_affidavit
 continue button field: caregiver_authorization_affidavit_intro
 question: |
-  Caregiver authorization affidavit
+  Caregiver Authorization Affidavit or Temporary Agent Affidavit 
 subquestion: |
-  This interview helps you give permission to someone to make medical or educational decisions for your child (someone under 18). 
-   This permission is given through a legal document called a Caregiver Authorization 
-   Affidavit. This document allows you to have another person help make decisions, who is 
-   called a caregiver. You can still make decisions after you give permission to a caregiver.
-   The caregiver can’t make a decision they know you disagree with.
-   At the end of the interview, you will be able to download and print the completed 
-   Caregiver Authorization Affidavit.
- 
+  This interview will help you give permission to someone to make decisions about your child (someone under
+  18).
+  At the end of the interview, you will be able to download and print your **affidavit**,
+  which confirms that you are giving permission to someone to take care of your child.
+
+  This interview will help you decide if you need:
+
+  * A caregiver authorization affidavit, or
+  * A temporary agent affidavit
+
   The permission can include decisions about:
 
-  1. Health care, and
-  1. Education
+  1. Health care,
+  1. Education, and
+  1. Other decisions, for up to 60 days
   
   You need the name, phone number, and address of the person you are authorizing to finish this 
   interview.
@@ -131,6 +141,7 @@ fields:
       users[0].name_fields()
   - Phone number: users[0].phone_number
     datatype: al_international_phone
+    required: False
   - code: |
       users[0].address_fields(default_state="MA")
 ---
@@ -140,7 +151,8 @@ id: What best describes you
 question: |
   Who do you want to give permission to?
 subquestion: |
-  You can choose any adult living with your child to be a caregiver. However, you can’t choose someone who has already lost their parental rights to your child.
+  You **cannot** name an adult who has had their
+  rights to take care of the child taken away by a court.
 fields:
   - code: |
       authorized_persons[0].name_fields()
@@ -161,6 +173,7 @@ fields:
       is: other
   - Phone number: authorized_persons[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: children
 question: |
@@ -211,6 +224,57 @@ fields:
       the right to make decisions about the children.
     js show if: |
       val("relationship_to_child") == "legal guardian" || val("relationship_to_child") == "legal custodian"
+  - Do the children have another parent who you know and are able to contact?: other_parent
+    datatype: yesnoradio
+    show if:
+      variable: relationship_to_child
+      is: parent
+  - Does the other parent also agree to this permission?: other_parent_agrees
+    datatype: yesnoradio
+    show if:
+      variable: other_parent
+      is: True
+---
+id: permission kind
+question: |
+  What kind of permission do you want to give?
+subquestion: |
+  Your answer will decide if we make a caregiver authorization affidavit 
+  or a temporary agent affidavit.
+
+  You can add limits on the permission on the next screen.
+fields:
+  - I want to let ${ authorized_persons.familiar() }: permission_kind
+    input type: radio
+    choices:
+      - Make decisions about medical treatment and education, for up to 2 years: caregiver authorization affidavit
+      - Make most parental decisions, other than adoption, for up to 60 days: temporary agent affidavit
+  - note: |
+      We will make a **caregiver authorization affidavit** because you want to give permission for more than 60 days
+      and the decisions are limited to medical treatment and education.
+    show if:
+      variable: permission_kind
+      is: caregiver authorization affidavit
+  - note: |
+      We will make a **temporary agent affidavit** because you want to give permission for no more than 60 days
+      and the decisions are not limited to medical treatment and education.
+    show if:
+      variable: permission_kind
+      is: temporary agent affidavit
+---
+id: warn no temporary agent possible
+question: |
+  You will need to make a caregiver authorization affidavit
+subquestion: |
+  Because ${ children.familiar() } has another parent who does not agree to this permission, you cannot make a temporary agent affidavit.
+
+  You can still make a caregiver authorization affidavit.
+continue button field: warn_no_temporary_agent_possible
+---
+code: |
+  if relationship_to_child == "parent" and other_parent and (not other_parent_agrees):
+    warn_no_temporary_agent_possible
+    permission_kind = "caregiver authorization affidavit"
 ---
 id: What are the limits of your permission
 question: |
@@ -221,16 +285,45 @@ subquestion: |
   1. The length of the permission, and
   2. The powers of the caregiver
 
+  You must choose an ending date for the permission. 
+  % if permission_kind == "caregiver authorization affidavit":
+  You can choose any date up to 2 years from the day you sign this document.
+
+  Limiting the powers is optional. If you do not write a limit, the caregiver
+  will have permission to make all decisions about healthcare and education for the length
+  of the permission.
+  % else:
+  You can choose any date up to 60 days from the day you sign this document.
+
+  Limiting the powers is optional. If you do not write a limit, the caregiver
+  will have permission to make **all** decisions that you can make as a parent for
+  the length of the permission, except for decisions about adoption.
+  % endif
 fields:
   - "When does your permission end?": expiration_of_authorization
     datatype: date
     min: ${ today().plus(days=1).format("yyyy-MM-dd") }
-    max: ${ today().plus(years=2).format("yyyy-MM-dd") }
+    max: ${ today().plus(years=2).plus(days=10).format("yyyy-MM-dd") }
     validation messages:
       max: |
-        You must choose a day that is no more than 2 years from today.
+        You must choose a day that is no more than 2 years from the day you will sign this.
       min: |
         You cannot choose a day that is today or in the past.
+    show if:
+      code: |
+        permission_kind == "caregiver authorization affidavit"
+  - "When does your permission end?": expiration_of_authorization
+    datatype: date
+    min: ${ today().plus(days=1).format("yyyy-MM-dd") }
+    max: ${ today().plus(days=70).format("yyyy-MM-dd") }
+    validation messages:
+      max: |
+        You must choose a day that is no more than 60 days from the day you will sign this.
+      min: |
+        You cannot choose a day that is today or in the past.
+    show if:
+      code: |
+        permission_kind == "temporary agent affidavit"
   - note: |
       **Length of Caregiver's Permission** 
       
@@ -367,12 +460,18 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - caregiver_authorization_affidavit_Post_interview_instructions: ALDocument.using(title="Instructions", filename="caregiver_authorization_affidavit_next_steps.docx", enabled=True, has_addendum=False)
-  - caregiver_authorization_affidavit_attachment: ALDocument.using(title="Caregiver authorization affidavit", filename="caregiver_authorization_affidavit", enabled=True, has_addendum=False, )
+  - caregiver_authorization_affidavit_attachment: ALDocument.using(title="Caregiver authorization affidavit", filename="caregiver_authorization_affidavit", has_addendum=False, )
+---
+code: |
+  temporary_agent_affidavit_attachment.enabled = permission_kind == "temporary agent affidavit"
+---
+code: |
+  caregiver_authorization_affidavit_attachment.enabled = permission_kind == "caregiver authorization affidavit"
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_Post_interview_instructions, caregiver_authorization_affidavit_attachment], filename="caregiver_authorization_affidavit", title="All forms to download for your records", enabled=True)
-  - al_recipient_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_attachment],  filename="caregiver_authorization_affidavit", title="All forms to file", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_Post_interview_instructions, caregiver_authorization_affidavit_attachment, temporary_agent_affidavit_attachment], filename="caregiver_authorization_affidavit", title="All forms to download for your records", enabled=True)
+  - al_recipient_bundle: ALDocumentBundle.using(elements=[caregiver_authorization_affidavit_attachment, temporary_agent_affidavit_attachment],  filename="caregiver_authorization_affidavit", title="All forms to file", enabled=True)
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
 # used for "preview" and "final" keys, and logic in the template checks the value of 

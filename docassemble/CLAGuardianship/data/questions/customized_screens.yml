@@ -46,8 +46,7 @@ code: |
   set_fee_waiver_defaults = True
 ---
 code: |
-  affidavitofindigency_attachment.enabled = who_is_making_petition == "interested_party" and wants_fee_waiver and is_indigent
-
+  affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
 ---
 ################# Care and Custody Affidavit #########################
 ---
@@ -81,7 +80,7 @@ code: |
   # note: inconsistency in how the user is referred to in the military
   # affidavit and the petition.
   # user = petitioner in the petition, and
-  # user should be "child" in the military affidavit
+  # user should be "child" in the military affidavit  
   additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
 code: |
@@ -95,13 +94,31 @@ code: |
 ---
 ############### Consent to Nomination by a Minor ################
 ---
+# code: |
+#   consent_to_nomination_by_a_minor_attachment.enabled = True # who_is_making_petition == "minor"
+---
 code: |
-  consent_to_nomination_by_a_minor_attachment.enabled = True # who_is_making_petition == "minor"
+  consent_to_nomination_by_a_minor_attachment.enabled = False
+
+  if len(requested_guardians.complete_elements()) > 0:
+    for requested_guardian in requested_guardians:
+      if requested_guardian.has_minor_consent:
+        consent_to_nomination_by_a_minor_attachment.enabled = True
+  else:
+    if who_is_making_petition == "interested_party" and petitioner_requesting_guardianship and petitioner_has_minor_consent:
+      consent_to_nomination_by_a_minor_attachment.enabled = True
 ---
 ############### Parental consent to petition ################
 ---
+# code: |
+#   parental_consent_to_petition_attachment.enabled = any(((not parent.is_deceased) and (parent.agrees_to_guardianship == True) for parent in parents))
+---
 code: |
-  parental_consent_to_petition_attachment.enabled = any((not parent.is_deceased and (parent.agrees_to_guardianship or parent.agrees_to_guardianship == None) for parent in parents))
+  parental_consent_to_petition_attachment.enabled = False
+
+  for parent in parents:
+    if (parent.is_deceased == False) and (parent.agrees_to_guardianship == True):
+      parental_consent_to_petition_attachment.enabled = True
 ---
 ############# Temporary guardianship ########################
 ---
@@ -163,7 +180,7 @@ fields:
   - Someone already named: requested_temporary_guardians[i]
     datatype: object_radio
     choices:
-      - requested_guardians if not petitioner_requesting_guardianship else []
+      - requested_guardians if ((not petitioner_requesting_guardianship) or (not bio_parents_can_resume_responsibilities)) else []
       - users if petitioner_requesting_guardianship else []
     exclude:
       - requested_temporary_guardians.complete_elements()

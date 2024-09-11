@@ -1,0 +1,66 @@
+---
+#################### Interview order #####################
+id: interview_order_temporary_agent_affidavit
+code: |
+  # Set the allowed courts for this interview
+  relationship_to_child
+  users
+  users[0].address.address
+  authorized_persons.gather()
+  authorized_persons[0].address.address
+  children.gather()
+  for child in children:
+    child.birthdate
+  parents.gather()
+  for parent in parents:
+    parent.address.address
+  interview_order_temporary_agent_affidavit = True
+---
+# ALDocument objects specify the metadata for each template
+objects:
+  - temporary_agent_affidavit_attachment: ALDocument.using(title="Temporary agent affidavit", filename="temporary_agent_affidavit", has_addendum=False, )
+---
+code: |
+  temporary_agent_affidavit_attachment.enabled = True
+---
+# Bundles group the ALDocuments into separate downloads, such as for court and for the user
+objects:
+  - al_user_bundle: ALDocumentBundle.using(elements=[temporary_agent_affidavit_Post_interview_instructions, temporary_agent_affidavit_attachment], filename="temporary_agent_affidavit", title="All forms to download for your records", enabled=True)
+  - al_court_bundle: ALDocumentBundle.using(elements=[temporary_agent_affidavit_attachment],  filename="temporary_agent_affidavit", title="All forms to deliver to court", enabled=True)
+---
+attachment:
+  name: temporary agent affidavit
+  filename: temporary_agent_affidavit
+  variable name: temporary_agent_affidavit_attachment[i]
+  skip undefined: True
+  pdf template file: temporary_agent_affidavit.pdf
+  fields:
+      - "users1": ${ users[0] }
+      - "users1_name_full__1": ${ users[0] }
+      - "users1_address_on_one_line": ${ users[0].address.on_one_line() }
+      - "relationship_to_child": ${ relationship_to_child }
+      - "authorized_persons1_name_full": ${ authorized_persons[0] }
+      - "authorized_persons1_name_full__1": ${ authorized_persons[0] }
+      - "authorized_persons1_name_full__2": ${ authorized_persons[0] }
+      - "authorized_persons1_name_full__3": ${ authorized_persons[0] }
+      - "authorized_persons1_address_line_one": ${ authorized_persons[0].address.line_one() }
+      - "authorized_persons1_address_line_two": ${ authorized_persons[0].address.line_two() }
+      - "children1": ${ children[0] }
+      - "children2": ${ children[1] }
+      - "children2_birthdate": ${ children[1].birthdate.format() }
+      - "children1_birthdate": ${ children[0].birthdate.format() }
+      - "children3": ${ children[2] }
+      - "children4": ${ children[3] }
+      - "children3_birthdate": ${ children[2].birthdate.format() }
+      - "children4_birthdate": ${ children[3].birthdate.format() }
+      - "excluded_powers": ${ excluded_powers }
+      - "expiration_of_authorization": ${ expiration_of_authorization }
+      - "users1_phone_numbers": ${ users[0].phone_numbers() }
+      - "authorized_persons1_phone_numbers": ${ authorized_persons.phone_numbers() }
+      - "parents1_name_full": ${ parents[0] }
+      - "parents1_name_full__2": ${ parents[0] }
+      - "parents1_address_on_one_line": ${ parents[0].address.on_one_line() }
+      - "parents1_phone_numbers": ${ parents[0].phone_numbers() }
+
+
+

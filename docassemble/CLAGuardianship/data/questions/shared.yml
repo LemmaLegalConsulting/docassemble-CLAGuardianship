@@ -7,6 +7,7 @@ objects:
   - users: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
   - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
   - guardians: ALPeopleList.using(there_are_any=True, complete_attribute="complete")
+  - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - attorneys: ALPeopleList.using(complete_attribute="complete")
   - other_parties: ALPeopleList.using(there_are_any=False)
 ---
@@ -18,25 +19,23 @@ code: |
   x.address.address
   x.complete = True
 ---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))   
+---
 #################### Object Blocks End #####################
 ---
 #################### Question Blocks Start #####################
 ---
 id: docket number
 question: |
-  What is your case number?
+  What is your docket number?
 fields:
-  - Case number: docket_number
+  - Docket number: docket_number
     maxlength: 25
     required: False
 ---
-#################### Question Blocks End #####################
----
-#################### Attachment Blocks Start #####################
----
 code: |
   users[0].mobile_number = DAEmpty()
----
 ---
 id: attorneys there_are_any
 question: |
@@ -80,5 +79,41 @@ fields:
   - BBO number (if you are an attorney in Massachusetts): attorneys[0].bbo
     required: False
 ---
-code: |  
-  form_filled_by_attorney = bool(len(attorneys))    
+id: users there_is_another
+question: |
+  % if form_filled_by_attorney:
+  Is anyone else making this Petition with your client?
+  % else:
+  Is anyone else making this Petition with you?
+  % endif
+fields:
+  - no label: users.there_is_another
+    datatype: yesnoradio
+---
+id: electronic signature question
+question: |
+  Electronic Signature
+subquestion: |
+  % if form_filled_by_attorney and (len(users.complete_elements()) > 1):
+  This tool can put "*/s/ ${ users[0] }*" and "*/s/ ${ users[1] }*" where the petitioners would sign their names so they do not have to sign the form by hand. The court will accept these as their signatures.
+
+  Otherwise, ${ users[0] } and ${ users[1] } will need to print the forms and sign them by hand.
+  % elif form_filled_by_attorney and (len(users.complete_elements()) < 2):
+  This tool can put "*/s/ ${ users[0] }*" where the petitioner would sign their name so they do not have to sign the form by hand. The court will accept this as their signature.
+
+  Otherwise, ${ users[0] } will need to print the forms and sign them by hand.
+  % else:
+  This tool can put "*/s/ ${ users[0] }*" where you would sign your name so you do not have to sign the form by hand. The court will accept this as your signature.
+
+  Otherwise, you will need to print your forms and sign them by hand.
+  % endif
+fields:
+  - Would you like to add your electronic signature to your form?: esign
+    datatype: yesnoradio
+--- 
+#################### Question Blocks End #####################
+---
+#################### Attachment Blocks Start #####################
+---
+#################### Attachment Blocks End #####################
+---

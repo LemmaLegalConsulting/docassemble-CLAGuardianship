@@ -1,8 +1,13 @@
 ---
 include:
+  - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
   - shared.yml
+  - military_affidavit.yml
+  - application_for_appointment.yml
+  - affidavit_disclosing_care_or_custody.yml
+  - temporary_guardian.yml
 ---
 metadata:
   title: >-
@@ -15,7 +20,8 @@ metadata:
     - "FA-00-00-00-00"
     - "FA-04-00-00-00"
   authors:
-    - Court Forms Online
+    - Rami Lorca
+    - Quinten Steenhuis
   allowed_courts:
     - "Probate and Family Court"
   typical_role: "unknown"
@@ -34,23 +40,40 @@ code: |
   github_repo_name = 'docassemble-PetitionForRemovalOfGuardianOfMinor'
 ---
 code: |
-  interview_short_title = "File a petition for the removal of a guardian of a minor"
+  interview_short_title = "Ask the court to remove a guardian for a minor"
 ---
 code: |
   al_form_type = "other"
 ---
 objects:
-  - users: ALPeopleList.using(ask_number=True, complete_attribute="complete")
-  - responsible_parents: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
-  - guardian_successors: ALPeopleList.using(there_are_any=True, maximum_number=2, complete_attribute="complete")
+  - responsible_parents: ALPeopleList.using(ask_number=True, maximum_number=2, complete_attribute="complete")
 ---
-sections:
-  - review_case_information: About the case
-  - review_petitioner_information: About the Petitioners
-  - review_guardian_information: Current guardians
-  - review_requests: Your requests to the Court
-  - review_attorney_information: Your attorney
-  - review_petition_for_removal_of_guardian: Review your answers
+code: |
+  enable_al_nav_sections = True
+---
+reconsider: True
+variable name: al_nav_sections
+data from code:
+  - review_case_information: |
+      "About the case"
+  - review_petitioner_information: |
+      "Petitioners"
+  - review_guardian_information: |
+      "Guardians"
+  - review_requests: |
+      "What you need"
+  - review_affidavit_disclosing_care_or_custody: |
+      "Affidavit Disclosing Care or Custody Proceedings"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_military_affidavit: |
+      "Military affidavit"
+  - section_fee_waiver: |
+      "Fee waiver"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_petition_for_removal_of_guardian: |
+      "Review your answers"
 ---
 #################### Interview order #####################
 comment: |
@@ -60,34 +83,42 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
 
-  nav.set_section("review_petition_for_removal_of_guardian")
-
   nav.set_section("review_case_information")
-  # trial_court.division
-  docket_number
+  form_filled_by_attorney
+  who_is_making_petition
+  set_number_of_petitioners
   children.gather()
+  if who_is_making_petition == 'minor':
+    for child in children:
+      child.birthdate
+      if child.age_in_years() < 14:
+        minor_age_kickout
+      child.phone_number
+  trial_court
+  docket_number
 
   nav.set_section("review_petitioner_information")
-  who_is_making_petition
-  users.gather()
-  petitioner_goals
-  minor_adopted
-  has_attachment
-  bio_parents_can_resume_responsibilities
+  if who_is_making_petition != "minor":
+    users.gather()
+  else:
+    set_user_to_minor
 
   nav.set_section("review_guardian_information")
   guardians.gather()
 
   nav.set_section("review_requests")
+  bio_parents_can_resume_responsibilities
+  set_responsible_parents_target_number
   if bio_parents_can_resume_responsibilities:
     responsible_parents.gather()
-  if petitioner_goals == "name_someone_new":
-    guardian_successors.gather()
 
-  nav.set_section("review_attorney_information")
-  attorneys.gather()
-  if len(attorneys):
-    attorneys[0].bbo
+  parents_cancel_requested_guardians
+  if not bio_parents_can_resume_responsibilities:
+    if requested_guardians.there_are_any: 
+      requested_guardians.gather()
+  
+  if requested_temporary_guardians.there_are_any:
+    interview_order_temporary_guardian
 
   interview_order_petition_for_removal_of_guardian = True
 ---
@@ -95,38 +126,315 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-mandatory: True
+# mandatory: True
 code: |
   al_intro_screen
   petition_for_removal_of_guardian_intro
   interview_order_petition_for_removal_of_guardian
-  signature_date
+
+  if who_is_making_petition != 'minor':
+    nav.set_section("review_affidavit_disclosing_care_or_custody")
+    interview_order_affidavit_disclosing_care_or_custody
+
+  nav.set_section("review_military_affidavit")
+  military_affidavit_intro
+  knows_status_already
+  interview_order_military_affidavit
+  military_affidavit_case_name
+
+  if who_is_making_petition != 'minor':
+    nav.set_section("section_fee_waiver")
+    if wants_fee_waiver:
+      set_fee_waiver_defaults
+      ask_affidavit_questions
+
+    if not form_filled_by_attorney:
+      if who_is_making_petition == 'parent':
+        parent_wants_lawyer
+        if parents_making_petition == 'both':
+          relationship_to_minor
+        set_parent_relationship
+  set_application_for_appointment_of_counsel
+
+  nav.set_section("section_download_petition")
+  if esign:
+    signature_date
   petition_for_removal_of_guardian_download
 ---
-comment: |
-  This question is used to introduce your interview. Please customize
 id: petition_for_removal_of_guardian
 continue button field: petition_for_removal_of_guardian_intro
 question: |
-  Petition for Removal of Guardian of Minor (MPC 240)
+  Ask the court to remove a guardian for a minor
 subquestion: |
-  If:
-
-    * you or a child you know or are related to has a court-appointed guardian, and 
-    * you have a reason that the guardian should be removed or replaced,
+  This form can help you if you are involved in a guardianship case for a minor and 
+  believe that the minor's {guardian} should be replaced or removed.
   
-  You can use this interview to ask the court to remove the guardian, or
-  to name a new guardian.
+  You can use this form to end the guardianship or to replace the guardian if:
+
+    * you or a child you know has a court-appointed guardian, **and** 
+    * you have a reason for the guardian to be removed or replaced.
 
   You will need to explain why the guardian should be removed or replaced.
+
+  <h2 class="h4">Before you get started</h2>
+
+  Please gather:
+
+  1. Information about the minor's parents, including name, contact information, and whether they are living.
+  2. Information about anyone **else** who has taken care of the minor over the last 60 days.
+  3. Information about **other court cases** that have to do with the minor.
+  4. Your own financial information, unless you are the minor.
+
+  <h2 class="h4">When you are finished</h2>
+
+  You need to print and file the documents that this interview makes with the court.
+
+  Some of the documents may need to be signed in front of a notary public.
+
+  Most people take about 20 minutes to finish this interview.
+terms:
+  guardian: |
+    A guardian for a minor is an adult who gets permission from a judge to make decisions for someone who is under 18.
 ---
 #################### Object Blocks Start #####################
 ---
-#NOTE: space left blank for now for additional object blocks that may be needed
+code: |
+  users[i].name.first
+  users[i].address.address
+  users[i].complete = True
+---
+code: |
+  parents[i].name.first
+  parents[i].complete = True
+---
+code: |
+  children[i].name.first
+  children[i].birthdate
+  children[i].complete = True
+---
+code: |
+  attorneys[i].name.first
+  attorneys[i].address.address
+  attorneys[i].complete = True
+---
+code: |
+  requested_guardians[i].name.first
+  requested_guardians[i].complete = True
+---
+code: |
+  children.there_is_another = False
+---
+code: |
+  attorneys.there_is_another = False
+---
+code: |
+  if who_is_making_petition == "minor":
+    users[0].name.first = children[0].name.first
+    users[0].name.last = children[0].name.last
+    users[0].name.middle = children[0].name.middle
+    users[0].name.suffix = children[0].name.suffix
+    users[0].address.address = children[0].address.address
+    users[0].address.unit = children[0].address.unit
+    users[0].address.city = children[0].address.city
+    users[0].address.state = children[0].address.state
+    users[0].address.zip = children[0].address.zip
+    users[0].phone_number = children[0].phone_number
+    users[0].relationship_to_minor = "Self"
+    users.auto_gather = False
+    users.gathered = True
+  set_user_to_minor = True
+---
+code: |
+  if who_is_making_petition == 'parent':
+    if parents_making_petition == 'both':
+      users.there_is_another = True
+    else:
+      users.there_is_another = False
+  else:
+    users.there_is_another = False
+
+  set_number_of_petitioners = True
+---
+code: |
+  if bio_parents_can_resume_responsibilities:
+    if responsible_parents_target_number == 'one_parent':
+      responsible_parents.target_number = 1
+    elif responsible_parents_target_number == 'both_parents':
+      responsible_parents.target_number = 2
+
+  set_responsible_parents_target_number = True
+---
+code: |
+  affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
+---
+code: |
+  if who_is_making_petition != 'minor':
+    if not form_filled_by_attorney:
+      if who_is_making_petition == 'parent':
+        if parent_wants_lawyer:
+          Application_for_appointment_attachment.enabled = True
+  
+  set_application_for_appointment_of_counsel = True
+---
+code: |
+  if parents_making_petition == 'father':
+    want_counsel_for_father = True
+  elif parents_making_petition == 'mother':
+    want_counsel_for_mother = True
+  elif parents_making_petition == 'both':
+    if relationship_to_minor == 'father':
+      want_counsel_for_father = True
+    elif relationship_to_minor == 'mother':
+      want_counsel_for_mother = True
+
+  set_parent_relationship = True
+---
+code: |
+  petitioner_requesting_guardianship = False
+---
+code: |
+  if bio_parents_can_resume_responsibilities:
+    requested_guardians.there_are_any = False
+  
+  parents_cancel_requested_guardians = True
 ---
 #################### Object Blocks End #####################
 ---
 #################### Question Blocks Start #####################
+---
+id: petitioner information
+sets:
+  - users[0].name.first
+  - users[0].name.last
+  - users[0].name.middle
+  - users[0].name.suffix
+  - users[0].address.address
+  - users[0].address.unit
+  - users[0].address.city
+  - users[0].address.state
+  - users[0].address.zip
+  - users[0].address.country
+  - users[0].phone_number
+question: |
+  % if form_filled_by_attorney:
+  Tell us about the petitioner
+  % else:
+  Tell us about yourself
+  % endif
+fields:
+  - code: |
+      users[0].name_fields()
+  - code: |
+      users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+  - Primary phone number: users[0].phone_number
+    datatype: al_international_phone
+    required: False
+---
+id: petitioner information
+sets:
+  - users[i].name.first
+  - users[i].name.last
+  - users[i].name.middle
+  - users[i].name.suffix
+  - users[i].address.address
+  - users[i].address.unit
+  - users[i].address.city
+  - users[i].address.state
+  - users[i].address.zip
+  - users[i].address.country
+  - users[i].phone_number
+question: |
+  Tell us about the other petitioner
+fields:
+  - code: |
+      users[i].name_fields()
+  - code: |
+      users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+  - Primary phone number: users[i].phone_number
+    datatype: al_international_phone
+    required: False
+validation code: |
+  if len(users.complete_elements()) > 0:
+    users.there_is_another = False
+---
+id: minor info
+sets:
+  - children[0].name.first
+  - children[0].name.last
+  - children[0].name.middle
+  - children[0].name.suffix
+  - children[0].address.address
+  - children[0].address.unit
+  - children[0].address.city
+  - children[0].address.state
+  - children[0].address.zip
+  - children[0].address.country
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Tell us about yourself
+  % else:
+  Who is the minor in this case?
+  % endif
+fields:
+  - code: |
+      children[0].name_fields()
+  - code: |
+      children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+---
+id: minor birthdate
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  When were you born?
+  % else:
+  When was ${ children.familiar() } born?
+  % endif
+fields:
+  - Birthdate: children[0].birthdate
+    datatype: date
+---
+id: minor age kickout
+event: minor_age_kickout
+question: |
+  We're sorry, but you cannot use this tool to create a *Petition for Removal of Guardian of Minor*
+subquestion: |
+  A minor needs to be **at least 14 years** old to fill out this petition for themselves.
+
+  If you made a mistake, select **Undo** to go back and change your answer.
+---
+id: minor phone number
+sets:
+  - children[0].phone_number
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  What is your phone number?
+  % else:
+  What is ${ children.familiar() }'s phone number?
+  % endif
+fields:
+  - Primary phone number: children[0].phone_number
+    datatype: al_international_phone
+    required: False
+---
+id: waiving_cost
+question: |
+  You may qualify for a fee waiver
+subquestion: |
+  There is no filing fee to ask for a guardian. 
+
+  But you may need to pay:
+
+  * A $15 citation fee
+  * And a fee to **serve** (give) the papers to the other people who need to know about this case,
+    or to publish notice if you cannot find them to serve them in person.
+
+  The judge may also want to know your income to decide if you can afford to
+  guarantee the **surety bond**.
+
+  If you earn under a certain amount, you can ask the court to help pay the citation fee,
+  serve the papers and to waive the surety bond.
+fields:
+  - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
+    datatype: yesnoradio
 ---
 id: petitioners
 question: |
@@ -159,76 +467,98 @@ fields:
       You do not need to explain why you want this petition 
       in this box.
 ---
-id: first petitioner information
-sets:
-  - users[0].name.first
-  - users[0].name.last
-  - users[0].name.middle
-  - users[0].name.suffix
-  - users[0].address.address
-  - users[0].address.unit
-  - users[0].address.city
-  - users[0].address.state
-  - users[0].address.zip
-  - users[0].address.country
-  - users[0].phone_number
+id: relationship to minor
 question: |
-  Information about you
+  What is your relationship to ${ children.familiar() }?
 fields:
-  - code: |
-      users[0].name_fields()
-  - code: |
-      users[0].address_fields()
-  - Phone number: users[0].phone_number
-    datatype: al_international_phone
----
-code: |
-  if who_is_making_petition == "parent":
-    if parents_making_petition == "both":
-      users.target_number = 2
-    else:
-      users.target_number = 1
-  else:
-    users.target_number = 1
----
-id: petitioner information
-sets:
-  - users[i].name.first
-  - users[i].name.last
-  - users[i].name.middle
-  - users[i].name.suffix
-  - users[i].address.address
-  - users[i].address.unit
-  - users[i].address.city
-  - users[i].address.state
-  - users[i].address.zip
-  - users[i].address.country
-  - users[i].phone_number
-question: |
-  Who else is asking to change or remove the guardian?
-fields:
-  - code: |
-      users[i].name_fields()
-  - code: |
-      users[i].address_fields()
-  - Phone number: users[i].phone_number
-    datatype: al_international_phone
----
-id: what is goal
-question: |
-  What are your goals?
-fields:
-  - label: |
-      % if len(users) > 1:
-      We would like to:
-      % else:
-      I would like to:
-      % endif
-    field: petitioner_goals
-    datatype: radio
+  - I am ${ children.familiar() }'s: relationship_to_minor
     choices:
-      - Remove the guardian: remove
-      - Replace the guardian with someone new: name_someone_new
+      - Father: father
+      - Mother: mother
+---
+id: choose a court
+question: |
+  What court is your case in?
+subquestion: |
+  **Check the case documents to make sure you select the correct court.**
+
+  % if len(all_matches) and all_courts.filter_courts(allowed_courts):
+  % if who_is_making_petition == "minor":
+  Because you live in ${ children[0].address.city }, we think the court
+  might be ${ court_short_label(all_matches[0]) }.
+  % else:
+  Because ${ children[0].familiar() } lives in ${ children[0].address.city }, 
+  we think the court might be ${ court_short_label(all_matches[0]) }.
+  % endif
+
+  ${ map_of(combined_locations(all_matches)) }
+
+  % endif
+
+fields:
+  - The case in is: trial_court
+    datatype: object
+    object labeler: court_short_label
+    choices: all_courts.filter_courts(allowed_courts)
+    default: |
+      next(iter(all_matches), None)
+---
+id: docket number
+question: |
+  What is your docket number?
+fields:
+  - Docket number: docket_number
+    maxlength: 25
+    required: False
+    help: |
+      If there is already a case for the guardianship of the minor, the docket number will written on the court papers. If you
+      don't have a docket number, or can't find one, you can leave this blank.
+---
+id: requested_guardians information
+sets:
+  - requested_guardians[i].name.first
+  - requested_guardians[i].name.last
+  - requested_guardians[i].name.middle
+  - requested_guardians[i].name.suffix
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Tell us about the ${ ordinal(i) } new guardian you want for yourself
+  % else:
+  Tell us about the ${ ordinal(i) } new guardian you want for ${ children.familiar() }
+  % endif
+fields:
+  - code: |
+      requested_guardians[i].name_fields()
+validation code: |
+  if len(requested_guardians.complete_elements()) > 0:
+    requested_guardians.there_is_another = False
+---
+id: requested_guardians there_is_another
+question: |
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Do you want to ask for a second new guardian for yourself?
+  % else:
+  Do you want to ask for a second new guardian for ${ children.familiar() }?
+  % endif
+fields:
+  - Choose one: requested_guardians.there_is_another
+    datatype: yesnoradio
+---
+id: requested_guardians there_are_any
+question: |
+  New guardians
+subquestion: |
+  You can ask the court to name **up to two people** as new guardians for ${ children.familiar() }.
+fields:
+  - Do you want someone else to be ${ children.familiar() }'s new guardian?: requested_guardians.there_are_any
+    datatype: yesnoradio
+---
+id: requested_guardians there_is_another
+question: |
+  Add another new guardian?
+fields:
+  - Do you want to add another person as a new guardian for ${ children.familiar() }?: successor_guardians.there_is_another
+    datatype: yesnoradio
 ---
 id: guardian information
 sets:
@@ -242,18 +572,23 @@ sets:
   - guardians[i].address.state
   - guardians[i].address.zip
   - guardians[i].address.country
-  - guardians[i].phone_number
-  - guardians[i].appointment_date
 question: |
-  % if len(guardians.complete_elements()) < 1:
-  Tell us about the minor's current guardian(s)
+  Tell us about
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  your
   % else:
-  Tell us about the second guardian
+  ${ children[0].familiar() }'s
+  % endif
+  % if len(guardians.complete_elements()) < 1:
+  current guardian(s)
+  % else:
+  other guardian
   % endif
 subquestion: |
   % if len(guardians.complete_elements()) < 1:
-  You can add up to two guardians in this petition. Start by telling us 
-  about the first guardian.
+  **If ${ children[0].familiar() } has more than one guardian**, you will get the chance to add them after this screen. 
+
+  You can add **up to two guardians** to this petition. 
   % endif
 fields:
   - code: |
@@ -262,37 +597,53 @@ fields:
       guardians[i].address_fields()
   - Phone number: guardians[i].phone_number
     datatype: al_international_phone
-  - When was this person appointed as a guardian for the minor?: guardians[i].appointment_date
+    required: False
+  - When was this person appointed as ${ children[0].familiar() }'s guardian?: guardians[i].appointment_date
     datatype: date
     required: True
+validation code: |
+  if len(guardians.complete_elements()) > 0:
+    guardians.there_is_another = False
 ---
 id: guardians there_is_another
 question: |
-  Was a second guardian appointed for ${ children[0] }?
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  Do you
+  % else:
+  Does ${ children[0].familiar() }
+  % endif 
+  have another guardian?
 fields:
   - no label: guardians.there_is_another
     datatype: yesnoradio
 ---
-code: |
-  if len(guardians.complete_elements()) > 0:
-    guardians.there_is_another = False
----
-id: Reasons for removing the child s guardian s
+id: Reasons for removing guardian
 question: |
-  % if petitioner_goals == "remove":
-  Why do you want to remove the guardian?
+  Why do you want to remove
+  % if (who_is_making_petition == 'minor') and (not form_filled_by_attorney):
+  your
   % else:
-  Why do you want to replace the guardian?
+  ${ children[0].familiar() }'s
+  % endif
+  % if len(guardians.complete_elements()) < 2:
+  guardian?
+  % else:
+  guardians?
   % endif
 subquestion: |
   Check all reasons that apply.
 fields:
-  - ${ children[0].familiar() }'s parents are able to take care of them now: bio_parents_can_resume_responsibilities
+  - ${ f"My parents" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"{children[0].familiar()}'s parents" } are able to care for ${ f"me" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"them" } now: bio_parents_can_resume_responsibilities
     datatype: yesno
+  - How many?: responsible_parents_target_number
+    choices:
+      - One parent: one_parent
+      - Both parents: both_parents
+    show if: bio_parents_can_resume_responsibilities
   - Explain why: why_parents_can_resume_responsibility
     datatype: area
     show if: bio_parents_can_resume_responsibilities
-  - ${ children[0].familiar() } was adopted: minor_adopted
+  - ${ f"I" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else children[0].familiar() } was adopted: minor_adopted
     datatype: yesno
   - Something else: has_attachment
     datatype: yesno
@@ -301,55 +652,39 @@ fields:
     show if: has_attachment
 validation code: |
   if not (bio_parents_can_resume_responsibilities or minor_adopted or has_attachment):
-    validation_error("You have to select at least one reason", field="has_attachment")
+    validation_error("Select at least one reason", field="has_attachment")
 ---
-code: |
-  responsible_parents.there_are_any = bio_parents_can_resume_responsibilities
-  responsible_parents.there_is_another = False  
----
+id: responsible parent information
 sets:
-  - responsible_parents[0].name.first
-  - responsible_parents[0].name.last
-id: about the responsible parents
+  - responsible_parents[i].name.first
+  - responsible_parents[i].name.last
+  - responsible_parents[i].name.middle
+  - responsible_parents[i].name.suffix
+  - responsible_parents[i].address.address
+  - responsible_parents[i].address.unit
+  - responsible_parents[i].address.city
+  - responsible_parents[i].address.state
+  - responsible_parents[i].address.zip
+  - responsible_parents[i].address.country
+  - responsible_parents[i].phone_number
+  - responsible_parents[i].appointment_date
 question: |
-  Which parent will be taking responsibility for the child again?
+  ${ capitalize(ordinal(i)) } parent resuming responsibility for
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  you
+  % else:
+  ${ children[0].familiar() }
+  % endif 
 fields:
-  - ${ children[0].familiar() } should go back to being taken care of by: who_will_be_responsible
-    datatype: radio
-    choices:
-      - 1 parent: one
-      - Both parents: both
-  - note: |
-      <h2 class="h4">Information about parent 1</h2>
   - code: |
-      responsible_parents[0].name_fields()
+      responsible_parents[i].name_fields()
   - code: |
-      responsible_parents[0].address_fields()
-  - Phone number: responsible_parents[0].phone_number
+      responsible_parents[i].address_fields()
+  - Phone number: responsible_parents[i].phone_number
     datatype: al_international_phone
-  - note: |
-      <h2 class="h4">Information about parent 2</h2>
-    show if:
-      variable: who_will_be_responsible
-      is: both
-  - code: |
-      responsible_parents[1].name_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
-  - code: |
-      responsible_parents[1].address_fields(show_if={"variable": "who_will_be_responsible", "is": "both"})
-  - Phone number: responsible_parents[1].phone_number
-    datatype: al_international_phone
-    show if:
-      variable: who_will_be_responsible
-      is: both
+    required: False
 ---
-id: who will be on this form
-question: |
-  Do you have an attorney for this case?
-fields:
-  - I have an attorney: attorneys.there_are_any
-    datatype: yesnoradio
----
-id: Attorney s information
+id: Attorney's information
 question: |
   Attorney's information
 subquestion: |
@@ -379,14 +714,10 @@ subquestion: |
 continue button field: petition_for_removal_of_guardian_preview_question
 ---
 code: |
-  signature_fields = ['petitioners[0].signature', 'petitioners[1].signature']
+  signature_fields = [user.attr_name('signature') for user in users]
 ---
 code: |
-  # This is a placeholder for the addresses that will be searched
-  # for matching address to court. Edit if court venue is based on 
-  # a different address than the user's
-  [user.address.address for user in users.complete_elements()]
-  addresses_to_search = [user.address for user in users.complete_elements()]
+  addresses_to_search = [children[0].address]
 ---
 #################### Question Blocks End #####################
 ---
@@ -415,11 +746,11 @@ review:
       % for item in children:
         * ${ item }
       % endfor
-  - Edit: petitioners.revisit
+  - Edit: users.revisit
     button: |
-      **Petitioners**
+      **users**
 
-      % for item in petitioners:
+      % for item in users:
         * ${ item }
       % endfor
   - Edit: guardians.revisit
@@ -456,21 +787,13 @@ review:
     button: |
       **Has attachment**:
       ${ word(yesno(has_attachment)) }
-  - Edit: guardian_successors.revisit
+  - Edit: requested_guardians.revisit
     button: |
       **Guardian successors**
 
-      % for item in guardian_successors:
+      % for item in requested_guardians:
         * ${ item }
       % endfor
-  - Edit: petitioners1_signature_date
-    button: |
-      **Date of petitioners1 signature**:
-      ${ petitioners1_signature_date }
-  - Edit: petitioners2_signature_date
-    button: |
-      **Date of petitioners2 signature**:
-      ${ petitioners2_signature_date }
   - Edit: attorneys.revisit
     button: |
       **Attorneys**
@@ -500,16 +823,16 @@ edit:
   - name.first
 confirm: True
 ---
-continue button field: petitioners.revisit
+continue button field: users.revisit
 question: |
-  Edit petitioners
+  Edit users
 subquestion: |
-  ${ petitioners.table }
+  ${ users.table }
 
-  ${ petitioners.add_action() }
+  ${ users.add_action() }
 ---
-table: petitioners.table
-rows: petitioners
+table: users.table
+rows: users
 columns:
   - Name: |
       row_item.name.full() if defined("row_item.name.first") else ""
@@ -572,16 +895,16 @@ edit:
   - phone_number
 confirm: True
 ---
-continue button field: guardian_successors.revisit
+continue button field: requested_guardians.revisit
 question: |
-  Edit guardian_successors
+  Edit requested_guardians
 subquestion: |
-  ${ guardian_successors.table }
+  ${ requested_guardians.table }
 
-  ${ guardian_successors.add_action() }
+  ${ requested_guardians.add_action() }
 ---
-table: guardian_successors.table
-rows: guardian_successors
+table: requested_guardians.table
+rows: requested_guardians
 columns:
   - Name: |
       row_item.name.full() if defined("row_item.name.first") else ""
@@ -638,16 +961,36 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - petition_for_removal_of_guardian_Post_interview_instructions: ALDocument.using(title="Instructions", filename="petition_for_removal_of_guardian_next_steps.docx", enabled=True, has_addendum=False)
-  - petition_for_removal_of_guardian_attachment: ALDocument.using(title="Petition for Removal of Guardian of Minor", filename="petition_for_removal_of_guardian", enabled=True, has_addendum=True, )
+  - petition_for_removal_of_guardian: ALDocument.using(title="Petition for Removal of Guardian of Minor", filename="petition_for_removal_of_guardian", enabled=True, has_addendum=True, default_overflow_message=" (Continued in Attachment)")
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
-  - al_user_bundle: ALDocumentBundle.using(elements=[petition_for_removal_of_guardian_Post_interview_instructions, petition_for_removal_of_guardian_attachment], filename="Petition_for_Removal_of_Guardian_of", title="All forms to download for your records", enabled=True)
-  - al_court_bundle: ALDocumentBundle.using(elements=[petition_for_removal_of_guardian_attachment],  filename="petition_for_removal_of_guardian", title="All forms to deliver to court", enabled=True)
+  - al_user_bundle: ALDocumentBundle.using(elements=[
+      petition_for_removal_of_guardian_Post_interview_instructions,
+      petition_for_removal_of_guardian,
+      motion_temporary_guardian_attachment,
+      Application_for_appointment_attachment,
+      affidavit_of_care_or_custody_attachment,
+      affidavitofindigency_attachment,
+      military_affidavit_bundle,
+      ],
+      filename="Petition for Removal of Guardian",
+      title="All forms to download for your records",
+      enabled=True
+      )
+  - al_court_bundle: ALDocumentBundle.using(elements=[
+      petition_for_removal_of_guardian,
+      motion_temporary_guardian_attachment,
+      Application_for_appointment_attachment,
+      affidavit_of_care_or_custody_attachment,
+      military_affidavit_bundle,
+      affidavitofindigency_attachment,
+      ],
+      filename="Petition for Removal of Guardian",
+      title="All forms to file in court",
+      enabled=True
+      )
 ---
-# Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is
-# used for "preview" and "final" keys, and logic in the template checks the value of
-# `i` to show or hide the user's signature
 attachment:
   name: Post-interview-Instructions
   filename: petition_for_removal_of_guardian_next_steps
@@ -657,15 +1000,18 @@ attachment:
   tagged pdf: True
 ---
 code: |
-  petition_for_removal_of_guardian_attachment.overflow_fields["other_reason_for_removal"].label = "Other reason for this petition"
-  petition_for_removal_of_guardian_attachment.overflow_fields["other_reason_for_removal"].overflow_trigger = 300
-
-  petition_for_removal_of_guardian_attachment.overflow_fields.gathered = True
+  petition_for_removal_of_guardian.overflow_fields["my_interest_is"].label = "Continued from Section 1 - Nature of petitioner's interest:"
+  petition_for_removal_of_guardian.overflow_fields["my_interest_is"].overflow_trigger = 180
+  petition_for_removal_of_guardian.overflow_fields["why_parents_can_resume_responsibility"].label = "Continued from Section 3 - Parents can resume parental responsibilities:"
+  petition_for_removal_of_guardian.overflow_fields["why_parents_can_resume_responsibility"].overflow_trigger = 340
+  petition_for_removal_of_guardian.overflow_fields["other_reason_for_removal"].label = "Continued from Section 3 - Other:"
+  petition_for_removal_of_guardian.overflow_fields["other_reason_for_removal"].overflow_trigger = 340
+  petition_for_removal_of_guardian.overflow_fields.gathered = True
 ---
 attachment:
   name: Petition for Removal of Guardian of
   filename: petition_for_removal_of_guardian
-  variable name: petition_for_removal_of_guardian_attachment[i]
+  variable name: petition_for_removal_of_guardian[i]
   skip undefined: True
   pdf template file: petition_for_removal_of_guardian.pdf
   fields:
@@ -739,16 +1085,24 @@ attachment:
     - "responsible_parents2_phone": ${ responsible_parents[1].phone_number }
     - "minor_adopted": ${ minor_adopted }
     - "has_attachment": ${ has_attachment }
-    - "guardian_successors1_name_middle_initial": ${ guardian_successors[0].name.middle_initial() }
-    - "guardian_successors1_name_last": ${ guardian_successors[0].name.last }
-    - "guardian_successors1_name_first": ${ guardian_successors[0].name.first }
-    - "guardian_successors2_name_middle_initial": ${ guardian_successors[1].name.middle_initial() }
-    - "guardian_successors2_name_last": ${ guardian_successors[1].name.last }
-    - "guardian_successors2_name_first": ${ guardian_successors[1].name.first }
-    - "petitioners1_signature": ${ petitioners[0].signature_if_final(i) }
-    - "petitioners1_signature_date": ${ petitioners1_signature_date.format() }
-    - "petitioners2_signature": ${ petitioners[1].signature_if_final(i) }
-    - "petitioners2_signature_date": ${ petitioners2_signature_date.format() }
+    - "guardian_successors1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
+    - "guardian_successors1_name_last": ${ requested_guardians[0].name.last }
+    - "guardian_successors1_name_first": ${ requested_guardians[0].name.first }
+    - "guardian_successors2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
+    - "guardian_successors2_name_last": ${ requested_guardians[1].name.last }
+    - "guardian_successors2_name_first": ${ requested_guardians[1].name.first }
+    - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
+    - "users1_signature_date": ${ today() }
+    - "users2_signature": |
+        % if len(users.complete_elements()) > 1 and esign:
+        ${ f"/s/ {users[1]}" }
+        % else:
+        ${ "" }
+        % endif
+    - "users2_signature_date": |
+        % if len(users.complete_elements()) > 1 and esign:
+        ${ today() }
+        % endif
     - "attorneys1_name": ${ attorneys[0] }
     - "attorneys1_address_address": ${ attorneys[0].address.address }
     - "attorneys1_address_unit": ${ attorneys[0].address.unit }
@@ -757,9 +1111,32 @@ attachment:
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
     - "attorneys1_phone": ${ attorneys[0].phone_number }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
-    - "my_interest_is": ${ my_interest_is }
-    - "why_parents_can_resume_responsibility": ${ why_parents_can_resume_responsibility }
+    - my_interest_is: |
+        % if who_is_making_petition == 'interested_person':
+        ${ petition_for_removal_of_guardian.safe_value('my_interest_is') }
+        % else:
+        ${ "" }
+        % endif
+    - why_parents_can_resume_responsibility: |
+        % if bio_parents_can_resume_responsibilities:
+        ${ petition_for_removal_of_guardian.safe_value('why_parents_can_resume_responsibility') }
+        % else:
+        ${ "" }
+        % endif
+    - other_reason_for_removal: |
+        % if has_attachment:
+        ${ petition_for_removal_of_guardian.safe_value('other_reason_for_removal') }
+        % else:
+        ${ "" }
+        % endif
+---
+attachment:
+  variable name: petition_for_removal_of_guardian.addendum
+  docx template file: petition_for_removal_of_guardian_attachment.docx
 ---
 #################### Attachment Blocks End #####################
 ---
-
+########### Customized screens #################################
+---
+code: |
+  additional_parties = ALPeopleList(elements=set().union(children + guardians))

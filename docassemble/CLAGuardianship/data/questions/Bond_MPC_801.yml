@@ -164,7 +164,7 @@ fields:
 #################### Attachment Blocks Start #####################
 ---
 objects:
-  - bond_attachment: ALDocument.using(title="Bond (MPC 801)", filename="Bond (MPC 801)", enabled=True)
+  - bond_attachment: ALDocument.using(title="Bond", filename="Bond (MPC 801)", enabled=True)
 ---
 id: download screen
 event: bond_download

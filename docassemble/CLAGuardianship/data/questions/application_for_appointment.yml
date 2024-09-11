@@ -5,9 +5,6 @@ comment: |
 id: interview_order_Application_for_appointment
 code: |
   # Set the allowed courts for this interview
-  allowed_courts = []
-  nav.set_section("review_Application_for_appointment")
-
   users.gather()
   children.gather()
   children[0].name
@@ -19,8 +16,6 @@ code: |
   users[0].address.address
   users[0].email
   users[0].phone_number
-  signature_date
-  basic_questions_signature_flow
   interview_order_Application_for_appointment = True
 ---
 id: Application_for_appointment
@@ -61,19 +56,17 @@ fields:
 ---
 id: Mother
 question: |
- What best describes your relationship to ${ children[0] }?
+  What best describes your relationship to ${ children[0] }?
 subquestion: |
-  I am ${ children[0].familiar() }'s
+  The answer to this question checks a box on the "application for 
+  appointment of counsel" form. An answer is not required.
+
+  I am ${ children[0].familiar() }'s 
 fields:
   - "Mother": want_counsel_for_mother
     datatype: yesno
   - "Father": want_counsel_for_father
     datatype: yesno
-validation code: |
-  if not (want_counsel_for_mother or want_counsel_for_father):
-    validation_error("Please select at least one option.")
-  elif (want_counsel_for_mother and want_counsel_for_father):
-    validation_error("Please select only one option.")
 ---
 id: preview Application_for_appointment
 question: |
@@ -189,7 +182,7 @@ progress: 100
 # ALDocument objects specify the metadata for each template
 objects:
   - Application_for_appointment_Post_interview_instructions: ALDocument.using(title="Instructions", filename="Application_for_appointment_next_steps.docx", enabled=True, has_addendum=False)
-  - Application_for_appointment_attachment: ALDocument.using(title="Application for appointment", filename="Application_for_appointment", has_addendum=False, )
+  - Application_for_appointment_attachment: ALDocument.using(title="Application for Appointment of Counsel", filename="Application_for_appointment", has_addendum=False, )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
 # used for "preview" and "final" keys, and logic in the template checks the value of 
@@ -203,7 +196,7 @@ attachment:
   tagged pdf: True
 ---
 attachment:
-  name: Application for appointment
+  name: Application for Appointment of Counsel
   filename: Application_for_appointment
   variable name: Application_for_appointment_attachment[i]
   skip undefined: True
@@ -227,7 +220,5 @@ attachment:
       - "father": ${ want_counsel_for_father }
       - "waiver_fee": ${ waiver_fee }
       - "signature_date": ${ signature_date.format() }
-      - "users1_signature": ${ users[0].signature_if_final(i) }
-
-
-
+      - "users1_signature": ${ f"/s/ {users[0]}" if esign else "" }
+---
