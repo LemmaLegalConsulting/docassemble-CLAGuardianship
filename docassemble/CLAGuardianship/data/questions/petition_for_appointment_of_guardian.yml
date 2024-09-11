@@ -358,6 +358,7 @@ question: |
 fields:
   - Primary phone number: children[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: petitioner information
 sets:
@@ -386,6 +387,7 @@ fields:
       users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[0].phone_number
     datatype: al_international_phone
+    required: False
   - Relationship to ${ children.familiar() }: users[0].relationship_to_minor
 ---
 id: petitioner information
@@ -417,6 +419,7 @@ fields:
       users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[i].phone_number
     datatype: al_international_phone
+    required: False
   - Relationship to ${ children.familiar() }: users[i].relationship_to_minor
 validation code: |
   if len(users.complete_elements()) > 0:
@@ -1730,8 +1733,8 @@ attachment:
     - "previous_third_party_guardian_death_or_incapacitation_exp": ${ previous_third_party_guardian_death_or_incapacitation_exp }
     - "petitioner_requesting_guardianship": ${ petitioner_requesting_guardianship }
     - "wants_sureties_waiver": ${ wants_sureties_waiver }
-    - "other_primary_care_or_custody_yes": ${ other_primary_care_or_custody_yes }
-    - "other_primary_care_or_custody_no": ${ other_primary_care_or_custody_no }
+    - "other_primary_care_or_custody_yes": ${ len(other_custodians) > 0 }
+    - "other_primary_care_or_custody_no": ${ len(other_custodians) < 1 }
     - "other_custodian1_name_first": ${ other_custodians[0].name.first }
     - "other_custodian1_name_middle_initial": ${ other_custodians[0].name.middle_initial() }
     - "other_custodian1_name_last": ${ other_custodians[0].name.last }
