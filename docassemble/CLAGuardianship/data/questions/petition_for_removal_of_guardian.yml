@@ -328,6 +328,7 @@ fields:
       users[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: petitioner information
 sets:
@@ -351,6 +352,7 @@ fields:
       users[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Primary phone number: users[i].phone_number
     datatype: al_international_phone
+    required: False
 validation code: |
   if len(users.complete_elements()) > 0:
     users.there_is_another = False
@@ -411,6 +413,7 @@ question: |
 fields:
   - Primary phone number: children[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: waiving_cost
 question: |
@@ -594,6 +597,7 @@ fields:
       guardians[i].address_fields()
   - Phone number: guardians[i].phone_number
     datatype: al_international_phone
+    required: False
   - When was this person appointed as ${ children[0].familiar() }'s guardian?: guardians[i].appointment_date
     datatype: date
     required: True
@@ -678,6 +682,7 @@ fields:
       responsible_parents[i].address_fields()
   - Phone number: responsible_parents[i].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: Attorney's information
 question: |

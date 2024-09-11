@@ -141,6 +141,7 @@ fields:
       users[0].name_fields()
   - Phone number: users[0].phone_number
     datatype: al_international_phone
+    required: False
   - code: |
       users[0].address_fields(default_state="MA")
 ---
@@ -172,6 +173,7 @@ fields:
       is: other
   - Phone number: authorized_persons[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: children
 question: |

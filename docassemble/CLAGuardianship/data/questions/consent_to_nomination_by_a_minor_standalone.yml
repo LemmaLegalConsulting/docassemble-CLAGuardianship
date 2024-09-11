@@ -158,6 +158,7 @@ question: |
 fields:
   - Primary phone number: children[0].phone_number
     datatype: al_international_phone
+    required: False
 ---
 id: choose a court
 question: |
