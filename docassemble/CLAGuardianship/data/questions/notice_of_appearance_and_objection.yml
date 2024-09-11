@@ -66,7 +66,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if appearance_as_attorney:
+  % if form_filled_by_attorney:
   What is your client's name?
   % else:
   What is your name?
