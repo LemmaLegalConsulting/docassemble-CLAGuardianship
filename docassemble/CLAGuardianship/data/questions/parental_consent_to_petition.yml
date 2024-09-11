@@ -108,7 +108,7 @@ fields:
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - parental_consent_to_petition_attachment: ALDocument.using(title="Consent to Guardianship", filename="consent_to_petition_for_guardianship", enabled=True, has_addendum=False, )
+  - parental_consent_to_petition_attachment: ALDocument.using(title="Consent to Appointment by Parents", filename="consent_to_petition_for_guardianship", has_addendum=False)
 ---
 code: |
   consenting_parents = DAList("consenting_parents", elements=[parent for parent in parents if parent.is_deceased == False and parent.agrees_to_guardianship])
