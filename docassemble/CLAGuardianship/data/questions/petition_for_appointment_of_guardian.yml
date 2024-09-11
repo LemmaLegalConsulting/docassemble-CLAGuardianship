@@ -651,7 +651,7 @@ fields:
       - petitioners[0].address
       - children[0].address
       - |
-        [parent.address for parent in parents.complete_elements() if not parent.is_deceased]
+        [parent.address for parent in parents.complete_elements() if ((not parent.is_deceased) and parent.address.address)]
     none of the above: A different address
     disable others:
       - parents[i].address.address
@@ -672,6 +672,17 @@ fields:
     required: False
   - Primary phone number: parents[i].phone_number
     required: False
+validation code: |
+  if parents[i].address.address and ((not parents[i].address.city) or (not parents[i].address.state)):
+    validation_error(f'You entered incomplete address details. If you want to add an address, make sure to include the street address, city, and state.')
+  elif parents[i].address.unit and ((not parents[i].address.address) or (not parents[i].address.city) or (not parents[i].address.state)):
+    validation_error(f'You entered incomplete address details. If you want to add an address, make sure to include the street address, city, and state.')
+  elif parents[i].address.city and ((not parents[i].address.address) or (not parents[i].address.state)):
+    validation_error(f'You entered incomplete address details. If you want to add an address, make sure to include the street address, city, and state.')
+  elif parents[i].address.state and ((not parents[i].address.address) or (not parents[i].address.city)):
+    validation_error(f'You entered incomplete address details. If you want to add an address, make sure to include the street address, city, and state.')
+  elif parents[i].address.zip and ((not parents[i].address.address) or (not parents[i].address.city) or (not parents[i].address.state)):
+    validation_error(f'You entered incomplete address details. If you want to add an address, make sure to include the street address, city, and state.')
 ---
 objects:
   - reason_seeking_guardianship: DADict.using(auto_gather=False, gathered=True)
