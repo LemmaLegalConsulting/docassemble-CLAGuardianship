@@ -7,9 +7,6 @@ include:
   # - users: ALPeopleList.using(ask_number=True,target_number=1)
   # - attorneys: ALPeopleList.using(ask_number=True,target_number=1)
 ---
-code: |
-  if appearance_as_attorney:
-    attorneys.there_are_any = True
 ---
 #################### Interview order #####################
 id: interview_order_notice_of_appearance_and_objection
@@ -232,7 +229,7 @@ question: |
 
 signature: users[0].signature
 under: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   ${ attorneys[0].name }
   % else:
   ${ users[0].name }
@@ -389,8 +386,8 @@ attachment:
     - "case_name": ${ case_name }
     - "petition": Appointment of Guardian
     - "file_date": ${ file_date.format() }
-    - "appearance_for_myself": ${ not appearance_as_attorney }
-    - "appearance_as_attorney": ${ appearance_as_attorney }
+    - "appearance_for_myself": ${ not form_filled_by_attorney }
+    - "appearance_as_attorney": ${ form_filled_by_attorney}
     - "users1_name_first": ${ users[0].name.first }
     - "users1_name_middle_initial": ${ users[0].name.middle_initial() }
     - "users1_name_last": ${ users[0].name.last }
