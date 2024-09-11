@@ -119,9 +119,6 @@ code: |
     other_custodians.gather()
 
   set_parents_deceased
-  # if not form_filled_by_attorney:
-  #   if any((user.is_bio_parent for user in users)):
-  #     parent_wants_lawyer    
 
   nav.set_section("review_requests") 
   reason_seeking_guardianship["parents_consent"]
@@ -131,8 +128,10 @@ code: |
     requested_guardians.gather()
 
   set_requested_guardians
-  if requested_guardians.there_are_any:
-    requested_guardians.gather()
+  set_petitioner_requesting_guardianship
+
+  # if requested_guardians.there_are_any:
+  #   requested_guardians.gather()
 
   if requested_temporary_guardians.there_are_any:
     interview_order_temporary_guardian
@@ -153,7 +152,7 @@ code: |
       estimated_personal_estate_value
   else:
     set_no_assets
-  
+
   nav.set_section("review_additional_requests")
   wants_additional_request
 
@@ -182,13 +181,14 @@ code: |
     if wants_fee_waiver:
       set_fee_waiver_defaults
       ask_affidavit_questions
-  
+
   nav.set_section("review_petition_for_appointment_of_guardian")
   petition_for_appointment_of_guardian_preview_question
 
   nav.set_section("section_download_petition")
   if esign:
     signature_date
+
   petition_for_appointment_of_guardian_download
 ---
 #################### Object/Code Blocks Start #####################
@@ -272,11 +272,18 @@ code: |
     if not petitioner_requesting_guardianship:
       requested_guardians.there_are_any = True
     else:
-      requested_guardians.there_are_any = False 
+      requested_guardians.there_are_any = False
+      petitioner_has_minor_consent 
   elif (who_is_making_petition == "minor"):
     requested_guardians.there_are_any = True
-  
+
   set_requested_guardians = True
+---
+code: |
+  if who_is_making_petition == "minor":
+    petitioner_requesting_guardianship = False
+
+  set_petitioner_requesting_guardianship = True
 ---
 code: |
   addresses_to_search = [children[0].address]
@@ -288,7 +295,7 @@ code: |
     parents_deceased = True
   else:
     parents_deceased = False
-  
+
   set_parents_deceased = True
 ---
 code: |
@@ -431,9 +438,9 @@ question: |
   You may qualify for a fee waiver
 subquestion: |
   There is no filing fee to ask for a guardian. 
-  
+
   But you may need to pay:
-  
+
   * A $15 citation fee
   * And a fee to **serve** (give) the papers to the other people who need to know about this case,
     or to publish notice if you cannot find them to serve them in person.
@@ -468,7 +475,7 @@ subquestion: |
   * A minor who is 14 or older.
 
   <h2 class="h4">Before you get started</h2>
-  
+
   Please gather:
 
   1. Information about the minor's parents, including name, contact information, and whether they are living.
@@ -532,15 +539,15 @@ fields:
     default: |
       next(iter(all_matches), None)
     under text: |
-        Make sure the court is either:
+      Make sure the court is either:
 
-        % if who_is_making_petition == "minor":
-        1. The county you live in right now, or
-        1. If your parents died, the court serving the county where your parent's estate was **probated** (decided)
-        % else:
-        1. The county the child lives in right now, or
-        1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
-        % endif
+      % if who_is_making_petition == "minor":
+      1. The county you live in right now, or
+      1. If your parents died, the court serving the county where your parent's estate was **probated** (decided)
+      % else:
+      1. The county the child lives in right now, or
+      1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
+      % endif
 
   - I will file in this court because: court_choice_reason
     datatype: checkboxes
@@ -591,7 +598,7 @@ content: |
 
   When someone is adopted, the birth record is updated with the new parent's name.
 
-  You do not need to list a step parent or a foster parent unless they have legally adopted the child.      
+  You do not need to list a step parent or a foster parent unless they have legally adopted the child.
 ---
 id: parent basic information
 sets:
@@ -686,7 +693,7 @@ subquestion: |
 fields:
   - ${ children.familiar() }'s parents **agree** ${ children.familiar() } should have a guardian: reason_seeking_guardianship["parents_consent"]
     datatype: yesno
-  - ${ children.familiar() }'s parents are **not fit** parents (they do not or cannot take care of ${ children.familiar() }) : reason_seeking_guardianship["parents_unfit"]
+  - ${ children.familiar() }'s parents are **not fit** parents (they do not or cannot take care of ${ children.familiar() }): reason_seeking_guardianship["parents_unfit"]
     datatype: yesno
   - Briefly explain: parents_unfit_to_exercise_parental_rights_exp
     datatype: area
@@ -718,7 +725,7 @@ fields:
       **Because you said that the previous guardian died or is no longer able to take care of ${ children.familiar() }, you need to give the judge more information.**
 
       The information could include:
-      
+
       * A copy of the court order that appointed the previous guardian
       * A copy of the death certificate of the previous guardian
 
@@ -813,7 +820,7 @@ id: deceased or incapacitated previous guardian
 question: |
   Tell us about the guardian that is now deceased or incapacitated
 subquestion: |
-  You must **attach the order or any relevant documents** to this Petition. You will also need to briefly **describe each of them below**. 
+  You must **attach the order or any relevant documents** to this Petition. You will also need to briefly **describe each of them below**.
 fields:
   - Write your description here: previous_third_party_guardian_death_or_incapacitation_exp
     input type: area
@@ -878,11 +885,11 @@ fields:
   - Briefly explain: skip_surety_reasons
     datatype: area
     maxlength: 310
-    show if: 
+    show if:
       variable: skip_surety_reasons_checklist["other"]
       is: True
       code: |
-        requested_temporary_guardians.there_are_any  
+        requested_temporary_guardians.there_are_any
 ---
 id: other custodian during past 60 days
 question: |
@@ -928,7 +935,7 @@ content: |
   "Primary care or custody" means you are one of the people who takes care of a child 
   most of the time. You make big decisions for them and handle their daily needs like meals, 
   a place to live, and keeping them safe.
-  
+
   A paid babysitter doesn't have primary care or custody. 
   They are only helping for a short time and aren't responsible for all of the child's needs.
 ---
@@ -967,7 +974,7 @@ fields:
   #     - |
   #       [custodian.adddress for custodian in other_custodians.complete_elements() if custodian.address.address]
   #   none of the above: A different address
-  - code: | 
+  - code: |
       other_custodians[i].address_fields()
   - Primary phone number: other_custodians[i].phone_number
   - Relationship to ${ children.familiar() }: other_custodians[i].relationship_to_minor
@@ -1024,12 +1031,12 @@ fields:
   - code: |
       requested_guardians[i].name_fields()
   - label: |
-      % if not who_is_making_petition == "minor":
-      Does ${ children[0].familiar() } agree that this person should be appointed as their guardian?
-      % else:
+      % if who_is_making_petition == "minor" and not form_filled_by_attorney:
       Do you agree that this person should be appointed as your guardian?
+      % else:
+      Does ${ children[0].familiar() } agree that this person should be appointed as their guardian?
       % endif
-    field: requested_guardians[i].agrees_to_be_guardian
+    field: requested_guardians[i].has_minor_consent
     datatype: yesnomaybe
   - code: |
       requested_guardians[i].address_fields()
@@ -1037,6 +1044,9 @@ fields:
     required: False
   - Relationship to ${ children.familiar() }: requested_guardians[i].relationship_to_minor
     required: False
+validation code: |
+  if who_is_making_petition == "minor":
+    requested_guardians[i].has_minor_consent = True
 ---
 id: requested guardian priority for appointment
 question: |
@@ -1373,34 +1383,34 @@ review:
   - Edit: reason_seeking_guardianship
     button: |
       **Reasons for seeking a guardianship for ${ children[0] }**:
-      
+
       % if reason_seeking_guardianship["parents_consent"]:
         * ${ children.familiar() }'s parents **agree** ${ children.familiar() } should have a guardian
 
       % endif
       % if reason_seeking_guardianship["parents_unfit"]:
         * ${ children.familiar() }'s parents are not fit to care for ${ children.familiar() }
-      
+
       % endif
       % if reason_seeking_guardianship["parents_death"]:
         * ${ children.familiar()}'s parents died
-      
+
       % endif
       % if reason_seeking_guardianship["parents_rights_terminated"]:
         * A judge ended the parental rights of ${ children.familiar() }'s parents
-      
+
       % endif
       % if reason_seeking_guardianship["parents_surrendered_rights"]:
         * ${ children.familiar() }'s parents voluntarily gave up their right to take care of ${ children.familiar() }
-      
+
       % endif
       % if reason_seeking_guardianship["parents_unavailable"]:
         * ${ children.familiar() }'s parents are not available to take care of ${ children.familiar() }
-      
+
       % endif
       % if reason_seeking_guardianship["previous_guardian"]:
         * ${ children.familiar() } had a guardian that died or is no longer able to act as guardian
-      
+
       % endif
   - Edit: petitioner_requesting_guardianship
     button: |
@@ -1811,7 +1821,7 @@ attachment:
     - "users1_signature_date": ${ today() }
     # - "users2_signature": ${ users.item(1).signature_if_final(i) }
     - "users2_signature": ${ f"/s/ {users[1]}" if esign else "" }
-    - "users2_signature_date": | 
+    - "users2_signature_date": |
         % if len(users.complete_elements()) > 1:
         ${ today() }
         % endif
