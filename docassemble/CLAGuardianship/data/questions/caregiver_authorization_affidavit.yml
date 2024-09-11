@@ -382,7 +382,7 @@ review:
   - Edit: authorized_persons[0].phone_number
     button: |
       **Authorized persons[0].phone number**:
-      ${ authorized_persons[0].phone_number }
+      ${ authorized_persons[0].phone_numbers() }
   - Edit: expiration_of_authorization
     button: |
       **Expiration of authorization**:

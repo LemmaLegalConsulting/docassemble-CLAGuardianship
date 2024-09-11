@@ -1028,7 +1028,7 @@ attachment:
     - "users1_address_state": ${ users[0].address.state }
     - "users1_address_zip": ${ users[0].address.zip }
     - "users1_address_city": ${ users[0].address.city }
-    - "users1_phone": ${ users[0].phone_number }
+    - "users1_phone": ${ users[0].phone_numbers() }
     - "users2_name_middle_initial": ${ users.item(1).name.middle_initial() }
     - "users2_name_last": ${ users.item(1).name.last }
     - "users2_name_first": ${ users.item(1).name.first }
@@ -1037,7 +1037,7 @@ attachment:
     - "users2_address_state": ${ users.item(1).address.state }
     - "users2_address_zip": ${ users.item(1).address.zip }
     - "users2_address_city": ${ users.item(1).address.city }
-    - "users2_phone": ${ users.item(1).phone_number }
+    - "users2_phone": ${ users.item(1).phone_numbers() }
     - "petitioner_is_parent": ${ who_is_making_petition == "parent" }
     - "petitioner_is_mother": ${ who_is_making_petition == "parent" and parents_making_petition == "mother" }
     - "petitioner_is_father": ${ who_is_making_petition == "parent" and parents_making_petition == "father" }
@@ -1052,7 +1052,7 @@ attachment:
     - "guardians1_address_state": ${ guardians[0].address.state }
     - "guardians1_address_zip": ${ guardians[0].address.zip }
     - "guardians1_address_city": ${ guardians[0].address.city }
-    - "guardians1_phone": ${ guardians[0].phone_number }
+    - "guardians1_phone": ${ guardians[0].phone_numbers() }
     - "guardians1_appointment_date": ${ guardians[0].appointment_date.format() }
     - "guardians2_name_last": ${ guardians[1].name.last }
     - "guardians2_name_middle_initial": ${ guardians[1].name.middle_initial() }
@@ -1062,7 +1062,7 @@ attachment:
     - "guardians2_address_state": ${ guardians[1].address.state }
     - "guardians2_address_zip": ${ guardians[1].address.zip }
     - "guardians2_address_city": ${ guardians[1].address.city }
-    - "guardians2_phone": ${ guardians[1].phone_number }
+    - "guardians2_phone": ${ guardians[1].phone_numbers() }
     - "guardians2_appointment_date": ${ guardians[1].appointment_date.format() }
     - "bio_parents_can_resume_responsibilities": ${ bio_parents_can_resume_responsibilities }
     - "responsible_parents1_name_middle_initial": ${ responsible_parents[0].name.middle_initial() }
@@ -1073,7 +1073,7 @@ attachment:
     - "responsible_parents1_address_state": ${ responsible_parents[0].address.state }
     - "responsible_parents1_address_zip": ${ responsible_parents[0].address.zip }
     - "responsible_parents1_address_city": ${ responsible_parents[0].address.city }
-    - "responsible_parents1_phone": ${ responsible_parents[0].phone_number }
+    - "responsible_parents1_phone": ${ responsible_parents[0].phone_numbers() }
     - "responsible_parents2_name_middle_initial": ${ responsible_parents[1].name.middle_initial() }
     - "responsible_parents2_name_last": ${ responsible_parents[1].name.last }
     - "responsible_parents2_name_first": ${ responsible_parents[1].name.first }
@@ -1082,7 +1082,7 @@ attachment:
     - "responsible_parents2_address_state": ${ responsible_parents[1].address.state }
     - "responsible_parents2_address_zip": ${ responsible_parents[1].address.zip }
     - "responsible_parents2_address_city": ${ responsible_parents[1].address.city }
-    - "responsible_parents2_phone": ${ responsible_parents[1].phone_number }
+    - "responsible_parents2_phone": ${ responsible_parents[1].phone_numbers() }
     - "minor_adopted": ${ minor_adopted }
     - "has_attachment": ${ has_attachment }
     - "guardian_successors1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
@@ -1109,7 +1109,7 @@ attachment:
     - "attorneys1_address_city": ${ attorneys[0].address.city }
     - "attorneys1_address_state": ${ attorneys[0].address.state }
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
-    - "attorneys1_phone": ${ attorneys[0].phone_number }
+    - "attorneys1_phone": ${ attorneys[0].phone_numbers() }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - my_interest_is: |
         % if who_is_making_petition == 'interested_person':

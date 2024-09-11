@@ -206,7 +206,7 @@ attachments:
     - "fiduciaries1_address_unit": ${ fiduciaries[0].address.unit }
     - "fiduciaries1_address_city": ${ fiduciaries[0].address.city }
     - "fiduciaries1_address_zip": ${ fiduciaries[0].address.zip }
-    - "fiduciaries1_phone": ${ fiduciaries[0].phone_number }
+    - "fiduciaries1_phone": ${ fiduciaries[0].phone_numbers() }
     - "fiduciaries2_name_first": ${ fiduciaries[1].name.first }
     - "fiduciaries2_name_middle": ${ fiduciaries[1].name.middle }
     - "fiduciaries2_name_last": ${ fiduciaries[1].name.last }
@@ -215,7 +215,7 @@ attachments:
     - "fiduciaries2_address_unit": ${ fiduciaries[1].address.unit }
     - "fiduciaries2_address_city": ${ fiduciaries[1].address.city }
     - "fiduciaries2_address_zip": ${ fiduciaries[1].address.zip }
-    - "fiduciaries2_phone": ${ fiduciaries[1].phone_number }
+    - "fiduciaries2_phone": ${ fiduciaries[1].phone_numbers() }
 
     - "fiduciary_role": ${ fiduciary_role }
 
