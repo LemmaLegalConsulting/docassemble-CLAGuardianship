@@ -21,7 +21,7 @@ code: |
 id: Application_for_appointment
 continue button field: Application_for_appointment_intro
 question: |
-  Application for appointment of counsel in a guardianship case
+  Application for Appointment of Counsel in a guardianship case of a minor
 subquestion: |
   If you are the **parent** of a child who is part of a guardianship case,
   you can use this interview to ask the court to give you a lawyer.
@@ -47,10 +47,9 @@ fields:
 ---
 id: waiver fee
 question: |
-  Do you want the court to pay for the full lawyer cost?
+  Can you afford the fee for a lawyer?
 subquestion: |
-  Normally, there is a fee of $150 to get a lawyer in a guardianship
-  case. You can ask the court to waive the fee if you cannot afford it.  
+  The court charges you $150.00 for a lawyer. If you can’t afford it, you can ask the court to cover the cost for you. Can you afford the $150.00 for a lawyer?  
 fields: 
   - I ask for permission not to pay the counsel fee: waiver_fee
     datatype: yesnoradio
