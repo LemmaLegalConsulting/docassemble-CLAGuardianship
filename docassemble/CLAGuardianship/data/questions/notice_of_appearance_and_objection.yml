@@ -88,7 +88,7 @@ sets:
 generic object: ALPeopleList
 
 question: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   What is your client's address?
   % else:
   What is your address?
