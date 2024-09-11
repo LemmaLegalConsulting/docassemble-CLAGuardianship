@@ -140,7 +140,7 @@ question: |
   Are you an attorney who is helping someone else file this document?
 
 fields: 
-  - I am: appearance_as_attorney
+  - I am: attorneys.there_are_any
     datatype: radio
     choices:
       - "Filing this document for myself": False
