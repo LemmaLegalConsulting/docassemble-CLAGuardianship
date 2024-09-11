@@ -17,10 +17,11 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = ["Probate and Family Court"]
 
-  appearance_as_attorney
+  attorneys.there_are_any
   users.gather()
   users[0].address.address
   users[0].phone_number
+  attorneys.gather(complete_attribute=["address.address", "phone_number", "bbo"])
   if appearance_as_attorney:
     attorneys.gather()
     attorneys[0].address.address
