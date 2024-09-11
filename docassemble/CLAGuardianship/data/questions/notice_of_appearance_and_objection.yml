@@ -224,7 +224,7 @@ code: |
 id: persons signature
 
 question: |
-  % if appearance_as_attorney == True:
+  % if form_filled_by_attorney:
   ${ attorneys[0].name }, please sign below
   % else:
   ${ users[0].name }, please sign below
