@@ -215,7 +215,7 @@ attachment:
       - "users1_address_state": ${ users[0].address.state }
       - "users1_address_zip": ${ users[0].address.zip }
       - "users1_email": ${ users[0].email }
-      - "users1_phone_number": ${ users[0].phone_number }
+      - "users1_phone_number": ${ users[0].phone_numbers() }
       - "mother": ${ want_counsel_for_mother }
       - "father": ${ want_counsel_for_father }
       - "waiver_fee": ${ waiver_fee }

@@ -396,7 +396,7 @@ attachment:
     - "users1_address_address": ${ users[0].address.address }
     - "users1_address_state": ${ users[0].address.state }
     - "users1_address_zip": ${ users[0].address.zip }
-    - "users1_phone_number": ${ users[0].phone_number }
+    - "users1_phone_number": ${ users[0].phone_numbers() }
     - "attorneys1_name_first": ${ attorneys[0].name.first }
     - "attorneys1_name_middle_initial": ${ attorneys[0].name.middle_initial() }
     - "attorneys1_name_last": ${ attorneys[0].name.last }
@@ -405,7 +405,7 @@ attachment:
     - "attorneys1_address_address": ${ attorneys[0].address.address }
     - "attorneys1_address_state": ${ attorneys[0].address.state }
     - "attorneys1_address_zip": ${ attorneys[0].address.zip }
-    - "attorneys1_phone_number": ${ attorneys[0].phone_number }
+    - "attorneys1_phone_number": ${ attorneys[0].phone_numbers() }
     - "not_objection": ${ not is_objection }
     - "objection": ${ is_objection }
     - "is_objection": ${ is_objection }
