@@ -7,6 +7,7 @@ include:
   - military_affidavit.yml
   - application_for_appointment.yml
   - affidavit_disclosing_care_or_custody.yml
+  - customized_screens.yml
   - temporary_guardian.yml
 ---
 metadata:
@@ -140,6 +141,7 @@ mandatory: True
 code: |
   al_intro_screen
   petition_for_removal_of_guardian_intro
+  set_guardian_removal
   interview_order_petition_for_removal_of_guardian
 
   if who_is_making_petition != 'minor':
@@ -406,6 +408,13 @@ code: |
 
   set_parent_relationships = True
 ---
+code: |
+  guardian_removal = True
+  set_guardian_removal = True
+---
+code: |
+  user_ask_role = "plaintiff"
+---
 #################### Object Blocks End #####################
 ---
 #################### Question Blocks Start #####################
@@ -563,16 +572,16 @@ fields:
   - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
     datatype: yesnoradio
 ---
-id: petitioners
-question: |
-  Who is asking to change or remove the guardian?
-fields:
-  - I am: who_is_making_petition
-    datatype: radio
-    choices:
-      - The minor's parent(s): parent
-      - The minor: minor
-      - Someone interested in the minor's welfare: interested_party
+# id: petitioners
+# question: |
+#   Who is asking to change or remove the guardian?
+# fields:
+#   - I am: who_is_making_petition
+#     datatype: radio
+#     choices:
+#       - The minor's parent(s): parent
+#       - The minor: minor
+#       - Someone interested in the minor's welfare: interested_party
 ---
 id: relationship to minor
 question: |

@@ -110,6 +110,22 @@ subquestion: |
 fields:
   - Would you like to add your electronic signature to your form?: esign
     datatype: yesnoradio
+---
+id: who is making petition
+question: |
+  % if form_filled_by_attorney:
+  What best describes your client?
+  % else:
+  What best describes you?
+  % endif
+fields:
+  - Choose one: who_is_making_petition
+    datatype: radio
+    choices:
+      - The minor: minor
+      - The minor's parent(s): parent
+        show if: guardian_removal
+      - Someone interested in the minor's welfare: interested_party
 --- 
 #################### Question Blocks End #####################
 ---

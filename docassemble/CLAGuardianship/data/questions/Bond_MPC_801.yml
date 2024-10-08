@@ -1,5 +1,4 @@
 include:
-  - petition_for_appointment_of_guardian.yml
   - shared.yml
   - docassemble.AssemblyLine:assembly_line.yml
 ---

@@ -162,10 +162,11 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   al_intro_screen
   petition_for_appointment_of_guardian_intro
+  set_guardian_removal
   interview_order_petition_for_appointment_of_guardian
   nav.set_section("review_affidavit_disclosing_care_or_custody")
   interview_order_affidavit_disclosing_care_or_custody
@@ -306,6 +307,10 @@ code: |
     assets.there_are_any = False
     
   set_no_assets = True
+---
+code: |
+  guardian_removal = False
+  set_guardian_removal = True
 ---
 #################### Object/Code Blocks End #####################
 ---
@@ -502,19 +507,19 @@ subquestion: |
 
   Most people take about 20 minutes to finish this interview.
 ---
-id: who is making petition
-question: |
-  % if form_filled_by_attorney:
-  What best describes your client?
-  % else:
-  What best describes you?
-  % endif
-fields:
-  - Choose one: who_is_making_petition
-    datatype: radio
-    choices:
-      - The minor: minor
-      - Someone interested in the minor's welfare: interested_party
+# id: who is making petition
+# question: |
+#   % if form_filled_by_attorney:
+#   What best describes your client?
+#   % else:
+#   What best describes you?
+#   % endif
+# fields:
+#   - Choose one: who_is_making_petition
+#     datatype: radio
+#     choices:
+#       - The minor: minor
+#       - Someone interested in the minor's welfare: interested_party
 ---
 id: choose a court
 question: |
