@@ -46,7 +46,7 @@ code: |
   al_form_type = "other"
 ---
 objects:
-  - responsible_parents: ALPeopleList.using(ask_number=True, maximum_number=2, complete_attribute="complete")
+  - responsible_parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
 ---
 code: |
   enable_al_nav_sections = True
@@ -85,8 +85,9 @@ code: |
 
   nav.set_section("review_case_information")
   form_filled_by_attorney
+
   who_is_making_petition
-  set_number_of_petitioners
+ 
   children.gather()
   if who_is_making_petition == 'minor':
     for child in children:
@@ -94,22 +95,31 @@ code: |
       if child.age_in_years() < 14:
         minor_age_kickout
       child.phone_number
+
   trial_court
   docket_number
 
   nav.set_section("review_petitioner_information")
-  if who_is_making_petition != "minor":
+  if who_is_making_petition == "interested_party" or who_is_making_petition == "parent":
     users.gather()
   else:
     set_user_to_minor
+  
+  set_parent_relationships
 
   nav.set_section("review_guardian_information")
   guardians.gather()
 
   nav.set_section("review_requests")
   bio_parents_can_resume_responsibilities
-  set_responsible_parents_target_number
-  if bio_parents_can_resume_responsibilities:
+
+  if bio_parents_can_resume_responsibilities: 
+    if who_is_making_petition == "parent": 
+      petitioner_parents_resuming_responsibility
+      set_petitioners_as_responsible_parents
+    else:
+      number_of_responsible_parents
+      set_number_of_responsible_parents
     responsible_parents.gather()
 
   parents_cancel_requested_guardians
@@ -126,7 +136,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   al_intro_screen
   petition_for_removal_of_guardian_intro
@@ -151,9 +161,7 @@ code: |
     if not form_filled_by_attorney:
       if who_is_making_petition == 'parent':
         parent_wants_lawyer
-        if parents_making_petition == 'both':
-          relationship_to_minor
-        set_parent_relationship
+
   set_application_for_appointment_of_counsel
 
   nav.set_section("section_download_petition")
@@ -201,11 +209,17 @@ terms:
 code: |
   users[i].name.first
   users[i].address.address
+  if i == 0 and who_is_making_petition == "interested_party":
+    users[i].nature_of_interest
   users[i].complete = True
 ---
 code: |
   parents[i].name.first
   parents[i].complete = True
+---
+code: |
+  responsible_parents[i].name.first
+  responsible_parents[i].complete = True
 ---
 code: |
   children[i].name.first
@@ -219,10 +233,15 @@ code: |
 ---
 code: |
   requested_guardians[i].name.first
+  requested_guardians[i].address.address
   requested_guardians[i].complete = True
 ---
 code: |
   children.there_is_another = False
+---
+code: |
+  if who_is_making_petition == "minor":
+    users.there_is_another = False
 ---
 code: |
   attorneys.there_is_another = False
@@ -244,25 +263,120 @@ code: |
     users.gathered = True
   set_user_to_minor = True
 ---
-code: |
-  if who_is_making_petition == 'parent':
-    if parents_making_petition == 'both':
-      users.there_is_another = True
-    else:
-      users.there_is_another = False
-  else:
-    users.there_is_another = False
-
-  set_number_of_petitioners = True
+id: petitioner parents assuming responsibility
+question: |
+  Parents resuming responsibility
+fields:
+  - Which of ${ children[0].familiar() }'s parents are resuming responsibility for ${ children[0].familiar() }?: petitioner_parents_resuming_responsibility
+    datatype: checkboxes
+    none of the above: False
+    minlength: 1
+    choices:
+      - ${ users[0] }: first_petitioner
+      - ${ f"{users[1]}" if (len(users.complete_elements()) > 1) else f"{children[0].familiar()}'s Other parent" }: second_petitioner
 ---
 code: |
-  if bio_parents_can_resume_responsibilities:
-    if responsible_parents_target_number == 'one_parent':
-      responsible_parents.target_number = 1
-    elif responsible_parents_target_number == 'both_parents':
-      responsible_parents.target_number = 2
+  if who_is_making_petition == "parent":
+    if len(users.complete_elements()) > 1:
+      if petitioner_parents_resuming_responsibility['first_petitioner'] \
+      and petitioner_parents_resuming_responsibility['second_petitioner']:
+        responsible_parents.target_number = 2
+        responsible_parents[0].name.first = users[0].name.first
+        responsible_parents[0].name.last = users[0].name.last
+        responsible_parents[0].name.middle = users[0].name.middle
+        responsible_parents[0].name.suffix = users[0].name.suffix
+        responsible_parents[0].address.address = users[0].address.address
+        responsible_parents[0].address.unit = users[0].address.unit
+        responsible_parents[0].address.city = users[0].address.city
+        responsible_parents[0].address.state = users[0].address.state
+        responsible_parents[0].address.zip = users[0].address.zip
+        responsible_parents[0].phone_number = users[0].phone_number
+        responsible_parents[1].name.first = users[1].name.first
+        responsible_parents[1].name.last = users[1].name.last
+        responsible_parents[1].name.middle = users[1].name.middle
+        responsible_parents[1].name.suffix = users[1].name.suffix
+        responsible_parents[1].address.address = users[1].address.address
+        responsible_parents[1].address.unit = users[1].address.unit
+        responsible_parents[1].address.city = users[1].address.city
+        responsible_parents[1].address.state = users[1].address.state
+        responsible_parents[1].address.zip = users[1].address.zip
+        responsible_parents[1].phone_number = users[1].phone_number
+      elif petitioner_parents_resuming_responsibility['first_petitioner'] \
+      and (not petitioner_parents_resuming_responsibility['second_petitioner']):
+        responsible_parents.target_number = 1
+        responsible_parents[0].name.first = users[0].name.first
+        responsible_parents[0].name.last = users[0].name.last
+        responsible_parents[0].name.middle = users[0].name.middle
+        responsible_parents[0].name.suffix = users[0].name.suffix
+        responsible_parents[0].address.address = users[0].address.address
+        responsible_parents[0].address.unit = users[0].address.unit
+        responsible_parents[0].address.city = users[0].address.city
+        responsible_parents[0].address.state = users[0].address.state
+        responsible_parents[0].address.zip = users[0].address.zip
+        responsible_parents[0].phone_number = users[0].phone_number
+      elif (not petitioner_parents_resuming_responsibility['first_petitioner']) \
+      and petitioner_parents_resuming_responsibility['second_petitioner']:
+        responsible_parents.target_number = 1
+        responsible_parents[0].name.first = users[1].name.first
+        responsible_parents[0].name.last = users[1].name.last
+        responsible_parents[0].name.middle = users[1].name.middle
+        responsible_parents[0].name.suffix = users[1].name.suffix
+        responsible_parents[0].address.address = users[1].address.address
+        responsible_parents[0].address.unit = users[1].address.unit
+        responsible_parents[0].address.city = users[1].address.city
+        responsible_parents[0].address.state = users[1].address.state
+        responsible_parents[0].address.zip = users[1].address.zip
+        responsible_parents[0].phone_number = users[1].phone_number
+    else:
+      if petitioner_parents_resuming_responsibility['first_petitioner'] \
+      and petitioner_parents_resuming_responsibility['second_petitioner']:
+        responsible_parents.target_number = 2
+        responsible_parents[0].name.first = users[0].name.first
+        responsible_parents[0].name.last = users[0].name.last
+        responsible_parents[0].name.middle = users[0].name.middle
+        responsible_parents[0].name.suffix = users[0].name.suffix
+        responsible_parents[0].address.address = users[0].address.address
+        responsible_parents[0].address.unit = users[0].address.unit
+        responsible_parents[0].address.city = users[0].address.city
+        responsible_parents[0].address.state = users[0].address.state
+        responsible_parents[0].address.zip = users[0].address.zip
+        responsible_parents[0].phone_number = users[0].phone_number
+      elif petitioner_parents_resuming_responsibility['first_petitioner'] \
+      and (not petitioner_parents_resuming_responsibility['second_petitioner']):
+        responsible_parents.target_number = 1
+        responsible_parents[0].name.first = users[0].name.first
+        responsible_parents[0].name.last = users[0].name.last
+        responsible_parents[0].name.middle = users[0].name.middle
+        responsible_parents[0].name.suffix = users[0].name.suffix
+        responsible_parents[0].address.address = users[0].address.address
+        responsible_parents[0].address.unit = users[0].address.unit
+        responsible_parents[0].address.city = users[0].address.city
+        responsible_parents[0].address.state = users[0].address.state
+        responsible_parents[0].address.zip = users[0].address.zip
+        responsible_parents[0].phone_number = users[0].phone_number
+      elif (not petitioner_parents_resuming_responsibility['first_petitioner']) \
+      and petitioner_parents_resuming_responsibility['second_petitioner']:
+        responsible_parents.target_number = 1
 
-  set_responsible_parents_target_number = True
+  set_petitioners_as_responsible_parents = True
+---
+id: how many parents resuming responsibility
+question: |
+  How many of ${ children[0].familiar() }'s parents are resuming responsibility for their care?
+fields:
+  - Choose up to two parents: number_of_responsible_parents
+    datatype: radio
+    choices:
+      - One parent: one_parent
+      - Both parents: both_parents
+---
+code: |
+  if number_of_responsible_parents == "one_parent":
+    responsible_parents.target_number = 1
+  elif number_of_responsible_parents == "both_parents":
+    responsible_parents.target_number = 2
+
+  set_number_of_responsible_parents = True
 ---
 code: |
   affidavitofindigency_attachment.enabled = who_is_making_petition != "minor" and wants_fee_waiver and is_indigent
@@ -277,19 +391,6 @@ code: |
   set_application_for_appointment_of_counsel = True
 ---
 code: |
-  if parents_making_petition == 'father':
-    want_counsel_for_father = True
-  elif parents_making_petition == 'mother':
-    want_counsel_for_mother = True
-  elif parents_making_petition == 'both':
-    if relationship_to_minor == 'father':
-      want_counsel_for_father = True
-    elif relationship_to_minor == 'mother':
-      want_counsel_for_mother = True
-
-  set_parent_relationship = True
----
-code: |
   petitioner_requesting_guardianship = False
 ---
 code: |
@@ -297,6 +398,13 @@ code: |
     requested_guardians.there_are_any = False
   
   parents_cancel_requested_guardians = True
+---
+code: |
+  if who_is_making_petition == "parent":
+    for user in users:
+      user.relationship_to_minor = "Parent"
+
+  set_parent_relationships = True
 ---
 #################### Object Blocks End #####################
 ---
@@ -344,7 +452,11 @@ sets:
   - users[i].address.country
   - users[i].phone_number
 question: |
+  % if who_is_making_petition == "parent":
+  Tell us about the other parent making this Petition
+  % else:
   Tell us about the other petitioner
+  % endif
 fields:
   - code: |
       users[i].name_fields()
@@ -356,6 +468,21 @@ fields:
 validation code: |
   if len(users.complete_elements()) > 0:
     users.there_is_another = False
+---
+id: users there_is_another
+question: |
+  % if form_filled_by_attorney and who_is_making_petition == "parent":
+  Is there another parent making this Petition with your client?
+  % elif who_is_making_petition == "parent":
+  Is there another parent making this Petition with you?
+  % elif form_filled_by_attorney and who_is_making_petition == "interested_party":
+  Is anyone else making this Petition with your client?
+  % else:
+  Is anyone else making this Petition with you?
+  % endif
+fields:
+  - no label: users.there_is_another
+    datatype: yesnoradio
 ---
 id: minor info
 sets:
@@ -445,36 +572,32 @@ fields:
     choices:
       - The minor's parent(s): parent
       - The minor: minor
-      - A person interested in the minor's welfare: interested_person
-  - And my specific relationship is: parents_making_petition
-    datatype: radio
-    choices:
-      - The minor's mother: mother
-      - The minor's father: father
-      - Both the parents are making this request together: both
-    show if:
-      variable: who_is_making_petition
-      is: parent
-  - And my relationship or interest is: my_interest_is
-    datatype: area
-    show if:
-      variable: who_is_making_petition
-      is: interested_person
-    help: |
-      Explain how you are related to the child, such as 
-      a family relationship or a professional relationship.
-
-      You do not need to explain why you want this petition 
-      in this box.
+      - Someone interested in the minor's welfare: interested_party
 ---
 id: relationship to minor
 question: |
-  What is your relationship to ${ children.familiar() }?
+  What is
+  % if i == 0:
+  your
+  % else:
+  ${ users[i] }'s 
+  % endif
+  relationship to ${ children.familiar() }?
 fields:
-  - I am ${ children.familiar() }'s: relationship_to_minor
-    choices:
-      - Father: father
-      - Mother: mother
+  - I am ${ children.familiar() }'s: users[i].relationship_to_minor
+---
+id: nature of interest in minor's welfare
+question: |
+  What is the nature of
+  % if i == 0:
+  your
+  % else:
+  ${ users[i] }'s 
+  % endif
+  interest in ${ children.familiar() }'s welfare?
+fields:
+  - Explain: users[i].nature_of_interest
+    datatype: area
 ---
 id: choose a court
 question: |
@@ -635,11 +758,6 @@ subquestion: |
 fields:
   - ${ f"My parents" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"{children[0].familiar()}'s parents" } are able to care for ${ f"me" if (who_is_making_petition == 'minor' and not form_filled_by_attorney) else f"them" } now: bio_parents_can_resume_responsibilities
     datatype: yesno
-  - How many?: responsible_parents_target_number
-    choices:
-      - One parent: one_parent
-      - Both parents: both_parents
-    show if: bio_parents_can_resume_responsibilities
   - Explain why: why_parents_can_resume_responsibility
     datatype: area
     show if: bio_parents_can_resume_responsibilities
@@ -656,6 +774,43 @@ validation code: |
 ---
 id: responsible parent information
 sets:
+  - responsible_parents[0].name.first
+  - responsible_parents[0].name.last
+  - responsible_parents[0].name.middle
+  - responsible_parents[0].name.suffix
+  - responsible_parents[0].address.address
+  - responsible_parents[0].address.unit
+  - responsible_parents[0].address.city
+  - responsible_parents[0].address.state
+  - responsible_parents[0].address.zip
+  - responsible_parents[0].address.country
+  - responsible_parents[0].phone_number
+question: |
+  % if responsible_parents.target_number > 1:
+  ${ capitalize(ordinal(i)) } parent
+  % else:
+  Parent
+  % endif 
+  resuming responsibility for
+  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
+  you
+  % else:
+  ${ children[0].familiar() }
+  % endif 
+fields:
+  - code: |
+      responsible_parents[0].name_fields()
+  - code: |
+      responsible_parents[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
+  - Phone number: responsible_parents[0].phone_number
+    datatype: al_international_phone
+    required: False
+validation code: |
+  if len(responsible_parents.complete_elements()) > 0:
+    responsible_parents.there_is_another = False
+---
+id: responsible parent information
+sets:
   - responsible_parents[i].name.first
   - responsible_parents[i].name.last
   - responsible_parents[i].name.middle
@@ -667,9 +822,13 @@ sets:
   - responsible_parents[i].address.zip
   - responsible_parents[i].address.country
   - responsible_parents[i].phone_number
-  - responsible_parents[i].appointment_date
 question: |
-  ${ capitalize(ordinal(i)) } parent resuming responsibility for
+  % if responsible_parents.target_number > 1:
+  ${ capitalize(ordinal(i)) } parent
+  % else:
+  Parent
+  % endif 
+  resuming responsibility for
   % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
   you
   % else:
@@ -679,10 +838,20 @@ fields:
   - code: |
       responsible_parents[i].name_fields()
   - code: |
-      responsible_parents[i].address_fields()
+      responsible_parents[i].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
   - Phone number: responsible_parents[i].phone_number
     datatype: al_international_phone
     required: False
+validation code: |
+  if len(responsible_parents.complete_elements()) > 0:
+    responsible_parents.there_is_another = False
+---
+id: responsible_parents there_is_another
+question: |
+  Other parent resuming responsibility 
+fields:
+  - Is there another parent resuming responsibility for ${ children[0].familiar() }?: responsible_parents.there_is_another
+    datatype: yesnoradio
 ---
 id: Attorney's information
 question: |
@@ -1039,11 +1208,9 @@ attachment:
     - "users2_address_city": ${ users.item(1).address.city }
     - "users2_phone": ${ users.item(1).phone_numbers() }
     - "petitioner_is_parent": ${ who_is_making_petition == "parent" }
-    - "petitioner_is_mother": ${ who_is_making_petition == "parent" and parents_making_petition == "mother" }
-    - "petitioner_is_father": ${ who_is_making_petition == "parent" and parents_making_petition == "father" }
-    - "petitioner_is_both_parents": ${ who_is_making_petition == "parent" and parents_making_petition == "both" }
+    - "petitioner_is_both_parents": ${ who_is_making_petition == "parent" and len(users.complete_elements()) > 1 }
     - "petitioner_is_minor": ${ who_is_making_petition == "minor" }
-    - "petitioner_is_interested_party": ${ who_is_making_petition == "interested_person" }
+    - "petitioner_is_interested_party": ${ who_is_making_petition == "interested_party" }
     - "guardians1_name_last": ${ guardians[0].name.last }
     - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
     - "guardians1_name_first": ${ guardians[0].name.first }
@@ -1112,7 +1279,7 @@ attachment:
     - "attorneys1_phone": ${ attorneys[0].phone_numbers() }
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - my_interest_is: |
-        % if who_is_making_petition == 'interested_person':
+        % if who_is_making_petition == 'interested_party':
         ${ petition_for_removal_of_guardian.safe_value('my_interest_is') }
         % else:
         ${ "" }
@@ -1140,3 +1307,4 @@ attachment:
 ---
 code: |
   additional_parties = ALPeopleList(elements=set().union(children + guardians))
+---
