@@ -40,8 +40,8 @@ code: |
   if len(requested_temporary_guardians.complete_elements()) >= 2:
      requested_temporary_guardians.there_is_another = False
 ---
-code: |
-  requested_temporary_guardians.there_are_any = True # Default
+# code: |
+#   requested_temporary_guardians.there_are_any = True # Default
 ---
 id: Verified_Motion_Appointment_intro
 continue button field: Verified_Motion_Appointment_intro
