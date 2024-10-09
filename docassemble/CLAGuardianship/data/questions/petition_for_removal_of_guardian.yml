@@ -795,16 +795,14 @@ sets:
   - responsible_parents[0].address.country
   - responsible_parents[0].phone_number
 question: |
-  % if responsible_parents.target_number > 1:
-  ${ capitalize(ordinal(i)) } parent
+  % if responsible_parents.target_number > 1 and (who_is_making_petition == "minor" and (not form_filled_by_attorney)):
+  ${ capitalize(ordinal(i)) } parent resuming responsibility for you
+  % elif responsible_parents.target_number < 2 and (who_is_making_petition == "minor" and (not form_filled_by_attorney)):
+  Parent resuming responsibility for you
+  % elif responsible_parents.target_number > 1:
+  ${ capitalize(ordinal(i)) } parent resuming responsibility for ${ children[0].familiar() }
   % else:
-  Parent
-  % endif 
-  resuming responsibility for
-  % if who_is_making_petition == "minor" and (not form_filled_by_attorney):
-  you
-  % else:
-  ${ children[0].familiar() }
+  Parent resuming responsibility for ${ children[0].familiar() }
   % endif 
 fields:
   - code: |
