@@ -212,7 +212,7 @@ code: |
   users[i].name.first
   users[i].address.address
   if i == 0 and who_is_making_petition == "interested_party":
-    users[i].nature_of_interest
+    my_interest_is
   users[i].complete = True
 ---
 code: |
@@ -605,7 +605,7 @@ question: |
   % endif
   interest in ${ children.familiar() }'s welfare?
 fields:
-  - Explain: users[i].nature_of_interest
+  - Explain: my_interest_is
     datatype: area
 ---
 id: choose a court
