@@ -40,17 +40,22 @@ code: |
   users.gather()
   other_parties.gather()
   additional_parties.gather()
-  serving_parties
-  if len(serving_parties) < len(users) + len(other_parties) + len(additional_parties):
-    ask_concluded_service_parties
-    if len(concluded_service_parties.elements):
-      set_concluded_service_dates
-    for party in concluded_service_parties.elements:
-      party.service_ended_date
-  if (len(serving_parties) + len(concluded_service_parties)) < len(users) + len(other_parties) + len(additional_parties):
-    ask_unsure_serving_parties
-  if len(serving_parties) + len(concluded_service_parties) + len(unsure_serving_parties) < len(users) + len(other_parties) + len(additional_parties):
-    confirm_not_serving_parties
+  set_all_military_statuses
+  if any([party.military_status == "past" for party in users.union(other_parties + additional_parties)]):
+    set_concluded_service_dates
+  if any([party.military_status == "unknown" for party in users.union(other_parties + additional_parties)]):
+    bond_agreement_i_understand
+  review_military_status
+  # if len(serving_parties) < len(users) + len(other_parties) + len(additional_parties):
+  #   ask_concluded_service_parties
+  #   if len(concluded_service_parties.elements):
+  #     set_concluded_service_dates
+  #   for party in concluded_service_parties.elements:
+  #     party.service_ended_date
+  # if (len(serving_parties) + len(concluded_service_parties)) < len(users) + len(other_parties) + len(additional_parties):
+  #   ask_unsure_serving_parties
+  # if len(serving_parties) + len(concluded_service_parties) + len(unsure_serving_parties) < len(users) + len(other_parties) + len(additional_parties):
+  #   confirm_not_serving_parties
   trial_court
   docket_numbers
   has_used_scra_site
@@ -63,8 +68,6 @@ code: |
   concluded_service_parties[i].service_ended_date
   concluded_service_parties[i].complete = True
 ---
-comment: |
-  This question is used to introduce your interview. Please customize
 id: Military_Affidavit
 continue button field: military_affidavit_intro
 question: |
@@ -120,80 +123,98 @@ fields:
       variable: knows_status_already
       is: False
 ---
-id: Military status of serving parties
-question: |
-  Are any of the parties in this case currently serving in the U.S. military?
-fields:
-  - Choose every party who you know is in the military **now**: serving_parties
-    datatype: object_checkboxes
-    choices:
-      - users
-      - other_parties
-      - additional_parties
+variable name: military_status_labels
+data:
+  - Yes: "yes"
+  - No: "no"
+  - Past: "past"
+  - Unknown: "unknown"
 ---
-id: ended military service
+continue button field: set_all_military_statuses
+id: select all statuses
 question: |
-  Did any of the parties in this case serve in the military **in the past**?
+  Select the current **military service** of **each** party in this case
+subquestion: |
+  For each party, including yourself:
+
+  * If they are currently serving active duty in the military, answer "Yes".
+  * If they are not serving in the military, answer "No"
+  * If they concluded their service, answer "Past"
+  * If you are unsure, answer "Unknown"
+
+  ${ collapse_template(explain_military_service)}
 fields:
-  - Choose every party who you know used to serve in the U.S. military:  concluded_service_parties
-    datatype: object_checkboxes
-    choices:
-      - users
-      - other_parties
-      - additional_parties
-    exclude:
-      - serving_parties
-continue button field: ask_concluded_service_parties
+  - code: |
+      [
+        {
+          "field": party.attr_name("military_status"),
+          "label": f"{ party.name_full() }",
+          "item grid": {
+            "width": 3,
+            "breakpoint": "sm"
+          },
+          "datatype": "radio",
+          "choices": military_status_labels
+        }
+        for party
+        in sorted(users.union(other_parties + additional_parties))
+      ]
 ---
-id: concluded service parties date
-question: |
-  When did the military service end?
-fields:
-  - "End date": concluded_service_parties[i].service_ended_date
-    datatype: date
+template: explain_military_service
+subject: |
+  What is military service?
+content: |
+  Under 50 U.S.C. § 3931, which is part of the Servicemembers Civil Relief Act (SCRA), the term "military service" is defined broadly to include the following:
+
+  1. Members of the armed forces on active duty.
+
+  This refers to individuals serving full time in the Army, Navy, Air Force, Marine Corps, or Coast Guard, including those in the Reserves and National Guard when called to active duty.
+  
+  2. Members of the National Guard on service under a call to active service for more than 30 consecutive days.
+
+  This includes National Guard members who are called to active duty by the President or the Secretary of Defense for emergencies, wars, or other national defense needs.
+
+  3. Commissioned officers of the Public Health Service or the National Oceanic and Atmospheric Administration (NOAA) on active service.
+
+  These commissioned officers are also considered to be in "military service" when performing their duties.
+
+  Someone who is otherwise in active service but is currently absent because of sickness, injury, leave, or other lawful cause is still considered to be in active military service.
 ---
 id: set all concluded service parties dates
 question: |
   When did the military service end?
+subquestion: |
+  Write the best date that you know for each party. Include a year.  Example: May 2024.
 fields:
   - code: |
       [
         {
           "field": party.attr_name("service_ended_date"),
-          "label": f"Date that { party.name_full() } ended military service",
+          "label": party.name_full(),
+          "under text": "Date service ended"
         }
         for party
-        in concluded_service_parties.elements
+        in
+        sorted(users.union(other_parties + additional_parties))          
+        if party.military_status == "past"
       ]
 continue button field: set_concluded_service_dates
 ---
 id: unsure military service
 question: |
-  Are you unsure about whether any of the parties in this case served in the military?
+  Because you are unsure about the military status of some parties
 subquestion: |
   If you select "unsure" for any party, the judge may make you pay
   a **bond** to protect the party's rights under the Servicemembers Civil Relief Act,
   before the judge makes the judgment against the party final.
 
-  ${ collapse_template(explain_military_unsure_bond)}
+  ${ collapse_template(explain_military_unsure_bond) }
 fields:
-  - Choose every party who you are unsure about: unsure_serving_parties
-    datatype: object_checkboxes
-    choices:
-      - users
-      - other_parties
-      - additional_parties
-    exclude:
-      - serving_parties
-      - concluded_service_parties
   - I understand I may have to pay a bond if I am unsure about a party's military status before a judge makes the judgment final: bond_agreement_i_understand
     datatype: yesno
-    js show if: |
-      val("unsure_serving_parties") && val("unsure_serving_parties").length > 0
 validation code: |
-  if len(unsure_serving_parties.elements) and not bond_agreement_i_understand:
-    validation_error("You must agree to pay a bond if you are unsure about a party's military status.")
-continue button field: ask_unsure_serving_parties
+  if not bond_agreement_i_understand:
+    validation_error("You must acknowledge that the judge can make you a bond if you are unsure about a party's military status.", field="bond_agreement_i_understand")
 ---
 template: explain_military_unsure_bond
 subject: |
@@ -207,45 +228,25 @@ content: |
   The bond is only required if the other party does not show up in court
   and loses "by default".
 ---
-id: confirm not serving parties
+id: confirm serving party status
 question: |
-  Parties **not** serving in the military
+  Confirm the military status of each party
 subquestion: |
-  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
-  Here is what you told us so far:
+  Here is what you told us about each party:
 
-  % if len(serving_parties):
-  % if len(serving_parties) == 1:
-  * You know that ${ serving_parties } is currently serving in the military.
-  % else:
-  * You know that ${ serving_parties } are currently serving in the military.
-  % endif
-  % endif
-  % if len(concluded_service_parties):
-  * You know that ${ concluded_service_parties } served in the military in the past.
-  % endif
-  % if len(unsure_serving_parties):
-  * You do not know whether ${ unsure_serving_parties } served in the military.
-  % endif
+  ${ all_party_status_review_table }
 
-  That means that you know the following parties are **not** serving in the military:
-  % else:
-  You have not told us about any parties serving in the military, which means
-  you know the following parties are **not** serving in the military:
-  % endif
-
-  % for party in users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties):
-  * ${ party }
-  % endfor
-
-  If this is not correct, edit your responses by clicking the button below.
-
-  * ${ action_button_html(url_action('serving_parties'), label="Edit parties currently serving in the military")}
-  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit parties whose service ended")}
-  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit parties you do not know about")}
-
-  If this is correct, click the button below to continue.
-continue button field: confirm_not_serving_parties
+  ${ action_button_html(url_action('set_all_military_statuses'), label="Edit military service status")}
+continue button field: review_military_status
+---
+table: all_party_status_review_table
+rows: users.union(other_parties + additional_parties)
+columns:
+  - Name: |
+      row_item.name_full()
+  # Find the first matching key in the military_status_labels list and show the matching text - this is for translation
+  - In active service?: |
+      next((k for d in military_status_labels for k, v in d.items() if v == row_item.military_status), "")
 ---
 code: |
   form_filled_by_attorney = bool(len(attorneys))    
@@ -304,44 +305,11 @@ fields:
 id: supporting the affidavit
 question: |
   How do you know the military status of the parties in this case?
-subquestion: |
-  % if len(serving_parties) or len(concluded_service_parties) or len(unsure_serving_parties):
-  Here is what you told us:
-
-  % if len(serving_parties):
-  % if len(serving_parties) == 1:
-  * You know that ${ serving_parties } is currently serving in the military.
-  % else:
-  * You know that ${ serving_parties } are currently serving in the military.
-  % endif
-  % endif
-  % if len(concluded_service_parties):
-  * You know that ${ concluded_service_parties } served in the military in the past.
-  % endif
-  % if len(unsure_serving_parties):
-  * You do not know whether ${ unsure_serving_parties } served in the military.
-  % endif
-
-  % endif
-  % if len(( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties))):
-  You know the following parties are **not** serving in the military:
-
-  % for party in users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties):
-  * ${ party }
-  % endfor
-  % endif
-
-  If this is not correct, edit your responses by clicking the button below.
-
-  * ${ action_button_html(url_action('serving_parties'), label="Edit serving parties")}
-  * ${ action_button_html(url_action('concluded_service_parties'), label="Edit concluded service parties")}
-  * ${ action_button_html(url_action('unsure_serving_parties'), label="Edit unsure serving parties")}
-
 fields:
   - "Did you use the Servicemembers Civil Relief Act Website?": has_used_scra_site
     datatype: yesnoradio
   - note: |
-      You need to attach copies of the search results to this form
+      You need to give the court a copy of your search results
     show if: has_used_scra_site
   - Are you ready to attach a copy or screenshot now?: wants_to_attach_search_results
     datatype: yesnoradio
@@ -539,6 +507,11 @@ code: |
 code: |
   military_affidavit_attachment.enabled = True
 ---
+code: |
+  # This is available to customize in other forms with more complex case name scenarios
+  # Leave it undefined to use the default case name of petitioner v respondent or In the interests of respondent
+  military_affidavit_case_name = ""
+---
 need:
   - military_affidavit_case_name
 attachment:
@@ -559,7 +532,7 @@ attachment:
       - "court_department_superior": ${trial_court.department == "Superior Court"}
       - "trial_court_division": ${ trial_court.division }
       - "petitioners": |
-          % if defined("military_affidavit_case_name"):
+          % if showifdef("military_affidavit_case_name"):
           ${ military_affidavit_case_name }
           % else:
             % if user_ask_role == "plaintiff":
@@ -581,16 +554,15 @@ attachment:
       - "users1_name_full__1": |
           ${ users[0] }
       - "date_signed__1": ${ today() }
-      - "has_serving_parties": ${ len(serving_parties) }
-      - "serving_parties": ${ serving_parties }
-      - "has_not_serving_parties": ${ len(users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) >= 1 }
-      - "not_serving_parties": ${ comma_and_list( users.union(other_parties + additional_parties).difference(serving_parties + concluded_service_parties + unsure_serving_parties)) }
-      - "has_concluded_service_parties": ${ len(concluded_service_parties) }
-      - "concluded_service_parties": ${ concluded_service_parties }
-      - "service_ended_date": |
-          ${ comma_and_list([f"{party}: {party.service_ended_date}" for party in concluded_service_parties]) }
-      - "has_unsure_serving_parties": ${ len(unsure_serving_parties) }
-      - "unsure_serving_parties": ${ unsure_serving_parties }
+      - "has_serving_parties": ${ any([party.military_status == "yes" for party in users.union(other_parties + additional_parties)]) }
+      - "serving_parties": ${ comma_and_list([party.name_full() for party in users.union(other_parties + additional_parties) if party.military_status == "yes"]) }
+      - "has_not_serving_parties": ${ any([party.military_status == "no" for party in users.union(other_parties + additional_parties)]) }
+      - "not_serving_parties": ${ comma_and_list( [party.name_full() for party in users.union(other_parties + additional_parties) if party.military_status == "no"] ) }
+      - "has_concluded_service_parties": ${ any([party.military_status == "past" for party in users.union(other_parties + additional_parties)]) }
+      - "concluded_service_parties_date": |
+          ${ comma_and_list([f"{party.name_full()}: {party.service_ended_date}" for party in users.union(other_parties + additional_parties) if party.military_status == "past"]) }
+      - "has_unsure_serving_parties": ${ any([party.military_status == "unknown" for party in users.union(other_parties + additional_parties)]) }
+      - "unsure_serving_parties": ${ comma_and_list([party.name_full() for party in users.union(other_parties + additional_parties) if party.military_status == "unknown"]) }
       - "has_used_scra_site": ${ has_used_scra_site }
       - "used_scra_site_facts": |
           % if has_used_scra_site:
