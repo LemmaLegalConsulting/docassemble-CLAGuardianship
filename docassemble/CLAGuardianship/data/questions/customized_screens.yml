@@ -81,7 +81,10 @@ code: |
   # affidavit and the petition.
   # user = petitioner in the petition, and
   # user should be "child" in the military affidavit  
-  additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
+  if who_is_making_petition == "minor":
+    additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(other_custodians))
+  else:
+    additional_parties = ALPeopleList(elements=set(parent for parent in parents if not parent.is_deceased).union(children + other_custodians))
 ---
 code: |
   military_affidavit_case_name = f"In the Interests of { children[0].name_full() }"

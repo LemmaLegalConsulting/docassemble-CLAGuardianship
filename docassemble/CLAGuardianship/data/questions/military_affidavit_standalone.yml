@@ -3,6 +3,7 @@ include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.ALMassachusetts:al_massachusetts.yml
   - docassemble.MassAccess:massaccess.yml
+  - military_affidavit.yml
 ---
 metadata:
   title: |

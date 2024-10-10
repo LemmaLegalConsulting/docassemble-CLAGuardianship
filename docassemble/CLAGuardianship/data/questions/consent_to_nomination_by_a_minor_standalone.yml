@@ -144,7 +144,7 @@ question: |
   % endif
 fields:
   - Birthdate: children[0].birthdate
-    datatype: date
+    datatype: Birthdate
 ---
 id: minor phone number
 sets:
