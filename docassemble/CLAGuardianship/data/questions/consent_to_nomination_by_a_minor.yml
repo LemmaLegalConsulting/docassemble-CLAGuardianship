@@ -143,6 +143,6 @@ attachment:
       - "users1_address_city": ${children[0].address.city}
       - "users1_address_state": ${children[0].address.state}
       - "users1_address_zip": ${children[0].address.zip}
-      - "users1_phone": ${children[0].phone_number}
+      - "users1_phone": ${children[0].phone_numbers() }
       - "users1_name": ${children[0].name}
 ---
