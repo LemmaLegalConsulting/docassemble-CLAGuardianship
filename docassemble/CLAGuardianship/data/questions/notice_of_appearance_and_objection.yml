@@ -423,3 +423,6 @@ attachment:
   docx template file: notice_of_appearance_and_objection_affidavit.docx
   skip undefined: True
   tagged pdf: True
+---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))   

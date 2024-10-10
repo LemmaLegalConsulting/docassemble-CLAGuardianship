@@ -261,9 +261,17 @@ fields:
     choices:
       - Now: True
       - By filing an affidavit within 30 days of the return date: False
-  - label: |
+  - label: |-
       Write your explanation below, one reason per line. Include enough facts that you personally know
       to help the judge decide. Your answers will become your **affidavit** to the court.
+
+      Your **affidavit** will begin with these words:
+
+      > I, ${ users[0] }, hereby affirm under the pains and penalties of perjury as follows:
+      >
+      > 1. I object to the appointment of a guardian for ${ children[0] }.
+
+      Write the rest of your explanation in your own words:
     label above field: True
     field: objection_reasons
     datatype: area
@@ -456,3 +464,6 @@ review:
     button: |
       **Bbo**:
       ${ bbo }
+---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))   
