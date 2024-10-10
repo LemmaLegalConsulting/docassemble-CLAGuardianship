@@ -96,6 +96,9 @@ code: |
   form_filled_by_attorney
 
   who_is_making_petition
+  if who_is_making_petition == "minor":
+    if children[0].age_in_years() < 14:
+      warn_minor_too_young
 
   if current_acting_guardian:
     existing_guardians_or_conservators_kickout
@@ -251,6 +254,20 @@ code: |
 code: |
   attorneys.there_is_another = False
 ---
+event: warn_minor_too_young
+decoration: hand
+question: |
+  Because you are under the age of 14
+subquestion: |
+  You are too young to make this petition on your own. 
+  You will need an adult to help you. 
+  Please ask an adult to help you answer the questions in this interview. The adult can 
+  be any person who is interested in your well-being.
+buttons:
+  - Exit: exit
+    url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
+  - Start over: restart
+---
 code: |
   if who_is_making_petition == "minor":
     users[0].name.first = children[0].name.first
@@ -349,7 +366,10 @@ question: |
   % endif
 fields:
   - Birthdate: children[0].birthdate
-    datatype: date
+    datatype: Birthdate
+validation code: |
+  if children[0].age_in_years() >= 18:
+    validation_error("The minor must be under 18 years old.", field="children[0].birthdate")
 ---
 id: minor phone number
 sets:
