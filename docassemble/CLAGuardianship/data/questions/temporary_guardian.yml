@@ -112,7 +112,7 @@ subquestion: |
   (opens in a new tab).
 
   When the guardian is for a minor, the surety requirement is often waived, or skipped.
-  This is because the guardian does not have control over the minor's money or property.
+  This is because the guardian does not have control over ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s money or property.
 
   You can ask the judge to skip the surety requirement now.
 fields:

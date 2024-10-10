@@ -8,10 +8,10 @@ question: |
   Is someone named in the petition to be appointed as a guardian?
 subquestion: |
   In some cases, whoever files the petition to get a guardian for
-  a child will also ask the judge to make a specific person the
+  a minor will also ask the judge to make a specific person the
   guardian.
 
-  They may have named up to 2 people to be the child's guardian.
+  They may have named up to 2 people to be ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s guardian.
 fields:
   - Is someone named as the potential guardian in the petition?: requested_guardians.there_are_any
     datatype: yesnoradio
@@ -20,7 +20,7 @@ id: requested guardian I
 sets:
   - requested_guardians[i].name.first
 question: |
-  Who is the ${ ordinal(i)} person the petitioner asked the judge to make the child's guardian?
+  Who is the ${ ordinal(i)} person the petitioner asked the judge to make ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s guardian?
 subquestion: |
   % if i > 0:
   You have already told us about ${ requested_guardians.complete_elements() }.
@@ -77,14 +77,6 @@ fields:
   - code: |
       children[0].address_fields(country_code=AL_DEFAULT_COUNTRY, default_state=AL_DEFAULT_STATE, show_country=False)
 ---
-# id: minor birthdate
-# question: |
-#   When was ${ children[0].name } born?
-# fields:
-#   - Birthdate: children[0].birthdate
-#     datatype: Birthdate
-
----
 id: temporary_guardianship_duration
 question: |
   Do you understand that if the court appoints a temporary guardian, the guardianship will initially last for 90 days and can be extended for additional 90 day periods if needed?
@@ -94,7 +86,7 @@ fields:
 ---
 id: permanent_guardianship_duration
 question: |
-  Do you understand that if the court appoints a permanent guardian, the guardianship will continue until the child reaches 18 years old, gets married, or the court terminates the guardianship?
+  Do you understand that if the court appoints a permanent guardian, the guardianship will continue until ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } reaches 18 years old, gets married, or the court terminates the guardianship?
 fields:
   no label: permanent_guardianship_duration
   datatype: yesnoradio

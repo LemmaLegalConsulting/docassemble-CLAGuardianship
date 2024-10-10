@@ -139,7 +139,7 @@ subquestion: |
   The temporary guardian can be the same person as the permanent guardian. 
 
   You can ask for a temporary guardian if waiting for a permanent guardian would risk 
-  **substantial harm** to the child's:
+  **substantial harm** to ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s:
 
   * health,
   * safety, or

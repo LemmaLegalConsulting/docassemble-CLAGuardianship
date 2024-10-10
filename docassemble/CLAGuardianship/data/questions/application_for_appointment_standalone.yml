@@ -10,10 +10,10 @@ metadata:
   short title: >-
     Get a lawyer for your guardianship case
   description: |-
-    If you are the **parent** of a child who is part of a guardianship case,
+    If you are the **parent** of a minor who is part of a guardianship case,
     you can use this interview to ask the court to give you a lawyer.
 
-    This interview will ask you questions about the child, the court case,
+    This interview will ask you questions about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }, the court case,
     and your contact information.
 
     There is a fee of $150 to get a lawyer in a guardianship case, but 
