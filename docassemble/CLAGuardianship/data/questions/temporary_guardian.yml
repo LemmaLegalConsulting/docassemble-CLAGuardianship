@@ -226,6 +226,6 @@ attachment:
       - "attorneys1_address_city": ${attorneys[0].address.city if form_filled_by_attorney else ""}
       - "attorneys1_address_state": ${attorneys[0].address.state if form_filled_by_attorney else ""}
       - "attorneys1_address_zip": ${attorneys[0].address.zip if form_filled_by_attorney else ""}
-      - "attorneys1_phone": ${attorneys[0].phone_number if form_filled_by_attorney else ""}
+      - "attorneys1_phone": ${attorneys[0].phone_numbers() if form_filled_by_attorney else ""}
       - "attorneys1_bbo": ${attorneys[0].bbo if form_filled_by_attorney else ""}
 ---

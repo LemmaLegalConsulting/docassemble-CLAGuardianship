@@ -71,6 +71,7 @@ code: |
       parent.phone_number
   set_progress(25)
   permission_kind
+  acknowledge_what_you_affirm_by_signing
   expiration_of_authorization
   children.gather()
   users[0].phone_number
@@ -82,7 +83,7 @@ code: |
 comment: |
   This block includes the logic for standalone interviews.
   Delete mandatory: True to include in another interview
-# mandatory: True
+mandatory: True
 code: |
   al_intro_screen
   caregiver_authorization_affidavit_intro
@@ -242,7 +243,7 @@ subquestion: |
   Your answer will decide if we make a caregiver authorization affidavit 
   or a temporary agent affidavit.
 
-  You can add limits on the permission on the next screen.
+  You can add limits on the permission later in this interview.
 fields:
   - I want to let ${ authorized_persons.familiar() }: permission_kind
     input type: radio
@@ -261,6 +262,21 @@ fields:
     show if:
       variable: permission_kind
       is: temporary agent affidavit
+---
+id: acknowledge what you affirm by signing
+question: |
+  Before you continue
+subquestion: |
+  When you sign this document, you need to acknowlede the following:
+
+  * There are no court orders in effect that would prohibit me from exercising or conferring the rights and responsibilities that I wish to confer upon the caregiver. 
+    (If you are the legal guardian or custodian, attach the court order appointing you.)
+  * I am not using this affidavit to circumvent any state or federal law, for the purposes of attendance at a particular school, or to re-confer rights to a caregiver from whom those rights have been removed by a court of law.
+  * I confer these rights and responsibilities freely and knowingly in order to provide for the child(ren) and not as a result of pressure, threats or payments by any person or agency.
+  * I understand that, if the affidavit is amended or revoked, I must provide the amended affidavit or revocation to all parties to whom I have provided this affidavit.
+
+continue button field: acknowledge_what_you_affirm_by_signing
+continue button label: I understand and agree
 ---
 id: warn no temporary agent possible
 question: |
@@ -300,7 +316,7 @@ subquestion: |
   the length of the permission, except for decisions about adoption.
   % endif
 fields:
-  - "When does your permission end?": expiration_of_authorization
+  - "My permission ends on": expiration_of_authorization
     datatype: date
     min: ${ today().plus(days=1).format("yyyy-MM-dd") }
     max: ${ today().plus(years=2).plus(days=10).format("yyyy-MM-dd") }
@@ -312,7 +328,7 @@ fields:
     show if:
       code: |
         permission_kind == "caregiver authorization affidavit"
-  - "When does your permission end?": expiration_of_authorization
+  - "My permission ends on": expiration_of_authorization
     datatype: date
     min: ${ today().plus(days=1).format("yyyy-MM-dd") }
     max: ${ today().plus(days=70).format("yyyy-MM-dd") }
@@ -324,30 +340,30 @@ fields:
     show if:
       code: |
         permission_kind == "temporary agent affidavit"
-  - note: |
-      **Length of Caregiver's Permission** 
+  # - note: |
+  #     **Length of Caregiver's Permission** 
       
-      First, you must choose a date for the caregiver's permission to end. The permission 
-      can last for up to **two years** from the date that the affidavit is signed.
-      You can also end this permission sooner if you need by sending the caregiver a written
-      note. Limiting the powers is optional. If you do not write a limit, the caregiver
-      will have permission to make all decisions about healthcare and education for the length
-      of the permission. 
+  #     First, you must choose a date for the caregiver's permission to end. The permission 
+  #     can last for up to **two years** from the date that the affidavit is signed.
+  #     You can also end this permission sooner if you need by sending the caregiver a written
+  #     note. Limiting the powers is optional. If you do not write a limit, the caregiver
+  #     will have permission to make all decisions about healthcare and education for the length
+  #     of the permission. 
       
-      When do you want the caregiver’s permission to expire?
+  #     When do you want the caregiver’s permission to expire?
       
-      **Limits to the Caregiver's Permission**
+  #     **Limits to the Caregiver's Permission**
 
-      Second, you may decide what specific things you do not want the caregiver to do. 
-      For example, you could write that the caregiver is not allowed to make decisions 
-      about your child’s mental health treatment. You don’t have to limit the 
-      caregiver’s permission.
-      **limit** what the caregiver can do. For example, you can stop the caregiver 
-      from making some medical decisions. If you don’t, the caregiver will have permission 
-      to make all decisions about your child’s healthcare and education. You can always 
-      change what permission the caregiver has later by sending the caregiver a written note.
+  #     Second, you may decide what specific things you do not want the caregiver to do. 
+  #     For example, you could write that the caregiver is not allowed to make decisions 
+  #     about your child’s mental health treatment. You don’t have to limit the 
+  #     caregiver’s permission.
+  #     **limit** what the caregiver can do. For example, you can stop the caregiver 
+  #     from making some medical decisions. If you don’t, the caregiver will have permission 
+  #     to make all decisions about your child’s healthcare and education. You can always 
+  #     change what permission the caregiver has later by sending the caregiver a written note.
 
-      What decisions do you not want the caregiver to make for your child?
+  #     What decisions do you not want the caregiver to make for your child?
       
   - "The caregiver is not permitted to do the following: (optional)": excluded_powers
     input type: area
