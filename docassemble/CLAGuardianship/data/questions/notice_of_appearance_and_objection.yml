@@ -189,8 +189,7 @@ content: |
   For example, you may disagree because:
 
   * ${ children[0].familiar() } does not need a guardian
-  * The person who wants to be the guardian has a conflict of interest or may not
-    manage ${ children[0].familiar() }'s money properly
+  * The person who wants to be the guardian is not a good choice
 ---
 id: What is your BBO number
 question: |
