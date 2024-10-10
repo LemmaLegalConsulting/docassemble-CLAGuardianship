@@ -526,7 +526,7 @@ question: |
   % endif
 fields:
   - Birthdate: children[0].birthdate
-    datatype: date
+    datatype: Birthdate
 ---
 id: minor age kickout
 event: minor_age_kickout
@@ -1311,7 +1311,9 @@ attachment:
 #################### Attachment Blocks End #####################
 ---
 ########### Customized screens #################################
----
 code: |
-  additional_parties = ALPeopleList(elements=set().union(children + guardians))
+  if who_is_making_petition == "minor":
+    additional_parties = ALPeopleList(elements=set(guardians + responsible_parents))
+  else:
+    additional_parties = ALPeopleList(elements=guardians.union(children + guardians))
 ---
