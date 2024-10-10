@@ -46,7 +46,7 @@ code: |
   github_repo_name =  'docassemble-NoticeOfAppearanceAndObjection'
 ---
 code: |
-  interview_short_title = "Parental Consent or Objection to a Minor Guardianship"
+  interview_short_title = "Participate as a parent in your child's guardianship case"
 ---
 code: |
   al_form_type = "other"
