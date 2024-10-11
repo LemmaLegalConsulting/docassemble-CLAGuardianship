@@ -23,10 +23,10 @@ continue button field: Application_for_appointment_intro
 question: |
   Application for Appointment of Counsel in a guardianship case of a minor
 subquestion: |
-  If you are the **parent** of a child who is part of a guardianship case,
+  If you are the **parent** of a minor who is part of a guardianship case,
   you can use this interview to ask the court to give you a lawyer.
 
-  This interview will ask you questions about the child, the court case,
+  This interview will ask you questions about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }, the court case,
   and your contact information.
 
   There is a fee of $150 to get a lawyer in a guardianship case, but 
@@ -34,7 +34,7 @@ subquestion: |
 ---
 id: Who is this for
 question: |
-  What is the name of the child who is part of the guardianship case?
+  What is the name of the minor who is part of the guardianship case?
 fields:
   - First Name: children[0].name.first
     required: True
@@ -112,7 +112,7 @@ review:
       % endif
   - Edit: children[0].name
     button: |
-      **Child name**:
+      **Minor's name**:
       ${ children[0].name }
   - Edit: users.revisit
     button: |

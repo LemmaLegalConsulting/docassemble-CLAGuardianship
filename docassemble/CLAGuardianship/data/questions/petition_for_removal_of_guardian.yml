@@ -181,7 +181,7 @@ subquestion: |
   
   You can use this form to end the guardianship or to replace the guardian if:
 
-    * you or a child you know has a court-appointed guardian, **and** 
+    * you or a minor you know has a court-appointed guardian, **and** 
     * you have a reason for the guardian to be removed or replaced.
 
   You will need to explain why the guardian should be removed or replaced.
@@ -572,17 +572,6 @@ fields:
   - Do you want to find out if you qualify for a fee waiver?: wants_fee_waiver
     datatype: yesnoradio
 ---
-# id: petitioners
-# question: |
-#   Who is asking to change or remove the guardian?
-# fields:
-#   - I am: who_is_making_petition
-#     datatype: radio
-#     choices:
-#       - The minor's parent(s): parent
-#       - The minor: minor
-#       - Someone interested in the minor's welfare: interested_party
----
 id: relationship to minor
 question: |
   What is
@@ -643,7 +632,7 @@ fields:
     maxlength: 25
     required: False
     help: |
-      If there is already a case for the guardianship of the minor, the docket number will written on the court papers. If you
+      If there is already a case for the guardianship of ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }, the docket number will written on the court papers. If you
       don't have a docket number, or can't find one, you can leave this blank.
 ---
 id: requested_guardians information

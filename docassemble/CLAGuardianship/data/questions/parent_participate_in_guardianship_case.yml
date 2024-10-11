@@ -4,7 +4,6 @@ include:
   - notice_of_appearance_and_objection.yml
   - parental_consent_to_petition.yml
   - application_for_appointment.yml
-
 ---
 metadata:
   title: >-
@@ -55,7 +54,7 @@ sections:
   - section_starting: Get started
   - section_choice: What do you want to do?
   - section_about_you: About you
-  - section_child: About the child
+  - section_child: About the minor
   - section_guardianship_case: About the guardianship case
   - section_documents: Optional documents
   - review_participate_in_guardianship: Review your answers
@@ -193,13 +192,13 @@ fields:
     field: who_is_asking_to_participate
     datatype: radio
     choices:
-      - The **parent** of the child in the guardianship case: parent
-      - Someone **else** who cares about the child's wellbeing: interested_person
+      - The **parent** of the minor in the guardianship case: parent
+      - Someone **else** who cares about the minor's wellbeing: interested_person
   - label: |
       % if form_filled_by_attorney:
-      And my client's relationship to the child is
+      And my client's relationship to the minor is
       % else:
-      And my relationship to the child is
+      And my relationship to the minor is
       % endif
     field: interested_person_relationship
     show if:
@@ -284,11 +283,7 @@ id: childs name
 sets:
   - children[0].name.first
 question: |
-  % if who_is_asking_to_participate == "interested_person" or form_filled_by_attorney:
-  About the child
-  % else:
-  About your child
-  % endif
+  About the minor
 fields:
   - note: |
       <h2 class="h4">Child's name</h2>
@@ -316,7 +311,7 @@ fields:
     object labeler: court_short_label
     choices: all_courts.filter_courts(allowed_courts)
     under text: |
-      Usually the court in the county where your child lives.
+      Usually the court in the county where ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"your child" } lives.
   - Date filed (optional): file_date
     datatype: date
     required: False
@@ -421,7 +416,7 @@ review:
 
   - Edit: children[0].name.first
     button: |
-      **About the child**
+      **About the minor**
 
       ${ children[0].name_full() }
 
@@ -467,3 +462,4 @@ review:
 ---
 code: |  
   form_filled_by_attorney = bool(len(attorneys))   
+---

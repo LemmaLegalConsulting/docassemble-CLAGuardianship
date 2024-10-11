@@ -12,9 +12,9 @@ metadata:
   short title: >-
     Affidavit of Care and Custody
   description: |-
-    The *Affidavit Disclosing Care or Custody Proceeding* is a form you have to file in court cases that involve a child.
+    The *Affidavit Disclosing Care or Custody Proceeding* is a form you have to file in court cases that involve ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }.
 
-    This form tells the court if there are already any court orders about your child. It also tells the court if any judge is making decisions about your child now.
+    This form tells the court if there are already any court orders about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }. It also tells the court if any judge is making decisions about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } now.
   authors:
     - Court Forms Online
   allowed_courts:
@@ -366,8 +366,8 @@ fields:
     choices:
       - someone has a 209A (abuse prevention) order
       - someone lives in a domestic violence shelter
-      - someone (other the minor) in danger of abuse
-      - the minor is in danger of abuse
+      - someone (other than ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }) in danger of abuse
+      - ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } is in danger of abuse
       - another (legal) reason not listed above
 ---
 template: explain_confidential_addresses
@@ -547,7 +547,7 @@ subquestion: |
   * custody  
   * a 209A restraining order
   * divorce or annulment
-  * child requiring assistance
+  * ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } requiring assistance
   * child support
   * paternity
   * visitation
@@ -581,7 +581,7 @@ question: |
 subquestion: |
   Include the best information you know. If you’re not sure, it is okay to leave information blank or to write down what you remember.
 
-  Only include information about cases that involve the children.
+  Only include information about cases that involve ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }.
 
   You will have a chance to add more cases later.
 fields:
@@ -653,8 +653,8 @@ fields:
     js show if: |
       !(val("other_care_custody_proceedings[i].case_status") == "adoption")  && val("other_care_custody_proceedings[i].custody_awarded")
 validation code: |
-  # We don't ask the user to select which child is in the case if
-  # there is only one child. Below code adds the child to the appropriate
+  # We don't ask the user to select which minor is in the case if
+  # there is only one child. Below code adds the minor to the appropriate
   # list so we can write more general code.
   if len(children_of_both) == 1:
     other_care_custody_proceedings[i].children = children_of_both
@@ -662,16 +662,6 @@ validation code: |
 ---
 code: |
   other_care_custody_proceedings[i].other_parties.there_are_any = other_care_custody_proceedings[i].other_party_types["other"]
-
-
-# ---
-# question: |
-#   Who else was involved in this case?
-# subquestion: |
-#   For the ${ordinal(i)} case, ${other_care_custody_proceedings[i]}:
-#   Is there anyone _other than_ you or ${other_parties.familiar()} who
-#   was a party to this case? For example, a grandparent or other parent of the child.
-# yesno: other_care_custody_proceedings[i].other_parties.there_are_any
 ---
 sets:
   - other_care_custody_proceedings[i].other_parties[j].address.address

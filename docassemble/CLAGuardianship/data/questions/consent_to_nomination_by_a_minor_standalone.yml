@@ -86,7 +86,7 @@ subquestion: |
   You can use this tool if:
 
   - You are at least 14 and want to choose who will be your guardian.
-  - You have been asked to be a guardian for a child who is at least 14 and you agree **or** disagree to
+  - You have been asked to be a guardian for a minor who is at least 14 and you agree **or** disagree to
     be the guardian.
 
   **Before you get started**:
@@ -311,4 +311,3 @@ attachment:
       - "users1_phone": ${children[0].phone_numbers() }
       - "users1_name": ${children[0].name}
 ---
-

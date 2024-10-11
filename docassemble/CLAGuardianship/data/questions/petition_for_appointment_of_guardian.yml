@@ -20,11 +20,11 @@ metadata:
   short title: >-
     Minor Guardianship
   description: |-
-    If you are or if you know a child who needs a responsible adult to make decisions
+    If you are or if you know a minor who needs a responsible adult to make decisions
     for them other than their parent or their current guardian, you can use this interview 
     to ask the court to appoint a guardian.
 
-    The guardian can make decisions about the child's health, education, finances, and
+    The guardian can make decisions about the minor's health, education, finances, and
     general welfare.
   tags:
     - "FA-00-00-00-00"
@@ -527,20 +527,6 @@ subquestion: |
 
   Most people take about 20 minutes to finish this interview.
 ---
-# id: who is making petition
-# question: |
-#   % if form_filled_by_attorney:
-#   What best describes your client?
-#   % else:
-#   What best describes you?
-#   % endif
-# fields:
-#   - Choose one: who_is_making_petition
-#     datatype: radio
-#     choices:
-#       - The minor: minor
-#       - Someone interested in the minor's welfare: interested_party
----
 id: choose a court
 question: |
   What court will you file in?
@@ -573,8 +559,8 @@ fields:
       1. The county you live in right now, or
       1. If your parents died, the court serving the county where your parent's estate was **probated** (decided)
       % else:
-      1. The county the child lives in right now, or
-      1. If the child's parents died, the court serving the county where the parent's estate was **probated** (decided)
+      1. The county ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } lives in right now, or
+      1. If ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s parents died, the court serving the county where the parents' estate was **probated** (decided)
       % endif
 
   - I will file in this court because: court_choice_reason
@@ -587,14 +573,14 @@ fields:
           % if who_is_making_petition == "minor":
           It is the court serving the county where I live
           % else:
-          It is the court serving the county where the child lives
+          It is the court serving the county where ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } lives
           % endif
         key: minors_county
       - label: |
           % if who_is_making_petition == "minor":
           My parent or parents died and this is the court serving the county where their estate was probated
           % else:
-          The child's parent or parents died and this is the court serving the county where their estate was probated
+          ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"The minor" }'s parent or parents died and this is the court serving the county where their estate was probated
           % endif
         key: will_county
 ---
@@ -602,7 +588,7 @@ id: how many parents
 question: |
   How many parents can you tell us about?
 subquestion: |
-  The judge needs to know about the minor's parents, whether or not they are alive.
+  The judge needs to know about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s parents, whether or not they are alive.
 
   ${ collapse_template(what_is_a_parent) }
 
@@ -621,12 +607,12 @@ template: what_is_a_parent
 subject: |
   What is a parent?
 content: |
-  A parent is someone who is named on the child's official birth record.
+  A parent is someone who is named on ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s official birth record.
   That includes a birth parent who still has parental rights and an adoptive parent.
 
   When someone is adopted, the birth record is updated with the new parent's name.
 
-  You do not need to list a step parent or a foster parent unless they have legally adopted the child.
+  You do not need to list a step parent or a foster parent unless they have legally adopted ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }.
 ---
 id: parent basic information
 sets:
@@ -903,7 +889,7 @@ subquestion: |
   (opens in a new tab).
 
   When the guardian is for a minor, the surety requirement is often waived, or skipped.
-  This is because the guardian does not have control over the minor's money or property.
+  This is because the guardian does not have control over ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s money or property.
 
   You can ask the judge to skip the surety requirement now.
 fields:
@@ -971,12 +957,12 @@ template: what_is_primary_care_or_custody
 subject: |
   What does **primary care or custody** mean?
 content: |
-  "Primary care or custody" means you are one of the people who takes care of a child 
+  "Primary care or custody" means you are one of the people who takes care of ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } 
   most of the time. You make big decisions for them and handle their daily needs like meals, 
   a place to live, and keeping them safe.
 
   A paid babysitter doesn't have primary care or custody. 
-  They are only helping for a short time and aren't responsible for all of the child's needs.
+  They are only helping for a short time and aren't responsible for all of ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s needs.
 ---
 id: other custodian information
 sets:
@@ -1092,9 +1078,9 @@ question: |
   Does ${ requested_guardians[i].name } have priority for appointment?
 subquestion: |
   In order to have priority for appointment as a guardian, a person must have been nominated
-  by the minor **and** the minor must be at least 14 years old.
+  by ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } **and** ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } must be at least 14 years old.
 
-  If you select 'Yes', you must attach a copy of the minor's nomination to this Petition.
+  If you select 'Yes', you must attach a copy of ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s nomination to this Petition.
 fields:
   - no label: requested_guardians[i].has_priority_appointment
     datatype: yesnoradio
@@ -1273,11 +1259,11 @@ subject: |
   Why does the judge need to know?
 content: |
   A guardian for a minor usually cannot make decisions
-  about the child's property unless they are also appointed
+  about ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s property unless they are also appointed
   as a **conservator**. But the judge still needs to know
-  about things that the minor owns.
+  about things that ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } owns.
 
-  If the minor owns a lot of valuable things, usually more than
+  If ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } owns a lot of valuable things, usually more than
   $5,000 worth, the judge may decide that the guardian needs
   to pay or guarantee a bond to the court.
 ---
