@@ -111,6 +111,7 @@ code: |
   # basic_questions_signature_flow
   # users[0].signature
   others_in_proceedings.gather() # making sure defined before attachment block
+  set_party_name
 
   interview_order_affidavit_disclosing_care_or_custody = True
 ---
@@ -146,6 +147,16 @@ code: |
     signing_attorney.address.zip = attorneys[0].address.zip
 
   set_signing_attorney = True
+---
+code: |
+  if form_filled_by_attorney:
+    party_name_attorney = str(users[0])
+    has_attorney = True
+  else:
+    party_name_no_attorney = str(users[0])
+    no_attorney = True
+
+  set_party_name = True
 ---
 #################### Override Blocks Start #####################
 ---
@@ -1146,6 +1157,9 @@ attachment:
     - "attorneys_for_parents_2": ${ str(attorneys_for_parents.item(1)) +  ' (' + str(attorneys_for_parents.item(1).represented_party) + ')' if defined('attorneys_for_parents[1]') else ''}
     - "attorneys_for_parents_3": ${ str(attorneys_for_parents.item(2)) + ' (' + str(attorneys_for_parents.item(2).represented_party) + ')' if defined('attorneys_for_parents[2]') else ''}
     - "user_signature": ${ f"/s/ {users[0]}" if esign else "" }
+    - "trial_court_division": ${ trial_court.division }
+    - "party_name_attorney": ${ party_name_attorney }
+    - "party_name_no_attorney": ${ party_name_no_attorney }
 ---
 id: care or custody intro
 continue button field: affidavit_disclosing_care_or_custody_intro
