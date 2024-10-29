@@ -158,6 +158,12 @@ code: |
 
   set_party_name = True
 ---
+code: |
+  if (not confidential_address) and (not ask_impound_affidavit):
+    no_confidential_addresses = True
+
+  set_no_address_change = True
+---
 #################### Override Blocks Start #####################
 ---
 #################### Question Blocks Start #####################
@@ -1086,6 +1092,7 @@ attachment:
     - "child1_address_on_one_line": ${ children_of_both.item(0).address.on_one_line(include_unit=True) if not confidential_address else ''}
     - "child2_address_on_one_line": ${ children_of_both.item(1).address.on_one_line(include_unit=True)  if not confidential_address else ''}
     - "child3_address_on_one_line": ${ children_of_both.item(2).address.on_one_line(include_unit=True)  if not confidential_address else ''}
+    - "child4_address_on_one_line": ${ children_of_both.item(3).address.on_one_line(include_unit=True)  if not confidential_address else ''}
     - "user_address_on_one_line": ${ users[0].address.on_one_line(include_unit=True)  if not confidential_address else ''}
     - "user_name_full__1": ${ str(users[0]) }
     - "child1_address_street": ${ children_of_both.item(0).address.line_one() }
@@ -1104,10 +1111,12 @@ attachment:
     - "child1_name_last_first": ${ children_of_both.item(0).name.lastfirst() }
     - "child2_name_last_first": ${ children_of_both.item(1).name.lastfirst() }
     - "child3_name_last_first": ${ children_of_both.item(2).name.lastfirst() }
+    - "child4_name_last_first": ${ children_of_both.item(3).name.lastfirst() }
     - "confidential_address": ${ confidential_address }
     - "child1_past_addresses_on_one_line": ${ children_of_both.item(0).previous_addresses if not confidential_address else '' }
     - "child2_past_addresses_on_one_line": ${ children_of_both.item(1).previous_addresses if not confidential_address else '' }
     - "child3_past_addresses_on_one_line": ${ children_of_both.item(2).previous_addresses if not confidential_address else '' }
+    - "child4_past_addresses_on_one_line": ${ children_of_both.item(3).previous_addresses if not confidential_address else '' }
     - "has_participated_custody_case": ${ has_participated_custody_case }
     - "has_not_participated_custody_case": ${ not has_participated_custody_case }
     - "know_of_other_custody_case": ${ know_of_other_custody_case }
