@@ -121,11 +121,23 @@ attachment:
       - "children1_name_first__1": ${ children[0].name.first }
       - "children1_name_middle__1": ${ children[0].name.middle }
       - "children1_name_last__1": ${ children[0].name.last }
-      - "user_is_parent": |
+      # - "user_is_parent": |
+      #     % if al_form_type == "starts_case":
+      #     ${ any((not parent.is_deceased for parent in parents))  }
+      #     % elif al_form_type == "other":
+      #     ${ True if who_is_asking_to_participate == 'parent' else False  }
+      #     % endif
+      - "user_is_father": |
           % if al_form_type == "starts_case":
           ${ any((not parent.is_deceased for parent in parents))  }
           % elif al_form_type == "other":
-          ${ True if who_is_asking_to_participate == 'parent' else False  }
+          ${ True if (who_is_asking_to_participate == 'parent' and waiver_and_consent_parent_relationship == 'father') else False  }
+          % endif
+      - "user_is_mother": |
+          % if al_form_type == "starts_case":
+          ${ any((not parent.is_deceased for parent in parents))  }
+          % elif al_form_type == "other":
+          ${ True if (who_is_asking_to_participate == 'parent' and waiver_and_consent_parent_relationship == 'mother') else False  }
           % endif
       # - "user_is_father": ${ True if who_is_making_petition == 'father' else False  }
       # display user_is_interested_person only when parent filling directly, not attached to the petition

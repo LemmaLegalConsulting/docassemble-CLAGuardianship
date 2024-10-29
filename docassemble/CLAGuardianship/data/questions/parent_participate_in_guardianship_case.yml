@@ -96,6 +96,8 @@ code: |
     nav.set_section("section_about_you")
     users.gather()
     interested_person_relationship
+    if interested_person_relationship == "parent":
+      waiver_and_consent_parent_relationship
     nav.set_section("section_child")
     children[0].name.first
     children[0].birthdate
@@ -353,6 +355,50 @@ code: |
 ---
 code: |
   notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
+---
+############## Waiver and Consent ###############
+---
+id: specify parent relationship
+question: |
+  More about your relationship to the minor
+fields:
+  - I am the minor's: waiver_and_consent_parent_relationship
+    datatype: radio
+    choices: 
+      - Father: father
+      - Mother: mother
+---
+code: |
+  requested_guardians[i].name.first
+  requested_guardians[i].complete = True
+---
+id: requested_guardians information
+sets:
+  - requested_guardians[i].name.first
+  - requested_guardians[i].name.last
+  - requested_guardians[i].name.middle
+  - requested_guardians[i].name.suffix
+question: |
+  Tell us about the ${ ordinal(i) } potential guardian
+fields:
+  - code: |
+      requested_guardians[i].name_fields()
+validation code: |
+  if len(requested_guardians.complete_elements()) > 0:
+    requested_guardians.there_is_another = False
+---
+id: requested_guardians there_is_another
+question: |
+  Is there another person named as a potential guardian?
+fields:
+  - Choose one: requested_guardians.there_is_another
+    datatype: yesnoradio
+---
+code: |
+  parental_consent_to_petition_attachment.enabled = False
+  
+  if main_choice in ("agree"):
+    parental_consent_to_petition_attachment.enabled = True
 ---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
