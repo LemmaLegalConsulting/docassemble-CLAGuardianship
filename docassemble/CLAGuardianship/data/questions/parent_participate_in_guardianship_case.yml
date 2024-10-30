@@ -95,6 +95,7 @@ code: |
     explain_notarization_requirement
     nav.set_section("section_about_you")
     users.gather()
+    users[0].address.address
     interested_person_relationship
     if interested_person_relationship == "parent":
       waiver_and_consent_parent_relationship
@@ -396,7 +397,7 @@ fields:
 ---
 code: |
   parental_consent_to_petition_attachment.enabled = False
-  
+
   if main_choice in ("agree"):
     parental_consent_to_petition_attachment.enabled = True
 ---
