@@ -433,7 +433,6 @@ code: |
   if attorneys.number_gathered() >= 1:
     attorneys.there_is_another = False
 ---
----
 id: notice of appearance and objection review screen
 continue button field: review_participate_in_guardianship
 continue button label: Next

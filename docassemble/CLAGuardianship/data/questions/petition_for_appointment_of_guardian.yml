@@ -114,6 +114,10 @@ code: |
 
   nav.set_section("review_parents_information")
   parents.gather()
+
+  ask_parental_relationships
+  set_parental_relationships
+
   if parents_deceased:
     if relatives.there_are_any:
       relatives.gather()
@@ -328,6 +332,132 @@ code: |
 code: |
   guardian_removal = False
   set_guardian_removal = True
+---
+code: |
+  for parent in parents:
+    if not parent.is_deceased:
+      if parent.agrees_to_guardianship:
+        parent.parental_relationship
+        break
+
+  ask_parental_relationships = True
+---
+depends on: consenting_parents
+code: |
+  if len(parents.complete_elements()) > 1: # two parents entered
+    if len([parent for parent in parents if getattr(parent, 'is_deceased', False) == False]) > 1: # both parents alive
+      if len([parent for parent in parents if getattr(parent, 'agrees_to_guardianship', False)]) > 1: # both parents agree
+        if parents[0].parental_relationship == "father":
+          consenting_parents[0].name.first = parents[0].name.first
+          consenting_parents[0].name.last = parents[0].name.last
+          consenting_parents[0].name.middle = parents[0].name.middle
+          consenting_parents[0].name.suffix = parents[0].name.suffix
+          consenting_parents[0].address.address = parents[0].address.address
+          consenting_parents[0].address.unit = parents[0].address.unit
+          consenting_parents[0].address.city = parents[0].address.city
+          consenting_parents[0].address.state = parents[0].address.state
+          consenting_parents[0].address.zip = parents[0].address.zip
+          consenting_parents[1].name.first = parents[1].name.first
+          consenting_parents[1].name.last = parents[1].name.last
+          consenting_parents[1].name.middle = parents[1].name.middle
+          consenting_parents[1].name.suffix = parents[1].name.suffix
+          consenting_parents[1].address.address = parents[1].address.address
+          consenting_parents[1].address.unit = parents[1].address.unit
+          consenting_parents[1].address.city = parents[1].address.city
+          consenting_parents[1].address.state = parents[1].address.state
+          consenting_parents[1].address.zip = parents[1].address.zip
+        else:
+          consenting_parents[0].name.first = parents[1].name.first
+          consenting_parents[0].name.last = parents[1].name.last
+          consenting_parents[0].name.middle = parents[1].name.middle
+          consenting_parents[0].name.suffix = parents[1].name.suffix
+          consenting_parents[0].address.address = parents[1].address.address
+          consenting_parents[0].address.unit = parents[1].address.unit
+          consenting_parents[0].address.city = parents[1].address.city
+          consenting_parents[0].address.state = parents[1].address.state
+          consenting_parents[0].address.zip = parents[1].address.zip
+          consenting_parents[1].name.first = parents[0].name.first
+          consenting_parents[1].name.last = parents[0].name.last
+          consenting_parents[1].name.middle = parents[0].name.middle
+          consenting_parents[1].name.suffix = parents[0].name.suffix
+          consenting_parents[1].address.address = parents[0].address.address
+          consenting_parents[1].address.unit = parents[0].address.unit
+          consenting_parents[1].address.city = parents[0].address.city
+          consenting_parents[1].address.state = parents[0].address.state
+          consenting_parents[1].address.zip = parents[0].address.zip
+      elif len([parent for parent in parents if getattr(parent, 'agrees_to_guardianship', False)]) > 0: # one parent agrees
+        for parent in parents:
+          if parent.agrees_to_guardianship:
+            if parent.parental_relationship == "father":
+              consenting_parents[0].name.first = parent.name.first
+              consenting_parents[0].name.last = parent.name.last
+              consenting_parents[0].name.middle = parent.name.middle
+              consenting_parents[0].name.suffix = parent.name.suffix
+              consenting_parents[0].address.address = parent.address.address
+              consenting_parents[0].address.unit = parent.address.unit
+              consenting_parents[0].address.city = parent.address.city
+              consenting_parents[0].address.state = parent.address.state
+              consenting_parents[0].address.zip = parent.address.zip
+            else:
+              consenting_parents[1].name.first = parent.name.first
+              consenting_parents[1].name.last = parent.name.last
+              consenting_parents[1].name.middle = parent.name.middle
+              consenting_parents[1].name.suffix = parent.name.suffix
+              consenting_parents[1].address.address = parent.address.address
+              consenting_parents[1].address.unit = parent.address.unit
+              consenting_parents[1].address.city = parent.address.city
+              consenting_parents[1].address.state = parent.address.state
+              consenting_parents[1].address.zip = parent.address.zip
+    elif len([parent for parent in parents if getattr(parent, 'is_deceased', False) == False]) > 0: # one parent alive
+      for parent in parents:
+        if not parent.is_deceased:
+          if parent.agrees_to_guardianship:
+            if parent.parental_relationship == "father":
+              consenting_parents[0].name.first = parent.name.first
+              consenting_parents[0].name.last = parent.name.last
+              consenting_parents[0].name.middle = parent.name.middle
+              consenting_parents[0].name.suffix = parent.name.suffix
+              consenting_parents[0].address.address = parent.address.address
+              consenting_parents[0].address.unit = parent.address.unit
+              consenting_parents[0].address.city = parent.address.city
+              consenting_parents[0].address.state = parent.address.state
+              consenting_parents[0].address.zip = parent.address.zip
+            else:
+              consenting_parents[1].name.first = parent.name.first
+              consenting_parents[1].name.last = parent.name.last
+              consenting_parents[1].name.middle = parent.name.middle
+              consenting_parents[1].name.suffix = parent.name.suffix
+              consenting_parents[1].address.address = parent.address.address
+              consenting_parents[1].address.unit = parent.address.unit
+              consenting_parents[1].address.city = parent.address.city
+              consenting_parents[1].address.state = parent.address.state
+              consenting_parents[1].address.zip = parent.address.zip 
+  elif len(parents.complete_elements()) > 0: # one parent entered
+    for parent in parents:
+      if not parent.is_deceased:
+        if parent.agrees_to_guardianship:
+          if parent.parental_relationship == "father":
+            consenting_parents[0].name.first = parent.name.first
+            consenting_parents[0].name.last = parent.name.last
+            consenting_parents[0].name.middle = parent.name.middle
+            consenting_parents[0].name.suffix = parent.name.suffix
+            consenting_parents[0].address.address = parent.address.address
+            consenting_parents[0].address.unit = parent.address.unit
+            consenting_parents[0].address.city = parent.address.city
+            consenting_parents[0].address.state = parent.address.state
+            consenting_parents[0].address.zip = parent.address.zip
+          else:
+            consenting_parents[1].name.first = parent.name.first
+            consenting_parents[1].name.last = parent.name.last
+            consenting_parents[1].name.middle = parent.name.middle
+            consenting_parents[1].name.suffix = parent.name.suffix
+            consenting_parents[1].address.address = parent.address.address
+            consenting_parents[1].address.unit = parent.address.unit
+            consenting_parents[1].address.city = parent.address.city
+            consenting_parents[1].address.state = parent.address.state
+            consenting_parents[1].address.zip = parent.address.zip 
+
+  set_parental_relationships = True
 ---
 #################### Object/Code Blocks End #####################
 ---
@@ -644,6 +774,25 @@ fields:
     show if:
       variable: parents[i].is_deceased
       is: False
+---
+id: parent relationship
+question: |
+  ${ parents[i] }'s parental relationship to ${ children.familiar() }
+subquestion: |
+  % if len(parents.complete_elements()) > 1 and len([parent for parent in parents if getattr(parent, 'agrees_to_guardianship', False)]) > 1:
+  Because of the way the court form for consenting to a guardianship is set up,
+  **one parent will need to be labeled as the father and the other as the mother**.
+
+  After you choose an option for ${ parents[0] }, the other option will be automatically applied to ${ parents[1] }.
+  For example, if you choose "father", the other parent will be entered into the form as "mother". **You can still use the
+  form if ${ parents[1] } does not identify with that option.** 
+  % endif 
+fields:
+  - ${ parents[i] } is ${ children.familiar() }'s: parents[i].parental_relationship
+    datatype: radio
+    choices:
+      - Father: father
+      - Mother: mother
 ---
 id: parent contact information
 sets:

@@ -1,6 +1,5 @@
 ---
 objects:
-  - parents: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - requested_guardians: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
 ---
 id: requested guardians
@@ -99,11 +98,13 @@ objects:
   - parental_consent_to_petition_attachment: ALDocument.using(title="Consent to Appointment by Parents", filename="consent_to_petition_for_guardianship", has_addendum=False)
 ---
 code: |
-  consenting_parents = DAList("consenting_parents", elements=[parent for parent in parents if parent.is_deceased == False and parent.agrees_to_guardianship])
+    consenting_parents = DAList("consenting_parents", 
+      elements=[
+          parent for parent in parents if parent.is_deceased == False and parent.agrees_to_guardianship
+        ]
+      )
 ---
 need:
-  - consenting_parents
-reconsider:
   - consenting_parents
 attachment:
   - name: parental_consent_to_petition
@@ -121,13 +122,13 @@ attachment:
           % if al_form_type == "starts_case":
           ${ any((not parent.is_deceased for parent in parents))  }
           % elif al_form_type == "other":
-          ${ True if (who_is_asking_to_participate == 'parent' and waiver_and_consent_parent_relationship == 'father') else False  }
+          ${ True if (waiver_and_consent_parent_relationship == 'father') else False  }
           % endif
       - "user_is_mother": |
           % if al_form_type == "starts_case":
           ${ any((not parent.is_deceased for parent in parents))  }
           % elif al_form_type == "other":
-          ${ True if (who_is_asking_to_participate == 'parent' and waiver_and_consent_parent_relationship == 'mother') else False  }
+          ${ True if (waiver_and_consent_parent_relationship == 'mother') else False  }
           % endif
       # display user_is_interested_person only when parent filling directly, not attached to the petition
       - "user_is_interested_person": |
@@ -144,20 +145,146 @@ attachment:
       - "guardians2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
       - "guardians2_name_first": ${ requested_guardians[1].name.first }
       - "guardians2_name_last": ${ requested_guardians[1].name.last }
-      - "parents1_name_full": ${ consenting_parents.item(0).name}
-      - "parents1_address_address": ${ consenting_parents.item(0).address.address}
-      - "parents1_address_unit": ${ consenting_parents.item(0).address.unit }
-      - "parents1_address_city": ${ consenting_parents.item(0).address.city}
-      - "parents1_address_state": ${ consenting_parents.item(0).address.state}
-      - "parents1_address_zip": ${ consenting_parents.item(0).address.zip}
-      - "parents2_name_full": ${ consenting_parents.item(1).name}
-      - "parents2_address_address": ${ consenting_parents.item(1).address.address}
-      - "parents2_address_unit": ${ consenting_parents.item(1).address.unit}
-      - "parents2_address_city": ${ consenting_parents.item(1).address.city}
-      - "parents2_address_state": ${ consenting_parents.item(1).address.state}
-      - "parents2_address_zip": ${ consenting_parents.item(1).address.zip}
-      - "parents1_signature_date": ${ today() if len(consenting_parents) else ""}
-      - "parents2_signature_date": ${ today() if len(consenting_parents) > 1 else ""}
+      - "parents1_name_full": |
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].name }
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).name }
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).name}
+          % endif 
+      - "parents1_address_address": |
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].address.address}
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).address.address}
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).address.address}
+          % endif
+      - "parents1_address_unit": |
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].address.unit}
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).address.unit}
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).address.unit}
+          % endif
+      - "parents1_address_city": | 
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].address.city}
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).address.city}
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).address.city}
+          % endif
+      - "parents1_address_state": |
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].address.state}
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).address.state}
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).address.state}
+          % endif 
+      - "parents1_address_zip": | 
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ users[0].address.zip}
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ consenting_parents.item(0).address.zip}
+              % endif
+            % endif
+          % else:
+            ${ consenting_parents.item(0).address.zip}
+          % endif
+      - "parents2_name_full": |
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).name }
+            % endif
+          % else:
+            ${ consenting_parents.item(1).name}
+          % endif
+      - "parents2_address_address": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).address.address}
+            % endif
+          % else:
+            ${ consenting_parents.item(1).address.address}
+          % endif
+      - "parents2_address_unit": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).address.city}
+            % endif
+          % else:
+            ${ consenting_parents.item(1).address.city}
+          % endif
+      - "parents2_address_city": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).address.city}
+            % endif
+          % else:
+            ${ consenting_parents.item(1).address.city}
+          % endif
+      - "parents2_address_state": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).address.state}
+            % endif
+          % else:
+            ${ consenting_parents.item(1).address.state}
+          % endif 
+      - "parents2_address_zip": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ consenting_parents.item(0).address.zip}
+            % endif
+          % else:
+            ${ consenting_parents.item(1).address.zip}
+          % endif
+      - "parents1_signature_date": |
+          % if al_form_type == "other":
+            % if who_is_asking_to_participate == "interested_person":
+              ${ today() }
+            % else:
+              % if waiver_and_consent_parent_relationship == "father":
+                ${ today() }
+              % endif
+            % endif
+          % else:
+            ${ "" }
+          % endif
+      - "parents2_signature_date": | 
+          % if al_form_type == "other":
+            % if waiver_and_consent_parent_relationship == "mother":
+              ${ today() }
+            % endif
+          % else:
+            ${ "" }
+          % endif
       - "users1_name_full": ${consenting_parents.item(0).name}
       - "children1_name_first__2": ${ children[0].name.first }
       - "children1_name_middle__2": ${ children[0].name.middle }
