@@ -181,7 +181,7 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - Application_for_appointment_Post_interview_instructions: ALDocument.using(title="Instructions", filename="Application_for_appointment_next_steps.docx", enabled=True, has_addendum=False)
+  - Application_for_appointment_Post_interview_instructions: ALDocument.using(title="Application for Appointment of Counsel Instructions", filename="application_for_appointment_next_steps.docx", enabled=True, has_addendum=False)
   - Application_for_appointment_attachment: ALDocument.using(title="Application for Appointment of Counsel", filename="Application_for_appointment", has_addendum=False, )
 ---
 # Each attachment defines a key in an ALDocument. We use `i` as the placeholder here so the same template is 
@@ -190,7 +190,7 @@ objects:
 attachment:
   name: Post-interview-Instructions
   filename: Application_for_appointment_next_steps
-  docx template file: Application_for_appointment_next_steps.docx
+  docx template file: application_for_appointment_next_steps.docx
   variable name: Application_for_appointment_Post_interview_instructions[i]
   skip undefined: True
   tagged pdf: True
