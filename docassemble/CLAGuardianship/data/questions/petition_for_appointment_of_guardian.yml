@@ -114,6 +114,11 @@ code: |
 
   nav.set_section("review_parents_information")
   parents.gather()
+
+  for parent in parents:
+    if not parent.is_deceased and parent.agrees_to_guardianship:
+      parent.parental_relationship
+
   if parents_deceased:
     if relatives.there_are_any:
       relatives.gather()
@@ -644,6 +649,46 @@ fields:
     show if:
       variable: parents[i].is_deceased
       is: False
+---
+if: |
+  i == 0 or ( len(parents.complete_elements().filter(is_deceased=True).filter(agrees_to_guardianship=True)) == 1 )
+id: parent relationship
+question: |
+  Adding ${ parents[i] }'s parental relationship to ${ children.familiar() } on the form
+subquestion: |
+  The court form has space for one parent labeled "mother" and one parent labeled "father", regardless of the parents genders.
+
+  <div class="alert alert-info" role="alert">
+    Note: the <a href="https://www.mass.gov/news/governor-healey-signs-parentage-act-ensuring-equality-for-all-families-in-massachusetts">Parentage Act</a>
+    requires the Trial Court to update its forms to remove this exclusive language. This interview will be updated to reflect the change
+    when the Trial Court has finished that work.
+  </div>
+fields:
+  - ${ parents[i] } will be labeled the: parents[i].parental_relationship
+    datatype: radio
+    choices:
+      - Father: father
+      - Mother: mother
+  - note: |
+      ${parents[1] } will be labeled the parent's **father**
+    show if:
+      variable: parents[i].parental_relationship
+      is: mother
+      code: |
+        len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1
+  - note: |
+      ${parents[1] } will be labeled the parent's **mother**
+    show if:
+      variable: parents[i].parental_relationship
+      is: father
+      code: |
+        len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1
+---
+code: |
+  # only reachable when parents[0] consented and is alive, 
+  # so we know that parents[0].parental_relationship is defined by the interactive question
+  if len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1:
+    parents[1].parental_relationship = "mother" if parents[0].parental_relationship == "father" else "father"
 ---
 id: parent contact information
 sets:
