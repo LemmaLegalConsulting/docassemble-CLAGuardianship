@@ -664,11 +664,15 @@ id: parent relationship
 question: |
   Adding ${ parents[i] }'s parental relationship to ${ children.familiar() } on the form
 subquestion: |
-  The court form has space for one parent labeled "mother" and one parent labeled "father", regardless of the parents genders.
+  The court form has space for one parent labeled "mother" and one parent labeled "father", regardless of each parent's gender.
+
+  You must choose which parent is labeled "mother" and which is labeled "father". It does not have any legal relevance to the case
+  if the label does not match the parent's gender.
 
   <div class="alert alert-info" role="alert">
-    Note: the <a href="https://www.mass.gov/news/governor-healey-signs-parentage-act-ensuring-equality-for-all-families-in-massachusetts">Parentage Act</a>
-    requires the Trial Court to update its forms to remove this exclusive language. This interview will be updated to reflect the change
+    <i class="fas fa-info-circle"></i>
+    The <a href="https://www.mass.gov/news/governor-healey-signs-parentage-act-ensuring-equality-for-all-families-in-massachusetts">Parentage Act</a><i class="fas fa-external-link-alt"></i>
+    requires the Trial Court to update its forms to remove unnecessary gendered language like this. This interview will be updated to reflect the change
     when the Trial Court has finished that work.
   </div>
 fields:
@@ -678,14 +682,14 @@ fields:
       - Father: father
       - Mother: mother
   - note: |
-      ${parents[1] } will be labeled the parent's **father**
+      ${parents[1] } will be labeled the **father**
     show if:
       variable: parents[i].parental_relationship
       is: mother
       code: |
         len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1
   - note: |
-      ${parents[1] } will be labeled the parent's **mother**
+      ${parents[1] } will be labeled the **mother**
     show if:
       variable: parents[i].parental_relationship
       is: father
