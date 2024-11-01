@@ -409,9 +409,11 @@ code: |
 objects:
   - al_user_bundle: ALDocumentBundle.using(
       elements=[
+          notice_of_appearance_and_objection_Post_interview_instructions,
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
           parental_consent_to_petition_attachment,
+          Application_for_appointment_Post_interview_instructions,
           Application_for_appointment_attachment,
           affidavitofindigency_attachment,
         ],
