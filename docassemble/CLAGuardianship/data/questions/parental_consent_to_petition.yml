@@ -106,6 +106,8 @@ code: |
 ---
 need:
   - consenting_parents
+reconsider:
+  - consenting_parents
 attachment:
   - name: parental_consent_to_petition
     filename: parental_consent_to_petition
@@ -155,7 +157,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).name}
+            ${ consenting_parents.filter(parental_relationship="father") }
           % endif 
       - "parents1_address_address": |
           % if al_form_type == "other":
@@ -167,7 +169,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).address.address}
+            ${ consenting_parents.filter(parental_relationship="father").item(0).address.address}
           % endif
       - "parents1_address_unit": |
           % if al_form_type == "other":
@@ -179,7 +181,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).address.unit}
+            ${ consenting_parents.filter(parental_relationship="father").item(0).address.unit}
           % endif
       - "parents1_address_city": | 
           % if al_form_type == "other":
@@ -191,7 +193,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).address.city}
+            ${ consenting_parents.filter(parental_relationship="father").item(0).address.city}
           % endif
       - "parents1_address_state": |
           % if al_form_type == "other":
@@ -203,7 +205,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).address.state}
+            ${ consenting_parents.filter(parental_relationship="father").item(0).address.state}
           % endif 
       - "parents1_address_zip": | 
           % if al_form_type == "other":
@@ -215,7 +217,7 @@ attachment:
               % endif
             % endif
           % else:
-            ${ consenting_parents.item(0).address.zip}
+            ${ consenting_parents.filter(parental_relationship="father").item(0).address.zip}
           % endif
       - "parents2_name_full": |
           % if al_form_type == "other":
@@ -223,7 +225,7 @@ attachment:
               ${ consenting_parents.item(0).name }
             % endif
           % else:
-            ${ consenting_parents.item(1).name}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).name}
           % endif
       - "parents2_address_address": | 
           % if al_form_type == "other":
@@ -231,7 +233,7 @@ attachment:
               ${ consenting_parents.item(0).address.address}
             % endif
           % else:
-            ${ consenting_parents.item(1).address.address}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).address.address}
           % endif
       - "parents2_address_unit": | 
           % if al_form_type == "other":
@@ -239,7 +241,7 @@ attachment:
               ${ consenting_parents.item(0).address.city}
             % endif
           % else:
-            ${ consenting_parents.item(1).address.city}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).address.city}
           % endif
       - "parents2_address_city": | 
           % if al_form_type == "other":
@@ -247,7 +249,7 @@ attachment:
               ${ consenting_parents.item(0).address.city}
             % endif
           % else:
-            ${ consenting_parents.item(1).address.city}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).address.city}
           % endif
       - "parents2_address_state": | 
           % if al_form_type == "other":
@@ -255,7 +257,7 @@ attachment:
               ${ consenting_parents.item(0).address.state}
             % endif
           % else:
-            ${ consenting_parents.item(1).address.state}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).address.state}
           % endif 
       - "parents2_address_zip": | 
           % if al_form_type == "other":
@@ -263,7 +265,7 @@ attachment:
               ${ consenting_parents.item(0).address.zip}
             % endif
           % else:
-            ${ consenting_parents.item(1).address.zip}
+            ${ consenting_parents.filter(parental_relationship="mother").item(0).address.zip}
           % endif
       - "parents1_signature_date": |
           % if al_form_type == "other":
@@ -275,7 +277,9 @@ attachment:
               % endif
             % endif
           % else:
-            ${ "" }
+            % if len(consenting_parents.filter(parental_relationship="father")) > 0: 
+              ${ today() }
+            % endif
           % endif
       - "parents2_signature_date": | 
           % if al_form_type == "other":
@@ -283,7 +287,9 @@ attachment:
               ${ today() }
             % endif
           % else:
-            ${ "" }
+            % if len(consenting_parents.filter(parental_relationship="mother")) > 0: 
+              ${ today() }
+            % endif
           % endif
       - "users1_name_full": ${consenting_parents.item(0).name}
       - "children1_name_first__2": ${ children[0].name.first }

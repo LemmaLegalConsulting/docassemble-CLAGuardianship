@@ -370,6 +370,10 @@ fields:
       - Mother: mother
 ---
 code: |
+  # Only one parent can use this pathway at a time so this should be safe to backfill with one value
+  parents[i].parental_relationship = waiver_and_consent_parent_relationship 
+---
+code: |
   requested_guardians[i].name.first
   requested_guardians[i].complete = True
 ---
