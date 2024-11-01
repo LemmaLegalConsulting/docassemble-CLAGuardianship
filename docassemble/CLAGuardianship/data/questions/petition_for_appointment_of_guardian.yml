@@ -198,6 +198,14 @@ code: |
 #################### Object/Code Blocks Start #####################
 ---
 code: |
+  fees['Filing fee'].waive = True
+  fees['Filing fee'].amount = 15
+  fees['Service'].waive = True
+  fees['Service'].amount = 35
+  
+  set_fee_waiver_defaults = True
+---
+code: |
   children[i].name.first
   children[i].birthdate
   if who_is_making_petition == "minor":
