@@ -1160,7 +1160,7 @@ objects:
 attachment:
   name: Post-interview-Instructions
   filename: petition_for_removal_of_guardian_next_steps
-  docx template file: Petition_for_Removal_of_Guardian_of_Minor_next_steps.docx
+  docx template file: petition_for_removal_of_guardian_next_steps.docx
   variable name: petition_for_removal_of_guardian_Post_interview_instructions[i]
   skip undefined: True
   tagged pdf: True
