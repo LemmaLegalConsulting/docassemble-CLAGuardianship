@@ -11,14 +11,43 @@ metadata:
   short title: >-
     Parent's Consent or Objection to a Minor Guardianship
   description: |-
-    This interview helps a Massachusetts parent participate in a minor guardianship case by:
+    This interview helps a Massachusetts parent or someone else who cares about the wellbeing of a minor
+    attend and have a chance to talk to the judge in a minor guardianship case. 
+    
+    It can help the parent or other person:
 
-    * Telling the court they disagree (object) to the guardianship, or
-    * Telling the court they agree (consent) to the guardianship.
+    * Tell the judge they disagree (object) to the guardianship, or
+    * Tell the judge they agree (consent) to the guardianship.
+
+    If you want to be heard but do not yet know if you agree or disagree, you can use this 
+    interview to ask the judge to let you speak at the hearing.
 
     It can also help the parent ask the judge to give them a lawyer for the case.
+  can_I_use_this_form: |
+    You can use this interview if:
+
+    * You are a parent of the minor in the guardianship case, or
+    * You are someone else who cares about the minor's wellbeing, and
+    * Someone has filed a case in court for the guardianship of a child.
+
+    The case to get a guardian for the minor has to already be filed with 
+    the court.
+  before_you_start: |
+    Before you start, you should have the court papers for the guardianship case.
+
+    If you do not have the papers, you need to know:
+
+    * The date the case was filed
+    * The docket number for the case
+    * The name of the court where the case was filed
+
+    You may be able to find this information on [masscourts.org](https://www.masscourts.org/).
+  LIST_topics:
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   tags:
-    - "FA-04-00-00-00"
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   authors:
     - Rami Lorca
     - Quinten Steenhuis
@@ -27,6 +56,26 @@ metadata:
   typical_role: "unknown"
   al_weaver_version: "1.10.2"
   generated_on: "2024-01-09"
+  maturity: production
+  estimated_completion_minutes: 20
+  estimated_completion_delta: 10
+  languages:
+    - en
+  jurisdiction: NAM-US-US+MA
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
+  help_page_title: "Guardianship of a Minor: An Overview"
+  form_titles:
+    - "Notice of Appearance and Objection (Probate and Family Court)"
+    - "Waiver and Consent to Petition for Appointment of Guardian of a Minor"
+    - "Application for appointment of counsel"
+    - "Affidavit of indigency"
+  form_numbers:
+    - MPC 505a
+    - MPC 440
+    - MPC 263
+    - TC0002
+  update_notes: |
+    2024-11-03: Added metadata
 ---
 objects:
   - children: ALPeopleList.using(ask_number=True,target_number=1)
