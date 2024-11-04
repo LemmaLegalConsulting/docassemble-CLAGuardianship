@@ -1,4 +1,9 @@
 ---
+include:
+  - shared.yml
+  - petition_for_appointment_of_guardian.yml
+  - customized_screens.yml
+---
 id: review petition for appointment of guardian
 event: review_full
 question: |
@@ -7,6 +12,7 @@ review:
   - note: |
       <hr>
       <h2 class='h5'>Petitioner(s)</h2>
+    show if: who_is_making_petition
   - Edit: users.revisit
     button: |-
       % for item in users:
@@ -32,6 +38,7 @@ review:
   - note: |
       <hr>
       <h2 class='h5'>Petitioner's Attorney</h2>
+    show if: attorneys.there_are_any
   - Edit: attorneys.revisit
     button: |-
       % for item in attorneys:
@@ -51,6 +58,7 @@ review:
   - note: |
       <hr>
       <h2 class='h5'>The Minor</h2>
+    show if: children[0].name.first
   - Edit: children.revisit
     button: |-
       % for item in children:
@@ -59,9 +67,19 @@ review:
         ${ item.address.block() }
 
       % endfor
+  - Edit: relatives.revisit
+    button: |
+      **${ children.familiar() }'s Relatives**:
+
+      % for item in relatives:
+        ${ item.address_block() }
+        Relationship to minor: ${ item.relationship_to_minor }
+
+      % endfor
   - note: |
       <hr>
       <h2 class='h5'>Court Information</h2>
+    show if: trial_court
   - Edit: 
     - trial_court
     - court_choice_reason
@@ -72,60 +90,323 @@ review:
 
       **because...**
 
-      % if court_choice_reason == "minors_county":
+      % if court_choice_reason["minors_county"]:
       % if who_is_making_petition == "minor":
-      It is the court serving the county where I live
+      
+      It is the court serving the county where I live.
       % else:
-      It is the court serving the county where ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } lives
+      
+      It is the court serving the county where ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } lives.
       % endif
-      % elif court_choice_reason == "will_county":
+      % endif
+      % if court_choice_reason["will_county"]:
       % if who_is_making_petition == "minor":
-      My parent or parents died and this is the court serving the county where their estate was probated
+      
+      My parent or parents died and this is the court serving the county where their estate was probated.
       % else:
-      ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"The minor" }'s parent or parents died and this is the court serving the county where their estate was probated
+      
+      ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"The minor" }'s parent or parents died and this is the court serving the county where their estate was probated.
       % endif
       % endif
   - note: |
       <hr>
       <h2 class='h5'>Minor's Parents</h2>
+    show if: parents[0].name.first
   - Edit: parents.revisit
     button: |-
       % for item in parents:
         **${ item }**
         % if item.is_deceased == True:
 
-        Deceased?: Yes
+        Deceased? Yes
         % elif item.is_deceased == False:
 
-        Deceased?: No
+        Deceased? No
         % else:
 
-        Deceased?: Unknown
+        Deceased? Unknown
         % endif
     
       % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Others That Have Cared for Minor During Last 60 Days</h2>
+    show if: other_custodians.there_are_any
+  - Edit: other_custodians.revisit
+    button: |-
+      % for item in other_custodians:
+
+        **${ item }**
+
+        ${ item.address_block() }
+        ${ item.phone_number }
+
+        Relationship to Minor: ${ item.relationship_to_minor }
+
+        Start Date: ${ item.start_date }
+
+        End Date: ${ item.end_date }
+    
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Guardianship Questions</h2>
+    show if: reason_seeking_guardianship
+  - Edit: 
+    - reason_seeking_guardianship
+    button: |-
+      **Why does ${ children[0].familiar() } need a new guardian?**
+
+      % if reason_seeking_guardianship["parents_consent"]:
+
+      * ${ children.familiar() }'s parents agree ${ children.familiar() } should have a guardian
+      % endif
+      % if reason_seeking_guardianship["parents_unfit"]:
+
+      * ${ children.familiar() }'s parents are not fit to take care of ${ children.familiar() } - Explanation: ${ parents_unfit_to_exercise_parental_rights_exp }
+      % endif
+      % if reason_seeking_guardianship["parents_death"]:
+
+      * ${ children.familiar()}'s parents died
+      % endif
+      % if reason_seeking_guardianship["parents_rights_terminated"]:
+
+      * A judge ended the parental rights of ${ children.familiar() }'s parents
+      % endif
+      % if reason_seeking_guardianship["parents_surrendered_rights"]:
+
+      * ${ children.familiar() }'s parents voluntarily gave up their right to take care of ${ children.familiar() } in a court
+      % endif
+      % if reason_seeking_guardianship["parents_unavailable"]:
+
+      * ${ children.familiar() }'s parents are not available to take care of ${ children.familiar() }
+      % endif
+      % if reason_seeking_guardianship["parents_unavailable"]:
+
+      * ${ children.familiar() }'s parents are not available to take care of ${ children.familiar() } - Explanation: ${ parents_unavailable_to_exercise_parental_rights_exp }
+      % endif
+      % if reason_seeking_guardianship["previous_guardian"]:
+
+      * ${ children.familiar() } already had a guardian, but that guardian died or is no longer able to act as guardian and the guardian did not name a replacement in writing
+      % endif
+  - Edit: 
+    - has_guardian_nomination_by_signed_doc
+    button: |-
+      **Has a guardian been nominated for ${ children[0].familiar() } in a will or other document, signed by a parent or existing guardian?**
+
+      % if has_guardian_nomination_by_signed_doc:
+      Yes
+      % elif not has_guardian_nomination_by_signed_doc:
+      No
+      % endif
+  - Edit: 
+    - has_conservator_case_or_petition
+    button: |-
+      **Does ${ children[0].familiar() } have a conservator (or will they ask the court for one)?**
+
+      % if has_conservator_case_or_petition:
+      Yes
+      % elif not has_conservator_case_or_petition:
+      No
+      % endif
+  - Edit: wants_sureties_waiver
+    button: |
+      **Do you want to waive sureties?**
+      
+      ${ word(yesno(wants_sureties_waiver)) }
+  - Edit: 
+    - wants_additional_request
+    button: |-
+      **Is there anything else you need to ask the court to do regarding the Petition for Guardianship?**
+
+      % if wants_additional_request:
+      Yes
+
+      ${ additional_request_to_court }
+      % elif not wants_additional_request:
+      No
+      % endif
+  - note: |
+      <hr>
+      <h2 class='h5'>Requested Guardians</h2>
+    show if: requested_guardians[0].name.first
+  - Edit: requested_guardians.revisit
+    button: |-
+      % for item in requested_guardians:
+
+        **${ item }**
+        % if item.relationship_to_minor:
+
+        Relationship to ${ children[0].familiar() }: ${ item.relationship_to_minor }
+        % endif
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+        % if item.has_minor_consent == True:
+        
+        Minor agrees to guardianship? Yes
+        % elif item.has_minor_consent == False:
+        
+        Minor agrees to guardianship? No
+        % else:
+        
+        Minor agrees to guardianship? Unknown
+        % endif
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Temporary Guardians</h2>
+    show if: requested_temporary_guardians.there_are_any
+  - Edit: requested_temporary_guardians.there_are_any
+    button: |
+      **Do you want to request a temporary guardian for ${ children[0].familiar() }?**
+
+      % if requested_temporary_guardians.there_are_any:
+      Yes
+
+      **Why do you need a temporary guardian?**
+      
+      ${ temporary_guardian_circumstances }
+
+      **What harm are you trying to avoid?**
+
+      ${ harm_avoided }
+
+      **What will the guardian do to prevent the harm?**
+
+      ${ temporary_guardian_action }
+      % elif not requested_temporary_guardians.there_are_any:
+      No
+      % endif
+  - Edit:
+    - requested_temporary_guardians.revisit
+    button: |
+      % if len(requested_temporary_guardians.complete_elements()) > 0:
+      % for item in requested_temporary_guardians:
+        
+      **${ item }**
+      
+      % endfor
+      % else:
+      None entered
+      % endif
+    show if: requested_temporary_guardians.there_are_any
+  - Edit:
+    - wants_specific_court_auth
+    button: |
+      **Will the tempoary guardian need any special authority from the court?**
+      % if wants_specific_court_auth:
+
+      Yes - ${ specific_court_authorization }
+      % else:
+      No
+      % endif
+
+      **Anything else you want the court to do with the temporary guardian request?**
+      % if wants_additional_request_to_court:
+      
+      Yes - ${ additional_request_to_court }
+      % else:
+      No
+      % endif
+    show if: requested_temporary_guardians.there_are_any
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
 ---
 table: children.table
 rows: children
 columns:
   - Name: |
-      row_item.name_full()
+      row_item.name.full() if defined("row_item.name.first") else ""
   - Birthdate: |
-      row_item.birthdate
+      row_item.birthdate if defined("row_item.birthdate") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.county") else ""
 edit:
   - name.first
   - birthdate
+  - address.county
 confirm: True
 ---
-table: parents.table
-rows: parents
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
 columns:
   - Name: |
-      row_item.name_full()
-  - Deceased?: |
-      row_item.is_deceased
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+  - signature
+confirm: True
+---
+continue button field: guardians.revisit
+question: |
+  Edit guardians
+subquestion: |
+  ${ guardians.table }
+
+  ${ guardians.add_action() }
+---
+table: guardians.table
+rows: guardians
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+confirm: True
+---
+continue button field: attorneys.revisit
+question: |
+  Edit attorneys
+subquestion: |
+  ${ attorneys.table }
+
+  ${ attorneys.add_action() }
+---
+table: attorneys.table
+rows: attorneys
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
 edit:
   - name.first
-  - is_deceased
+  - address.zip
+  - phone_number
 confirm: True
 ---
