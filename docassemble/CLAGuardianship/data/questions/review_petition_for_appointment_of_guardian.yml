@@ -1,0 +1,131 @@
+---
+id: review petition for appointment of guardian
+event: review_full
+question: |
+  Review your answers
+review:
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner(s)</h2>
+  - Edit: users.revisit
+    button: |-
+      % for item in users:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+
+      % endfor
+  - Edit: who_is_making_petition
+    button: |-
+      **The Petitioner is...**
+
+      % if who_is_making_petition == "minor":
+      The minor
+      % elif who_is_making_petition == "interested_party":
+      Someone interested in the minor's welfare
+      % endif
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner's Attorney</h2>
+  - Edit: attorneys.revisit
+    button: |-
+      % for item in attorneys:
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+        % if item.bbo:
+
+        BBO: ${ item.bbo }
+        % endif
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>The Minor</h2>
+  - Edit: children.revisit
+    button: |-
+      % for item in children:
+        **${ item }**
+      
+        ${ item.address.block() }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Court Information</h2>
+  - Edit: 
+    - trial_court
+    - court_choice_reason
+    button: |-
+      **I will file in...**
+
+      ${ trial_court }
+
+      **because...**
+
+      % if court_choice_reason == "minors_county":
+      % if who_is_making_petition == "minor":
+      It is the court serving the county where I live
+      % else:
+      It is the court serving the county where ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } lives
+      % endif
+      % elif court_choice_reason == "will_county":
+      % if who_is_making_petition == "minor":
+      My parent or parents died and this is the court serving the county where their estate was probated
+      % else:
+      ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"The minor" }'s parent or parents died and this is the court serving the county where their estate was probated
+      % endif
+      % endif
+  - note: |
+      <hr>
+      <h2 class='h5'>Minor's Parents</h2>
+  - Edit: parents.revisit
+    button: |-
+      % for item in parents:
+        **${ item }**
+        % if item.is_deceased == True:
+
+        Deceased?: Yes
+        % elif item.is_deceased == False:
+
+        Deceased?: No
+        % else:
+
+        Deceased?: Unknown
+        % endif
+    
+      % endfor
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name_full()
+  - Birthdate: |
+      row_item.birthdate
+edit:
+  - name.first
+  - birthdate
+confirm: True
+---
+table: parents.table
+rows: parents
+columns:
+  - Name: |
+      row_item.name_full()
+  - Deceased?: |
+      row_item.is_deceased
+edit:
+  - name.first
+  - is_deceased
+confirm: True
+---

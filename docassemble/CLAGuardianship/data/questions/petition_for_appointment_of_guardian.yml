@@ -10,6 +10,7 @@ include:
   - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
   - customized_screens.yml
+  - review_petition_for_appointment_of_guardian.yml
 ---
 modules:
   - docassemble.ALToolbox.al_income
@@ -132,6 +133,7 @@ data:
   #- review_bond: Bond
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
+  - review_full: "✎ <u>Review / Edit</u>"
 ---
 #################### Interview order #####################
 comment: |
@@ -141,6 +143,7 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
 
+  nav.set_section('review_full')
   nav.set_section("review_case_information")
   form_filled_by_attorney
 
