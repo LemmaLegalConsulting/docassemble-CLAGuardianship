@@ -38,7 +38,7 @@ review:
   - note: |
       <hr>
       <h2 class='h5'>Petitioner's Attorney</h2>
-    show if: attorneys.there_are_any
+    show if: form_filled_by_attorney
   - Edit: attorneys.revisit
     button: |-
       % for item in attorneys:
@@ -55,6 +55,7 @@ review:
         % endif
 
       % endfor
+    show if: form_filled_by_attorney
   - note: |
       <hr>
       <h2 class='h5'>The Minor</h2>
@@ -111,26 +112,32 @@ review:
   - note: |
       <hr>
       <h2 class='h5'>Minor's Parents</h2>
-    show if: parents[0].name.first
+    show if: defined('parents.target_number')
+  - Edit: parents.target_number
+    button: |-
+      **How many of the minor's parents can you tell us about?**
+      % if parents.target_number == 0:
+
+      None
+      % elif parents.target_number == 1:
+
+      One parent
+      % elif parents.target_number == 2:
+
+      Two parents
+      % endif
   - Edit: parents.revisit
     button: |-
       % for item in parents:
-        **${ item }**
-        % if item.is_deceased == True:
+      **${ children[0].familiar() }'s parents include:**
 
-        Deceased? Yes
-        % elif item.is_deceased == False:
+      * **${ item }**
 
-        Deceased? No
-        % else:
-
-        Deceased? Unknown
-        % endif
-    
       % endfor
+    show if: parents.target_number > 0
   - note: |
       <hr>
-      <h2 class='h5'>Others That Have Cared for Minor During Last 60 Days</h2>
+      <h2 class='h5'>Others That Have Cared for ${ children[0].familiar() } During Last 60 Days</h2>
     show if: other_custodians.there_are_any
   - Edit: other_custodians.revisit
     button: |-
@@ -148,6 +155,7 @@ review:
         End Date: ${ item.end_date }
     
       % endfor
+    show if: other_custodians.there_are_any
   - note: |
       <hr>
       <h2 class='h5'>Guardianship Questions</h2>
@@ -286,9 +294,10 @@ review:
     - requested_temporary_guardians.revisit
     button: |
       % if len(requested_temporary_guardians.complete_elements()) > 0:
+      **The temporary guardians you are requesting include:**
       % for item in requested_temporary_guardians:
         
-      **${ item }**
+      * **${ item }**
       
       % endfor
       % else:
