@@ -1,0 +1,293 @@
+---
+include:
+  - shared.yml
+  - parent_participate_in_guardianship_case.yml
+  - customized_screens.yml
+---
+id: review petition for appointment of guardian
+event: review_full
+question: |
+  Review your answers
+review:
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner(s)</h2>
+    show if: defined('attorneys.there_are_any')
+  - Edit: users[0].name.first
+    button: |-
+      % for item in users:
+
+        **${ item }**
+        % if who_is_asking_to_participate == "parent":
+        % if waiver_and_consent_parent_relationship == "father":
+            (minor's father)
+        % elif waiver_and_consent_parent_relationship == "mother":
+            (minor's mother)
+        % endif
+        % endif
+      
+        ${ item.address }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+        % if item.email:
+
+        ${ item.email }
+        % endif
+      % endfor
+  - Edit: attorneys.there_are_any
+    button: |-
+      **I am...**
+
+      % if not attorneys.there_are_any:
+      Filing this document for myself
+      % else:
+      A lawyer and will be filing this document for my client
+      % endif
+  - Edit: who_is_asking_to_participate
+    button: |-
+      **Petitioner's role:**
+      % if who_is_asking_to_participate == "parent":
+
+        The minor's parent
+      % elif who_is_asking_to_participate == "interested_person":
+      % if interested_person_relationship == "legal guardian":
+
+        The minor's legal guardian
+      % elif interested_person_relationship == "grandparent":
+
+        The minor's grandparent
+      % elif interested_person_relationship == "step parent":
+
+        The minor's step-parent
+      % elif interested_person_relationship == "adult sibling":
+
+        The minor's adult sibling
+      % elif interested_person_relationship == "sibling of parent":
+
+        The minor's aunt or uncle
+      % elif interested_person_relationship == "friend":
+
+        The minor's friend
+      % elif interested_person_relationship == "other":
+
+        ${ interested_person_relationship_other }
+      % endif
+      % endif
+    
+      **Petitioner wants to:**
+      % if main_choice == "objection":
+
+      Disagree with the guardianship
+      % elif main_choice == "agree":
+
+      Agree with the guardianship
+      % elif main_choice == "participate":
+
+      Neither agree nor disagree with the guardianship, but still attend and participate in the hearing
+      % endif 
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner's Attorney</h2>
+    show if: form_filled_by_attorney
+  - Edit: attorneys.revisit
+    button: |-
+      % for item in attorneys:
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+        % if item.bbo:
+
+        BBO: ${ item.bbo }
+        % endif
+
+      % endfor
+    show if: form_filled_by_attorney
+  - note: |
+      <hr>
+      <h2 class='h5'>The Minor</h2>
+    show if: children[0].name.first
+  - Edit: children[0].name.first
+    button: |-
+      % for item in children:
+
+        **${ item.name }**
+        
+        DOB: ${ item.birthdate }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Court & Case Information</h2>
+    show if: trial_court
+  - Edit: 
+    - trial_court
+    button: |-
+      **The guardianship case is being heard in the following court:**
+
+      ${ trial_court }
+      % if docket_number:
+
+      **Case docket number:**
+
+      ${ docket_number }
+      % endif
+      % if file_date:
+
+      **Date filed:**
+
+      ${ file_date }
+      % endif
+  - note: |
+      <hr>
+      <h2 class='h5'>Current Guardian(s)</h2>
+    show if: guardians[0].name.first
+  - Edit: guardians.revisit
+    button: |-
+      % for item in guardians:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+        ${ item.phone_number }
+        % endif
+
+        Date appointed: ${ item.appointment_date }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Guardianship Questions</h2>
+    show if: ready_to_make_affidavit
+  - Edit:
+    - ready_to_make_affidavit
+    button: |-
+      **Why do you diagree with the guardianship?**
+      % if ready_to_make_affidavit:
+
+      ${ objection_reasons }
+      % else:
+
+      I will provide my explanation to the court in an affidavit within 30 days of the return date
+      % endif
+    show if: main_choice == "objection"
+  - note: |
+      <hr>
+      <h2 class='h5'>Requested New Guardian(s)</h2>
+    show if: defined('requested_guardians.there_are_any')
+  - Edit: requested_guardians.there_are_any
+    button: |-
+      **Is someone name in the petition to be appointed as a guardian?**
+
+      ${ word(yesno(requested_guardians.there_are_any)) }
+  - Edit: requested_guardians.revisit
+    button: |-
+      **The people named in the petition to be appointed guardian include:**
+      % for item in requested_guardians:
+
+      * ${ item }
+
+      % endfor
+    show if: requested_guardians[0].name.first
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Birthdate: |
+      row_item.birthdate if defined("row_item.birthdate") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.county") else ""
+edit:
+  - name.first
+  - birthdate
+  - address.county
+confirm: True
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+  - signature
+confirm: True
+---
+continue button field: guardians.revisit
+question: |
+  Edit guardians
+subquestion: |
+  ${ guardians.table }
+
+  ${ guardians.add_action() }
+---
+table: guardians.table
+rows: guardians
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+confirm: True
+---
+continue button field: attorneys.revisit
+question: |
+  Edit attorneys
+subquestion: |
+  ${ attorneys.table }
+
+  ${ attorneys.add_action() }
+---
+table: attorneys.table
+rows: attorneys
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.first
+  - address.zip
+  - phone_number
+confirm: True
+---
