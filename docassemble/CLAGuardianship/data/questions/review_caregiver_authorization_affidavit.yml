@@ -1,0 +1,164 @@
+---
+include:
+  - caregiver_authorization_affidavit.yml
+---
+id: review petition for appointment of guardian
+event: review_full
+question: |
+  Review your answers
+review:
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner(s)</h2>
+    show if: users[0].name.first
+  - Edit: users[0].name.first
+    button: |-
+      % for item in users:
+
+        **${ item }**
+
+        ${ item.address_block() }
+
+      % endfor
+  - Edit: relationship_to_child
+    button: |-
+      **I am the minor's:**
+      % if relationship_to_child == "parent":
+
+      Parent
+
+      **Does the minor have another parent whom you know and are able to contact?**
+      % if other_parent:
+
+      Yes
+      
+      **Does the other parent also agree to this persmission?**
+      % if other_parent_agrees:
+
+      Yes
+      % else:
+
+      No
+      % endif
+      % else:
+
+      No
+      % endif
+      % elif relationship_to_child == "legal guardian":
+
+      Guardian
+      % elif relationship_to_child == "legal custodian":
+
+      Custodian
+      % endif
+  - note: |
+      <hr>
+      <h2 class='h5'>The Minor</h2>
+    show if: children[0].name.first
+  - Edit: children[0].name.first
+    button: |-
+      % for item in children:
+
+        **${ item.name }**
+        
+        DOB: ${ item.birthdate }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Authorized People</h2>
+    show if: authorized_persons[0].name.first
+  - Edit: authorized_persons.revisit
+    button: |-
+      **Who do you want to authorize to be the minor's caregiver?**
+      % for item in authorized_persons:
+
+        **${ item }**
+      
+        % if item.phone_number:
+        ${ item.phone_number }
+        % endif
+
+        **Relationship to minor:**
+        % if caregiver_relationship_to_child == "aunt":
+
+        Minor's aunt
+        % elif caregiver_relationship_to_child == "uncle":
+
+        Minor's uncle
+
+        % elif caregiver_relationship_to_child == "parent's sibling":
+
+        Minor's parent's sibling
+
+        % elif caregiver_relationship_to_child == "grandparent":
+
+        Minor's grandparent
+
+        % elif caregiver_relationship_to_child == "sibling":
+
+        Minor's sibling
+
+        % elif caregiver_relationship_to_child == "cousin":
+
+        Minor's cousin
+
+        % elif caregiver_relationship_to_child == "parent's friend":
+
+        Minor's parent's friend
+
+        % elif caregiver_relationship_to_child == "other":
+
+        ${ caregiver_relationship_to_child }
+        % endif
+      % endfor
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Birthdate: |
+      row_item.birthdate if defined("row_item.birthdate") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.county") else ""
+edit:
+  - name.first
+  - birthdate
+  - address.county
+confirm: True
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+  - signature
+confirm: True
+---
