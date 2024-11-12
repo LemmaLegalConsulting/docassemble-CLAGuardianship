@@ -9,6 +9,7 @@ include:
   - affidavit_disclosing_care_or_custody.yml
   - customized_screens.yml
   - temporary_guardian.yml
+  - review_petition_for_removal_of_guardian.yml
 ---
 metadata:
   title: >-
@@ -130,6 +131,8 @@ data from code:
       showifdef("who_is_making_petition") == "minor"
   - review_petition_for_removal_of_guardian: |
       "Review your answers"
+  - review_full: | 
+      "✎ <u>Review / Edit</u>"
 ---
 #################### Interview order #####################
 comment: |
@@ -139,6 +142,7 @@ code: |
   # Set the allowed courts for this interview
   allowed_courts = ['Probate and Family Court']
 
+  nav.set_section('review_full')
   nav.set_section("review_case_information")
   form_filled_by_attorney
 

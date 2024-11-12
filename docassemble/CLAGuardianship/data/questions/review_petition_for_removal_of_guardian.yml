@@ -1,0 +1,318 @@
+---
+include:
+  - shared.yml
+  - petition_for_removal_of_guardian.yml
+  - customized_screens.yml
+---
+id: review petition for appointment of guardian
+event: review_full
+question: |
+  Review your answers
+review:
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner(s)</h2>
+    show if: who_is_making_petition
+  - Edit: users.revisit
+    button: |-
+      % for item in users:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+        ${ item.phone_number }
+        % endif
+
+      % endfor
+  - Edit: who_is_making_petition
+    button: |-
+      **The Petitioner is...**
+
+      % if who_is_making_petition == "minor":
+      The minor
+      % elif who_is_making_petition == "interested_party":
+      Someone interested in the minor's welfare
+      % elif who_is_making_petition == "parent":
+      One of the minor's parents
+      % endif
+  - Edit: my_interest_is
+    button: |-
+      **What is the nature of your interest in ${ children[0].familiar() }'s welfare?**
+
+      ${ my_interest_is }
+  - note: |
+      <hr>
+      <h2 class='h5'>Petitioner's Attorney</h2>
+    show if: form_filled_by_attorney
+  - Edit: attorneys.revisit
+    button: |-
+      % for item in attorneys:
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+
+        ${ item.phone_number }
+        % endif
+        % if item.bbo:
+
+        BBO: ${ item.bbo }
+        % endif
+
+      % endfor
+    show if: form_filled_by_attorney
+  - note: |
+      <hr>
+      <h2 class='h5'>The Minor</h2>
+    show if: children[0].name.first
+  - Edit: children.revisit
+    button: |-
+      % for item in children:
+        **${ item }**
+      
+        ${ item.address.block() }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Court & Case Information</h2>
+    show if: trial_court
+  - Edit: 
+    - trial_court
+    button: |-
+      **The guardianship case is being heard in the following court:**
+
+      ${ trial_court }
+  - Edit: 
+    - docket_number
+    button: |-
+      **Case docket number:**
+
+      ${ docket_number }
+  - note: |
+      <hr>
+      <h2 class='h5'>Current Guardian(s)</h2>
+    show if: guardians[0].name.first
+  - Edit: guardians.revisit
+    button: |-
+      % for item in guardians:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+        ${ item.phone_number }
+        % endif
+
+        Date appointed: ${ item.appointment_date }
+
+      % endfor
+  - note: |
+      <hr>
+      <h2 class='h5'>Guardianship Questions</h2>
+    show if: bio_parents_can_resume_responsibilities or minor_adopted or has_attachment
+  - Edit:
+    - bio_parents_can_resume_responsibilities
+    button: |-
+      **Why do you want to remove ${ children[0].familiar() }'s guardians?**
+      % if bio_parents_can_resume_responsibilities:
+
+      * **${ children[0].familiar() }'s parents are able to care for them** - 
+      ${ why_parents_can_resume_responsibility }
+      % endif
+      % if minor_adopted:
+
+      * **${ children[0].familiar() } was adopted**
+      % endif
+      % if has_attachment:
+
+      * **The following reason** - ${ other_reason_for_removal }
+      % endif
+  - Edit: responsible_parents.revisit
+    button: |-
+      **The following parents can resume responsibility for ${ children[0].familiar() }:**
+      % for item in responsible_parents:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+        % if item.phone_number:
+        ${ item.phone_number }
+        % endif
+
+      % endfor
+    show if: bio_parents_can_resume_responsibilities
+  - note: |
+      <hr>
+      <h2 class='h5'>Requested New Guardian(s)</h2>
+    show if: defined('requested_guardians.there_are_any')
+  - Edit: requested_guardians.there_are_any
+    button: |-
+      **Do you want to request new guradians?**
+
+      ${ word(yesno(requested_guardians.there_are_any)) }
+  - Edit: requested_guardians.revisit
+    button: |-
+      % for item in requested_guardians:
+
+        **${ item }**
+      
+        ${ item.address.block() }
+
+      % endfor
+    show if: requested_guardians[0].name.first
+  - note: |
+      <hr>
+      <h2 class='h5'>Temporary Guardians</h2>
+    show if: defined('requested_temporary_guardians.there_are_any')
+  - Edit: requested_temporary_guardians.there_are_any
+    button: |
+      **Do you want to request a temporary guardian for ${ children[0].familiar() }?**
+
+      % if requested_temporary_guardians.there_are_any:
+      Yes
+
+      **Why do you need a temporary guardian?**
+      
+      ${ temporary_guardian_circumstances }
+
+      **What harm are you trying to avoid?**
+
+      ${ harm_avoided }
+
+      **What will the guardian do to prevent the harm?**
+
+      ${ temporary_guardian_action }
+      % elif not requested_temporary_guardians.there_are_any:
+      No
+      % endif
+  - Edit:
+    - requested_temporary_guardians.revisit
+    button: |
+      % if len(requested_temporary_guardians.complete_elements()) > 0:
+      **The temporary guardians you are requesting include:**
+      % for item in requested_temporary_guardians:
+        
+      * **${ item }**
+      
+      % endfor
+      % else:
+      None entered
+      % endif
+    show if: requested_temporary_guardians.there_are_any
+  - Edit:
+    - wants_specific_court_auth
+    button: |
+      **Will the tempoary guardian need any special authority from the court?**
+      % if wants_specific_court_auth:
+
+      Yes - ${ specific_court_authorization }
+      % else:
+      No
+      % endif
+
+      **Anything else you want the court to do with the temporary guardian request?**
+      % if wants_additional_request_to_court:
+      
+      Yes - ${ additional_request_to_court }
+      % else:
+      No
+      % endif
+    show if: requested_temporary_guardians.there_are_any
+---
+continue button field: children.revisit
+question: |
+  Edit children
+subquestion: |
+  ${ children.table }
+
+  ${ children.add_action() }
+---
+table: children.table
+rows: children
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Birthdate: |
+      row_item.birthdate if defined("row_item.birthdate") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.county") else ""
+edit:
+  - name.first
+  - birthdate
+  - address.county
+confirm: True
+---
+continue button field: users.revisit
+question: |
+  Edit users
+subquestion: |
+  ${ users.table }
+
+  ${ users.add_action() }
+---
+table: users.table
+rows: users
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+  - Signature: |
+      row_item.signature if defined("row_item.signature") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+  - signature
+confirm: True
+---
+continue button field: guardians.revisit
+question: |
+  Edit guardians
+subquestion: |
+  ${ guardians.table }
+
+  ${ guardians.add_action() }
+---
+table: guardians.table
+rows: guardians
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.unit") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.last
+  - address.unit
+  - phone_number
+confirm: True
+---
+continue button field: attorneys.revisit
+question: |
+  Edit attorneys
+subquestion: |
+  ${ attorneys.table }
+
+  ${ attorneys.add_action() }
+---
+table: attorneys.table
+rows: attorneys
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.first") else ""
+  - Address: |
+      row_item.address.block() if defined("row_item.address.zip") else ""
+  - Phone number: |
+      row_item.phone_number if defined("row_item.phone_number") else ""
+edit:
+  - name.first
+  - address.zip
+  - phone_number
+confirm: True
+---
