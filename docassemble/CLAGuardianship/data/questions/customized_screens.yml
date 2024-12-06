@@ -71,6 +71,9 @@ subquestion: |
 objects:
   - other_parties: DAEmpty
 ---
+code: |
+  al_person_answering = who_is_making_petition  
+---
 ################ Military affidavit ###################
 ---
 code: |

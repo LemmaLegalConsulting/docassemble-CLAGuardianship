@@ -1,6 +1,6 @@
 ---
 include:
-  - shared.yml
+  #- shared.yml
   - docassemble.AssemblyLine:assembly_line.yml
 ---
 modules:
@@ -93,38 +93,20 @@ code: |
   day # uncomment for standalone
 
   if form_filled_by_attorney:
-    if (who_is_making_petition == "minor") or (who_is_making_petition == "interested_party" and needs_attorney_signature):
+    if (al_person_answering == "minor") or (al_person_answering == "interested_party" and needs_attorney_signature):
       set_signing_attorney
 
-  # uncomment for standalone
   need_past_address_appendix
   # need_children_appendix
   need_other_parties_appendix
 
-  # uncomment for standalone
   str(users[0])
   users[0].address.on_one_line(include_unit=True)
-  # courts.gather()
   fill_in_court_name   
-  # docket_numbers[0]  # Enable this if a standalone form
-  # affidavit_disclosing_care_or_custody_preview_question # Pre-canned preview screen
-  # basic_questions_signature_flow
-  # users[0].signature
-  others_in_proceedings.gather() # making sure defined before attachment block
+  others_in_proceedings.gather()
   set_party_name
 
   interview_order_affidavit_disclosing_care_or_custody = True
----
-###################### Main order ######################
-comment: |
-  This block includes the logic for standalone interviews.
-  Delete mandatory: True to include in another interview
-# mandatory: True
-code: |
-  interview_order_affidavit_disclosing_care_or_custody
-  if esign:
-    signature_date
-  affidavit_disclosing_care_or_custody_download
 ---
 code: |
   DCF = ALIndividual("DCF")
@@ -456,7 +438,8 @@ fields:
       is: USA
   - Country: children[i].address.country
     default: USA
-  - ${ children[i].familiar } has lived here since: children[i].address.start_date
+  - ${ children[i].familiar() } has lived here since: children[i].address.start_date
+    validate: include_a_year
 
 ---
 id: who lives with
@@ -882,7 +865,15 @@ id: had any gals
 question: |
   Information about Guardians ad Litem (GALs)
 subquestion: |
-  Did the judge appoint a GAL or investigator on this case?
+  Did the judge appoint a:
+  
+  * GAL
+  * investigator
+  * probation officer
+  * court investigator, or 
+  * court evaluator
+
+  For one or more of the children in this case?
 fields:
   - no label: other_care_custody_proceedings[i].has_gal
     datatype: yesnoradio
@@ -1085,19 +1076,21 @@ objects:
       )
 ---
 code: |
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].overflow_trigger = 3
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].overflow_trigger = 4
   affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both'].label = "Children (continued)"
 
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[0].previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[1].previous_addresses'].overflow_trigger = 2
-  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[2].previous_addresses'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[0].previous_addresses'].overflow_trigger = 1
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[1].previous_addresses'].overflow_trigger = 1
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[2].previous_addresses'].overflow_trigger = 1
+  affidavit_of_care_or_custody_attachment.overflow_fields['children_of_both[3].previous_addresses'].overflow_trigger = 1
 
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[0].other_parties'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[1].other_parties'].overflow_trigger = 3
-  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[2].other_parties'].overflow_trigger = 3
 
-  affidavit_of_care_or_custody_attachment.overflow_fields['gals_investigators'].overflow_trigger = 3
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings'].overflow_trigger = 4
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[0].other_parties'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[1].other_parties'].overflow_trigger = 2
+  affidavit_of_care_or_custody_attachment.overflow_fields['other_care_custody_proceedings[2].other_parties'].overflow_trigger = 2
+
+  affidavit_of_care_or_custody_attachment.overflow_fields['gals_investigators'].overflow_trigger = 4
   affidavit_of_care_or_custody_attachment.overflow_fields['gals_investigators'].label = "Guardians Ad Litem and Investigators (continued)"
 
   affidavit_of_care_or_custody_attachment.overflow_fields['attorneys_for_parents'].overflow_trigger = 3
@@ -1237,9 +1230,9 @@ attachment:
     # - "attorneys_for_parents_3": ${ str(attorneys_for_parents.item(2)) + ' (' + str(attorneys_for_parents.item(2).represented_party) + ')' if defined('attorneys_for_parents[2]') else ''}
     # - "user_signature": ${ f"/s/ {users[0]}" if esign else "" }
 
-    - "child_1_has_appointed_gal_etc_yes": something
-    - "child_1_has_appointed_gal_etc_no": something
-    - "child_1_has_appointed_gal_etc_unknown": something
+    - "child_1_has_appointed_gal_etc_yes": ${ len(other_care_custody_proceedings.get_gals_per_child(children_of_both.item(0))) > 0}
+    - "child_1_has_appointed_gal_etc_no": ${ len(other_care_custody_proceedings.get_gals_per_child(children_of_both.item(0))) < 1}
+    - "child_1_has_appointed_gal_etc_unknown": 
     - "child_1_appointed_gal_etc_names": something
     - "child_2_appointed_gal_etc_names": something
     - "child_2_has_appointed_gal_etc_yes": something
@@ -1284,7 +1277,7 @@ question: |
 subquestion: |
   As part of the petition for guardianship, the court needs to know about any
   other cases involving the care or custody of 
-  % if (who_is_making_petition == 'parent'):
+  % if (al_person_answering == 'parent'):
   your children. This includes cases where you, another parent, or someone else 
   has been involved in a court case about the care or custody of 
   ${ children[0].familiar() }.
@@ -1322,3 +1315,15 @@ code: |
   year
   trigger_aff_care_or_custody_computed_variables = True
 ---
+code: |  
+  form_filled_by_attorney = bool(len(attorneys))
+---
+id: attorneys there_are_any
+question: |
+  Are you the attorney for the person who needs to tell the court about their children's cases?
+fields:
+  - Are you the attorney?: attorneys.there_are_any
+    datatype: radio
+    choices:
+      - Yes, I am the attorney: True
+      - No, I am the person making the petition: False  

@@ -1,7 +1,9 @@
-from docassemble.base.util import DAObject, DAList, comma_and_list
+from typing import Optional
+from docassemble.base.util import DAObject, DAList, comma_and_list, validation_error, word
 from docassemble.AssemblyLine.al_general import *
+import re
 
-__all__ = ['OtherProceeding', 'OtherProceedingList', 'GAL', 'GALList', 'number_to_letter', 'filter_letters']
+__all__ = ['OtherProceeding', 'OtherProceedingList', 'GAL', 'GALList', 'number_to_letter', 'filter_letters', 'include_a_year']
 
 class OtherProceeding(DAObject):
   """Currently used to represents a care and custody proceeding."""
@@ -108,6 +110,19 @@ class OtherProceedingList(DAList):
           GALs.append(gal, set_instance_name=True)         
     return GALs
 
+  def get_gals_per_child(self, intrinsic_name, child):
+    GALs = GALList(intrinsic_name, auto_gather=False,gathered=True)
+
+    for case in self:
+      if case.is_open and case.has_gal:
+        for gal in case.gals:
+          if gal.represented_all_children:
+            GALs.append(gal, set_instance_name=True)
+          else:
+            if child in gal.represented_children:
+              GALs.append(gal, set_instance_name=True)
+    return GALs
+
 class GAL(ALIndividual):
   """This object has a helper for printing itself in PDF, as well as a way to merge attributes for duplicates"""
   def status(self):
@@ -167,3 +182,20 @@ def filter_letters(letter_strings):
     retval = ''
   return retval
   
+
+def include_a_year(text:str, field:Optional[str]=None) -> bool:
+  """
+  Validates whether the input text contains at least one 4-digit sequence
+  that occurs within a range of ~ 200 years, indicating a valid "year"
+  for an event that should be reported on most court forms, like a birthdate
+  or a moving date.
+  
+  Returns True if found, otherwise raises a DAValidationError.
+  """
+  # Match a 4-digit sequence
+  if re.search(r'\b(18|19|20|21)\d{2}\b', text):
+     return True
+  else:
+    validation_error(word("Include a year, like: Fall of 2023"), field=field)
+  
+  return False
