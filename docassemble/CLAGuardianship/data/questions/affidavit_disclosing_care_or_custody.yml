@@ -529,7 +529,7 @@ subquestion: |
   * custody  
   * a 209A restraining order
   * divorce or annulment
-  * ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } requiring assistance
+  * child requiring assistance (CRA)
   * child support
   * paternity
   * visitation
@@ -1113,10 +1113,9 @@ attachment:
     - "child2_past_addresses_on_one_line": ${ children_of_both.item(1).previous_addresses if not confidential_address else '' }
     - "child3_past_addresses_on_one_line": ${ children_of_both.item(2).previous_addresses if not confidential_address else '' }
     - "child4_past_addresses_on_one_line": ${ children_of_both.item(3).previous_addresses if not confidential_address else '' }
-    - "has_participated_custody_case": ${ has_participated_custody_case }
-    # - "has_not_participated_custody_case": ${ not has_participated_custody_case }
-    - "know_of_other_custody_case": ${ know_of_other_custody_case }
-    - "do_not_know_of_other_custody_case": ${ not know_of_other_custody_case }
+    - "has_participated_custody_case": ${ custody_case_participation == "participated" }
+    - "dont_know_any_custody_cases": ${ custody_case_participation == "no cases" }
+    - "know_of_other_custody_case": ${ custody_case_participation == "know of" }
     - "other_case_1_user_role": ${other_care_custody_proceedings.item(0).role() }
     - "other_case_1_letters": ${ other_care_custody_proceedings.item(0).child_letters() }
     - "other_case_1_court": ${ other_care_custody_proceedings.item(0).court_name }
