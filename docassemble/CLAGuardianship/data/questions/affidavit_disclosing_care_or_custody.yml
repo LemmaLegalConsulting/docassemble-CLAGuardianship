@@ -75,20 +75,24 @@ code: |
     if (al_person_answering == "minor") or (al_person_answering == "interested_party" and needs_attorney_signature):
       set_signing_attorney
 
-  need_past_address_appendix
-  need_other_parties_appendix
-
   str(users[0])
   users[0].address.on_one_line(include_unit=True)
   fill_in_court_name
 
-  for child in children_of_both:
-    child.address.address
-    child.lives_with
-    child.previous_addresses.gather()
+  if confidential_address_reasons.all_false():
+    # 2024 update to affidavit removes address information instead of putting on a separate page when confidential
+    for child in children_of_both:
+      child.address.address
+      child.lives_with
+      child.previous_addresses.gather()
 
   others_in_proceedings.gather()
   set_party_name
+
+  if confidential_address_reasons.all_false():
+    need_past_address_appendix
+
+  need_other_parties_appendix
 
   interview_order_affidavit_disclosing_care_or_custody = True  
 ---
@@ -208,6 +212,7 @@ fields:
     exclude: children[i].address
   - Start date: children[i].previous_addresses[j].start_date
     maxlength: 12
+    default: ${ children[i].address.end_date if i == 0 else "" }
   - End date: children[i].previous_addresses[j].end_date
     maxlength: 12
   - Address: children[i].previous_addresses[j].address
@@ -215,12 +220,13 @@ fields:
   - Unit: children[i].previous_addresses[j].unit
     required: False
   - City: children[i].previous_addresses[j].city
-  - State: children[i].previous_addresses[j].state
-    code: |
-      states_list()
+  - State/Province/Administrative area: children[i].previous_addresses[j].state
     default: "MA"
-  - Zip: children[i].previous_addresses[j].zip
     required: False
+  - Zip/Postal code: children[i].previous_addresses[j].zip
+    required: False
+  - Country: children[i].previous_addresses[j].country
+    default: "US"
   - Who did ${children[i]} live with at this address?: children[i].previous_addresses[j].lived_with
     datatype: area
     rows: 2
@@ -303,41 +309,28 @@ code: |
   user_role = 'plaintiff'
 ---
 question: |
-  Confidential Address - Affidavit Disclosing Care or Custody Proceeding
+  Confidential Address - Child Care and Custody Affidavit
 subquestion: |
-  The affidavit disclosing care or custody proceedings form has two pages. 
-  The second page lists addresses and phone
-  numbers and can be kept confidential (private) if you need it to be.
-
-  ${ collapse_template(explain_confidential_addresses) }
-
-  Do you need to keep phone numbers and addresses information private for any of the following reasons?
+  Do you need to keep address information private for any of the following reasons?
 fields:
   - Check any that you have good reason to believe: confidential_address_reasons
     datatype: checkboxes
     choices:
-      - someone has a 209A (abuse prevention) order
-      - someone lives in a domestic violence shelter
-      - someone (other than ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }) in danger of abuse
-      - ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } is in danger of abuse
-      - another (legal) reason not listed above
----
-template: explain_confidential_addresses
-subject: |
-  When can I keep an address private?
-content: |
-  You can keep an address private if you believe that:
-
-  * You live in a shelter for battered persons
-  * You or your children are in danger of physical or emotional abuse
-  * You are filing this form together with a 209A abuse prevention order
-
-  If you believe that you have another legal reason to keep your
-  address information private, select that option on the previous screen.
+      - someone has a 209A (abuse prevention) order: has_209a
+      - someone lives in a domestic violence shelter: dv_shelter
+      - someone (other than ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }) in danger of abuse: danger_abuse
+      - ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" } is in danger of abuse: child_danger_abuse
+      - one or more of the children is adopted and sharing their past addresses would disclose private information about the birth parents: child_adopted
+      - another (legal) reason not listed above: other_reason
 ---
 code: |
   # This checks box 3 on the form
-  confidential_address = confidential_address_reasons.any_true()
+  confidential_address = confidential_address_reasons.any_true("has_209a",
+    "dv_shelter",
+    "danger_abuse",
+    "child_danger_abuse",
+    "other_reason",
+  )
 ---
 # This should show the address of the plaintiff and each kid, but
 # Only if they are unique
@@ -852,6 +845,7 @@ fields:
     disable others: True
     exclude:
       - children[i].gals.complete_elements()
+    none of the above: Someone else
   - Full name: children[i].gals[j].name.first
   - Role: children[i].gals[j].role
     datatype: radio
@@ -905,43 +899,43 @@ subquestion: |
   % endif
   ${comma_and_list(other_care_custody_proceedings.elements)}.
 yesno: other_care_custody_proceedings.there_is_another
----
-reconsider: True
-code: |
-  # Build the lists of attorneys for parents
-  attorneys_for_parents.clear()
-  for case in other_care_custody_proceedings.complete_elements():
-    # If they selected an attorney and the attorney is a new one 
-    # (e.g., a string rather than an Individual)
-    if case.is_open and case.atty_for_user and hasattr(case, 'atty_for_user_name'):
-      atty = attorneys_for_parents.appendObject()
-      atty.name.first = case.atty_for_user_name
-      atty.represented_party = users
-    # if case.is_open and case.atty_for_defendant and hasattr(case, 'atty_for_defendant_name'):
-    #   atty = attorneys_for_parents.appendObject()
-    #   atty.name.first = case.atty_for_defendant_name                
-    #   atty.represented_party = other_parties
-  attorneys_for_parents.gathered = True
----
-reconsider: True
-code: |
-  # Build the list of attorneys for children
-  attorneys_for_children.clear()
-  for case in other_care_custody_proceedings.complete_elements():
-    if case.is_open and case.atty_for_children:
-      if len(case.children) == 1:
-        atty = attorneys_for_children.appendObject()
-        atty.name.first = case.atty_for_children_name
-        atty.represented_children = case.children
-      else:
-        attorneys_for_children.extend(case.attorneys_for_children)
-  attorneys_for_children.gathered=True
----
-code: |
-  if have_pending_cases:
-    gals_investigators = other_care_custody_proceedings.get_gals('gals_investigators')
-  else:
-    gals_investigators = DAList("gals_investigators", gathered=True, auto_gather=False)
+# ---
+# reconsider: True
+# code: |
+#   # Build the lists of attorneys for parents
+#   attorneys_for_parents.clear()
+#   for case in other_care_custody_proceedings.complete_elements():
+#     # If they selected an attorney and the attorney is a new one 
+#     # (e.g., a string rather than an Individual)
+#     if case.is_open and case.atty_for_user and hasattr(case, 'atty_for_user_name'):
+#       atty = attorneys_for_parents.appendObject()
+#       atty.name.first = case.atty_for_user_name
+#       atty.represented_party = users
+#     # if case.is_open and case.atty_for_defendant and hasattr(case, 'atty_for_defendant_name'):
+#     #   atty = attorneys_for_parents.appendObject()
+#     #   atty.name.first = case.atty_for_defendant_name                
+#     #   atty.represented_party = other_parties
+#   attorneys_for_parents.gathered = True
+# ---
+# reconsider: True
+# code: |
+#   # Build the list of attorneys for children
+#   attorneys_for_children.clear()
+#   for case in other_care_custody_proceedings.complete_elements():
+#     if case.is_open and case.atty_for_children:
+#       if len(case.children) == 1:
+#         atty = attorneys_for_children.appendObject()
+#         atty.name.first = case.atty_for_children_name
+#         atty.represented_children = case.children
+#       else:
+#         attorneys_for_children.extend(case.attorneys_for_children)
+#   attorneys_for_children.gathered=True
+# ---
+# code: |
+#   if have_pending_cases:
+#     gals_investigators = other_care_custody_proceedings.get_gals('gals_investigators')
+#   else:
+#     gals_investigators = DAList("gals_investigators", gathered=True, auto_gather=False)
 ---
 code: |
   # Assign each child a letter from A..Z, or even AA..AZ, etc.
@@ -1098,17 +1092,18 @@ attachment:
     # - "child3_address_city_state_zip": ${ children_of_both.item(2).address.line_two() }
     # - "user_address_on_one_line__2": ${ users[0].address.on_one_line(include_unit=True) }
     - "case_name": ${ case_name }
-    - "court_division_bmc": ${ trial_court.division == "Boston Municipal Court" }
-    - "court_division_district_court": ${ trial_court.division == "District Court" }
-    - "court_division_juvenile_court": ${ trial_court.division == "Juvenile Court" }
-    - "court_division_family_court": ${ trial_court.division == "Probate and Family Court" }
-    - "court_division_superior_court": ${ trial_court.division == "Superior Court" }
+    - "court_department_bmc": ${ trial_court.department == "Boston Municipal Court" }
+    - "court_department_district_court": ${ trial_court.department == "District Court" }
+    - "court_department_juvenile_court": ${ trial_court.department == "Juvenile Court" }
+    - "court_department_family_court": ${ trial_court.department == "Probate and Family Court" }
+    - "court_department_superior_court": ${ trial_court.department == "Superior Court" }
     # - "child1_name_last_first": ${ children_of_both.item(0).name.lastfirst() }
     # - "child2_name_last_first": ${ children_of_both.item(1).name.lastfirst() }
     # - "child3_name_last_first": ${ children_of_both.item(2).name.lastfirst() }
     # - "child4_name_last_first": ${ children_of_both.item(3).name.lastfirst() }
-    - "confidential_address": ${ confidential_address }
-    - "ask_impound_affidavit": ""
+    - "confidential_address": ${ confidential_address_reasons.any_true("has_209a", "dv_shelter",  "danger_abuse", "child_danger_abuse", "other_reason", ) }
+    - "ask_impound_affidavit": ${ confidential_address_reasons["child_adopted"] }
+    - "no_confidential_addresses": ${ confidential_address_reasons.all_false() }
     - "child1_past_addresses_on_one_line": ${ children_of_both.item(0).previous_addresses if not confidential_address else '' }
     - "child2_past_addresses_on_one_line": ${ children_of_both.item(1).previous_addresses if not confidential_address else '' }
     - "child3_past_addresses_on_one_line": ${ children_of_both.item(2).previous_addresses if not confidential_address else '' }
@@ -1157,7 +1152,7 @@ attachment:
         % endif
     - "child1_past_addresses_2": |
         % if not confidential_address:
-        ${ children_of_both.item(0).previous_addresses.item(1).on_one_line() }
+        ${ children_of_both.item(0).previous_addresses.item(0).on_one_line() }
         % endif
     - "child2_past_addresses_1": |
         % if not confidential_address:
@@ -1165,7 +1160,7 @@ attachment:
         % endif
     - "child2_past_addresses_2": |
         % if not confidential_address:
-        ${ children_of_both.item(1).previous_addresses.item(1).on_one_line() }
+        ${ children_of_both.item(1).previous_addresses.item(0).on_one_line() }
         % endif
     - "child3_past_addresses_1": |
         % if not confidential_address:
@@ -1173,39 +1168,37 @@ attachment:
         % endif
     - "child3_past_addresses_2": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(1).on_one_line() }
+        ${ children_of_both.item(2).previous_addresses.item(0).on_one_line() }
         % endif
     - "child1_address1_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(0).lives_with }
+        ${ children_of_both.item(0).lives_with } - 
 
         ${ children_of_both.item(0).relationship }
         % endif
     - "child1_address1_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(0).previous_addresses.item(0).start_date }
+        ${ children_of_both.item(0).address.start_date }
         % endif
     - "child1_address2_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(0).previous_addresses.item(1).lives_with }
+        ${ children_of_both.item(0).previous_addresses.item(0).lives_with } - 
 
-        ${ children_of_both.item(0).previous_addresses.item(1).relationship }
+        ${ children_of_both.item(0).previous_addresses.item(0).relationship }
         % endif
     - "child1_address2_end_date": |
         % if not confidential_address:
-        ${ children_of_both.item(0).previous_addresses.item(1).end_date }
+        ${ children_of_both.item(0).previous_addresses.item(0).end_date }
         % endif
     - "child1_address2_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(0).previous_addresses.item(1).start_date }
+        ${ children_of_both.item(0).previous_addresses.item(0).start_date }
         % endif
     - "child1_name_full": |
-        % if not confidential_address:
         ${ children_of_both.item(0) }
-        % endif
     - "child2_address1_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(1).lives_with }
+        ${ children_of_both.item(1).lives_with } - 
 
         ${ children_of_both.item(1).relationship }
         % endif
@@ -1215,93 +1208,99 @@ attachment:
         % endif
     - "child2_address2_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(1).previous_addresses.item(1).lives_with }
+        ${ children_of_both.item(1).previous_addresses.item(0).lives_with } - 
 
-        ${ children_of_both.item(1).previous_addresses.item(1).relationship }
-        % endif
-    - "child2_address2_end_date": |
-        % if not confidential_address:
-        ${ children_of_both.item(1).previous_addresses.item(1).end_date }
+        ${ children_of_both.item(1).previous_addresses.item(0).relationship }
         % endif
     - "child2_address2_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(1).previous_addresses.item(1).start_date }
+        ${ children_of_both.item(1).previous_addresses.item(0).start_date }
+        % endif
+    - "child2_address2_end_date": |
+        % if not confidential_address:
+        ${ children_of_both.item(1).previous_addresses.item(0).end_date }
         % endif
     - "child2_name_full": |
-        % if not confidential_address:
         ${ children_of_both.item(1) }
-        % endif
     - "child3_address1_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(2).lives_with }
+        ${ children_of_both.item(2).lives_with } - 
 
         ${ children_of_both.item(2).relationship }
         % endif
     - "child3_address1_end_date": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(0).end_date }
+        Present
+        % endif
+    - "child1_address1_end_date": |
+        % if not confidential_address:
+        Present
+        % endif
+    - "child2_address1_end_date": |
+        % if not confidential_address:
+        Present
         % endif
     - "child3_address1_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(0).start_date }
+        ${ children_of_both.item(2).address.start_date }
+        % endif
+    - "child4_address1_end_date": |
+        % if not confidential_address:
+        Present
         % endif
     - "child3_address2_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(1).lives_with }
+        ${ children_of_both.item(2).previous_addresses.item(0).lives_with } - 
 
-        ${ children_of_both.item(2).previous_addresses.item(1).relationship }
+        ${ children_of_both.item(2).previous_addresses.item(0).relationship }
         % endif
     - "child3_address2_end_date": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(1).end_date }
+        ${ children_of_both.item(2).previous_addresses.item(0).end_date }
         % endif
     - "child3_address2_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(2).previous_addresses.item(1).start_date }
+        ${ children_of_both.item(2).previous_addresses.item(0).start_date }
         % endif
     - "child3_name_full": |
-        % if not confidential_address:
         ${ children_of_both.item(2) }
-        % endif
     - "child4_address_on_one_line": |
         % if not confidential_address:
         ${ children_of_both.item(3).address.on_one_line(include_unit=True) }
         % endif
     - "child4_address1_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(0).lives_with }
+        ${ children_of_both.item(3).lives_with } - 
 
-        ${ children_of_both.item(3).previous_addresses.item(0).relationship }
+        ${ children_of_both.item(3).relationship }
         % endif
     - "child4_address1_end_date": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(0).end_date }
+        Present
         % endif
     - "child4_address1_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(0).start_date }
+        ${ children_of_both.item(3).address.start_date }
         % endif
     - "child4_address2_adults_lives_with": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(1).lives_with }
+        ${ children_of_both.item(3).lives_with } - 
 
-        ${ children_of_both.item(3).previous_addresses.item(1).relationship }
+        ${ children_of_both.item(3).relationship }
         % endif
     - "child4_address2_end_date": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(1).end_date }
+        ${ children_of_both.item(3).previous_addresses.item(0).end_date }
         % endif
     - "child4_address2_start_date": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses.item(1).start_date }
+        ${ children_of_both.item(3).address.start_date }
         % endif
     - "child4_name_full": |
-        % if not confidential_address:
         ${ children_of_both.item(3) }
-        % endif
     - "child4_past_addresses_on_one_line": |
         % if not confidential_address:
-        ${ children_of_both.item(3).previous_addresses }
+        ${ children_of_both.item(3).previous_addresses.item(0) }
         % endif
     # - "attorney_for_children_1": ${ str(attorneys_for_children.item(0)) +  ' (' + str(attorneys_for_children.item(0).represented_children) + ')' if defined('attorneys_for_children[0]') else ''}
     # - "attorney_for_children_2": ${ str(attorneys_for_children.item(1)) +  ' (' + str(attorneys_for_children.item(1).represented_children) + ')' if defined('attorneys_for_children[1]') else ''}
@@ -1336,7 +1335,9 @@ attachment:
     - "other_case_other_parties_4_address_on_one_line": ${ others_in_proceedings.item(3).address.on_one_line(include_unit=True) }
     - "other_case_other_parties_4_letters": ${ filter_letters(others_in_proceedings.item(3).child_letters) }
     - "other_case_other_parties_4_names": ${ others_in_proceedings.item(3) }
+    - "not_signer_is_attorney": ${ not attorneys.there_are_any or not attorneys.is_petitioner_minor_or_incompetent} 
     - "signer_is_attorney": ${ attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent}
+    - "signer_is_attorney__1": ${ attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent}
     - "trial_court_division": ${ trial_court.division }
     - "users1_address_block": ${ users[0].address.block() }
     - "users1_address_on_one_line__1": ${ users[0].address.on_one_line(include_unit=True) }
@@ -1360,34 +1361,19 @@ attachment:
 id: care or custody intro
 continue button field: affidavit_disclosing_care_or_custody_intro
 question: |
-  Affidavit Disclosing Care or Custody Proceedings
+  Child Care or Custody Disclosure Affidavit
 subquestion: |
-  As part of the petition for guardianship, the court needs to know about any
+  Before making a decision that affects who takes care of ${ children.familiar() }, 
+  the court needs to know about any
   other cases involving the care or custody of 
   % if (al_person_answering == 'parent'):
   your children. This includes cases where you, another parent, or someone else 
   has been involved in a court case about the care or custody of 
-  ${ children[0].familiar() }.
-
-  If ${ children[0].familiar() } has been involved in any court cases about their 
-  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
-  Proceeding*.
-
-  This helps the court find out about any open or closed cases related to the care 
-  and/or custody of ${ children[0].familiar() } and get a better picture of their
-  situation.
+  ${ children.familiar() }.
   % else:
-  ${ children[0].familiar() }. This includes cases where you, 
-  ${ children[0].familiar() }'s parents, or someone else has been involved in a
-  court case about the care or custody of ${ children[0].familiar() }.
-
-  If ${ children[0].familiar() } has been involved in any court cases about their 
-  custody or care, then you must submit an *Affidavit Disclosing Care or Custody 
-  Proceeding*.
-
-  This helps the court find out about any open or closed cases related to the care 
-  and/or custody of ${ children[0].familiar() } and get a better picture of their
-  situation.
+  ${ children.familiar() }. This includes cases where you, 
+  ${ children.familiar() }'s parents, or someone else has been involved in a
+  court case about the care or custody of ${ children.familiar() }.
   % endif
 ---
 code: |
