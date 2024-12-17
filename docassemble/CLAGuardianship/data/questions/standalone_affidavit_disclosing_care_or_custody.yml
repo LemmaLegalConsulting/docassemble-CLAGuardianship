@@ -1,0 +1,172 @@
+---
+include:
+  - docassemble.AssemblyLine:assembly_line.yml
+  - docassemble.MassAccess:massaccess.yml
+  - affidavit_disclosing_care_or_custody.yml
+---
+metadata:
+  title: |
+    Affidavit Disclosing Care or Custody Proceedings
+  short title: |
+    Affidavit of Care and Custody
+  description: |
+    You can use this interview to make an Affidavit Disclosing Care or Custody Proceedings to
+    tell the judge about:
+
+    * Any other cases that the child or children are in now
+    * Any other cases that the child has been in before
+    * The names of the people, like the child's parents, who are involved in those cases
+    * The names of attorneys, guardians ad litem, or other people who are involved in those cases
+
+    The form that this interview makes may already be included in other interviews on this site.
+  can_I_use_this_form: |
+    If you are asking a judge to make a decision about the custody or guardianship of a child,
+    the judge needs to know about any **other** cases involving the child. This helps the judge
+    know if another judge has already made an order about who can take care of the child.
+
+    Any person who is part of a family law case or a case about protection from abuse
+    can use this form to tell the judge what they know about other cases involving the child or children.
+  before_you_start: |
+    Before you start, you may want to gather information about:
+
+    * The names of the children who are part of the case
+    * The names of the other people who are involved in the case
+    * The names of the attorneys or other people who are involved in the case
+    * The names of the courts where the case is happening
+
+    In some cases, you may want to use the [MassCourts](https://masscourts.org) website to find
+    more about cases that have to do with the children.
+  maturity: production
+  estimated_completion_minutes: 20
+  estimated_completion_delta: 15
+  languages:
+    - en
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/probate-and-family-court/affidavit-disclosing-care-or-custody-proceeding
+  help_page_title: The Affidavit disclosing Care or Custody proceeding
+  LIST_topics: 
+    - FA-07-00-00-00
+  tags: 
+    - FA-07-00-00-00
+  jurisdiction: NAM-US-US+MA
+  original_form: https://www.mass.gov/doc/affidavit-disclosing-care-or-custody-proceeding-ocaj-1-trc-iv/download
+  original_form_published_on: 1995
+  review_date: 2024
+  form_titles:
+    - Affidavit Disclosing Care or Custody Proceedings
+  form_numbers:
+    - OCAJ-1 TRC IV (07/95)
+  fees:
+    - Filing fee: 0.00
+  update_notes: |
+    This form should still be updated to Assembly Line - it uses MAVC instead, although there is a version in the 209A
+    and in the Child Guardianship interviews that is updated to Assembly Line.
+---
+code: |
+  allowed_courts = [
+      "Boston Municipal Court",
+      "District Court",
+      "Superior Court",
+      "Probate and Family Court",
+      "Juvenile Court",
+      ]
+---
+id: interview order
+mandatory: True
+code: |
+  set_preconditions
+  basic_questions_intro_screen
+  intro
+  users[0].name.first
+  user_needs_interpreter
+  other_parties[0].name.first
+  confidential_address_reasons
+  other_care_custody_proceedings.there_are_any =  custody_case_participation != "no cases"
+
+  interview_order_affidavit_disclosing_care_or_custody
+
+  trigger_aff_care_or_custody_computed_variables
+  users[0].address.geolocate()
+  
+  trial_court
+  fill_in_court_name
+  users[0].mobile_number
+  download
+# ---
+# code: |
+#   all_matches = macourts.matching_courts([users[0].address], court_types=allowed_courts)
+---
+code: |
+  users.there_is_another = False
+  other_parties.there_are_any = True
+  other_parties.there_is_another = False
+  children.there_are_any = True
+  set_preconditions = True
+---
+code: |
+  children_of_both = children
+---
+id: intro
+continue button field: intro
+question: |
+  Affidavit Disclosing Care or Custody
+subquestion: |
+  This form helps you complete an "Affidavit Disclosing
+  Care or Custody Proceedings".
+  
+  The main purpose of this form is to find out about any open or 
+  closed cases related to the care and/or custody of your 
+  children. This helps the court get a better picture of your 
+  childrens’ situations. You may have to complete this form
+  even if you do not have any cases to tell the court about.
+  
+  You will need to answer questions about:
+  
+  * past cases
+  * the names of people who currently represent you, the other 
+  party, or your children, and
+  * the address and contact information for you, the other
+  party, and your children
+---  
+id: name of other party
+question: |
+  What is the name of your children's other parent?
+fields:
+  - First name: other_parties[0].name.first
+  - Middle: other_parties[0].name.middle
+    required: False
+  - Last: other_parties[0].name.last
+  - Suffix: other_parties[0].name.suffix
+    required: False
+    code: |
+      name_suffix()
+---    
+id: children names without birthdate
+question: |
+  Tell us about the children you have with ${other_parties.familiar()}  
+subquestion: |
+  List all of your children who are part of your new case. Usually,
+  this is all of your children with ${other_parties.familiar()}
+  who are under the age of 18.
+  
+  Click "${word("Add another")}" to add more.
+list collect: True
+fields:
+  - First Name: children[i].name.first
+  - Middle Name: children[i].name.middle
+    required: False
+  - Last Name: children[i].name.last
+  - Suffix: children[i].name.suffix
+    required: False
+    code: |
+      name_suffix()
+---
+code: |
+  users[i].name.first
+  users[i].complete = True
+---
+event: download
+id: download
+question: |
+  All done
+subquestion: |
+  ${ al_user_bundle.download_list_html() }
