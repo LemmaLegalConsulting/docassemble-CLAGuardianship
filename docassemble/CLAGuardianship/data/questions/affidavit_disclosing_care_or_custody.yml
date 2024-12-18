@@ -212,9 +212,9 @@ fields:
     exclude: children[i].address
   - Start date: children[i].previous_addresses[j].start_date
     maxlength: 12
-    default: ${ children[i].address.end_date if i == 0 else "" }
   - End date: children[i].previous_addresses[j].end_date
     maxlength: 12
+    default: ${ children[i].address.start_date if i == 0 else "" }
   - Address: children[i].previous_addresses[j].address
     address autocomplete: True
   - Unit: children[i].previous_addresses[j].unit
