@@ -55,22 +55,18 @@ def find_package_data(
                 out.setdefault(package, []).append(prefix + name)
     return out
 
-
-setup(
-    name="docassemble.CLAGuardianship",
-    version="1.5.14",
-    description=("CLA Guardianship Interviews"),
-    long_description="# docassemble.CLAGuardianship\n\n## Author\n\nCourt Forms Online\n\n",
-    long_description_content_type="text/markdown",
-    author="Court Forms Online",
-    author_email="",
-    license="The MIT License",
-    url="https://courtformsonline.org",
-    packages=find_packages(),
-    namespace_packages=["docassemble"],
-    install_requires=["docassemble.AssemblyLine", "docassemble.ALToolbox>=0.11.0"],
-    zip_safe=False,
-    package_data=find_package_data(
-        where="docassemble/CLAGuardianship/", package="docassemble.CLAGuardianship"
-    ),
-)
+setup(name='docassemble.CLAGuardianship',
+      version='1.6.0',
+      description=('CLA Guardianship Interviews'),
+      long_description='# docassemble.CLAGuardianship\n\n## Author\n\nCourt Forms Online\n\n',
+      long_description_content_type='text/markdown',
+      author='Court Forms Online',
+      author_email='',
+      license='The MIT License',
+      url='https://courtformsonline.org',
+      packages=find_packages(),
+      namespace_packages=['docassemble'],
+      install_requires=['docassemble.AssemblyLine', 'docassemble.ALToolbox>=0.11.0'],
+      zip_safe=False,
+      package_data=find_package_data(where='docassemble/CLAGuardianship/', package='docassemble.CLAGuardianship'),
+     )

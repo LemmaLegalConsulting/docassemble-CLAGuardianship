@@ -352,7 +352,7 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - notice_of_appearance_and_objection_Post_interview_instructions: ALDocument.using(title="Instructions", filename="notice_of_appearance_and_objection_next_steps.docx", enabled=True, has_addendum=False)
+  - notice_of_appearance_and_objection_Post_interview_instructions: ALDocument.using(title="Notice of Appearance and Objection Instructions", filename="notice_of_appearance_and_objection_next_steps.docx", enabled=True, has_addendum=False)
   - notice_of_appearance_and_objection_attachment: ALDocument.using(title="Notice of Appearance and Objection", filename="notice_of_appearance_and_objection", has_addendum=False, )
   - notice_of_appearance_and_objection_affidavit_attachment: ALDocument.using(title="Affidavit and Objection", filename="Affidavit and Objection of ${ users[0]}", has_addendum=False)
 ---

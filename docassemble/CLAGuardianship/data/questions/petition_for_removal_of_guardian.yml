@@ -16,10 +16,45 @@ metadata:
   short title: >-
     Petition to Remove a Guardian
   description: |-
-    This interview helps someone in Massachusetts file a petition for the removal of a guardian of a minor.
+    If your child, or the child of someone you care about,
+    has a guardian and you believe the guardian should be removed or replaced, 
+    you can use this interview to ask the court to remove the guardian.
+
+    It will help you make a petition to remove a guardian and optionally, let you
+    name a new guardian.
+
+    It can also help you make up to 5 other forms that you
+    may need to file with your petition. The other forms include:
+
+    * Petition to appoint a temporary guardian
+    * Request to get a lawyer (for a parent)
+    * Affidavit disclosing care or custody proceedings
+    * Military affidavit
+    * Fee waiver application (also called an affidavit of indigency)
+  can_I_use_this_form: |
+    You can use this interview if you are either:
+
+    * A parent, or
+    * Someone **else** who cares about a child and wants to ask the court to remove a guardian.
+  before_you_start: |
+    Before you start this interview, you should get information about:
+
+    * The guardianship case, including the name of the court and the case number (docket number)
+    * The child, including their birthdate and address
+    * The names, contact information, and other facts about the child's parents
+    * The name of the child's current guardian
+    * The names, contact information, and other facts about any new guardian that you want to ask the judge to appoint
+  maturity: production
+  estimated_completion_minutes: 20
+  estimated_completion_delta: 10
+  languages:
+    - en
+  LIST_topics:
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   tags:
-    - "FA-00-00-00-00"
-    - "FA-04-00-00-00"
+    - ES-03-03-00-00
+    - FA-04B-00-00-00
   authors:
     - Rami Lorca
     - Quinten Steenhuis
@@ -28,6 +63,26 @@ metadata:
   typical_role: "unknown"
   al_weaver_version: "playground"
   generated_on: "2024-02-13"
+  form_titles:
+    - Petition for Removal of Guardian of Minor
+    - Motion to Appoint Temporary Guardian
+    - Military Affidavit
+    - Application for Appointment of Counsel
+    - Affidavit Disclosing Care or Custody Proceedings
+    - Affidavit of Indigency
+  form_numbers:
+    - MPC 240
+    - OCAJ-1
+    - TC0002
+    - MPC 263
+    - MPC 340
+  original_form_published_on: 2011-05-03
+  jurisdiction: NAM-US-US+MA
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
+  help_page_title: "Guardianship of a Minor: An Overview"
+  review_date: "2024-11-03"
+  update_notes: |
+    2024-11-03 Added metadata
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -1134,6 +1189,7 @@ objects:
       petition_for_removal_of_guardian_Post_interview_instructions,
       petition_for_removal_of_guardian,
       motion_temporary_guardian_attachment,
+      Application_for_appointment_Post_interview_instructions,
       Application_for_appointment_attachment,
       affidavit_of_care_or_custody_attachment,
       affidavitofindigency_attachment,
@@ -1159,7 +1215,7 @@ objects:
 attachment:
   name: Post-interview-Instructions
   filename: petition_for_removal_of_guardian_next_steps
-  docx template file: Petition_for_Removal_of_Guardian_of_Minor_next_steps.docx
+  docx template file: petition_for_removal_of_guardian_next_steps.docx
   variable name: petition_for_removal_of_guardian_Post_interview_instructions[i]
   skip undefined: True
   tagged pdf: True

@@ -6,12 +6,39 @@ include:
 ---
 metadata:
   title: >-
-    Caregiver authorization affidavit
+    Caregiver authorization or temporary agent affidavit
   short title: >-
     Caregiver authorization
   description: |-
-    This interview helps someone in Massachusetts give permission to someone to 
-    take care of their child.
+    This interview helps a parent or guardian in Massachusetts give temporary permission to someone to 
+    make medical and educational decisions for their child. The parent does not lose their
+    rights to make decisions for their child.
+
+    You may want to use this interview if you are unable to care for your child for a short period of time,
+    up to 60 days or 2 years, depending on the kind of permission you need to give.
+
+    It can make either a **caregiver authorization affidavit** or the **temporary agent affidavit**,
+    depending on which kind of permission you want to give.
+
+    This form does not need to be filed with the court. It must be signed in front of a notary and two witnesses.    
+  can_I_use_this_form: |
+    Any parent or guardian in Massachusetts can use this form to give temporary permission to someone to make medical and educational decisions for their child.
+
+    You can use this form to give permission to a trusted adult to make:
+
+    * Medical decisions and 
+    * Educational decisions, for up to 2 years
+    
+    or
+    
+    * Some other decisions, including decisions over where your child lives and property, for up to 60 days
+  before_you_start: |
+    Before you start, decide what you want to allow the caregiver to do and for how long.
+
+    You will need the name and contact information for the person that you want to give permission to.
+
+    Be ready to print the form and sign it in front of a notary and two witnesses. You may also decide
+    to send a copy of the signed form to the child's school and doctor.
   tags:
     - "ES-03-00-00-00"
     - "FA-00-00-00-00"
@@ -24,6 +51,21 @@ metadata:
   typical_role: "plaintiff"
   al_weaver_version: "1.10.3"
   generated_on: "2024-04-29"
+  maturity: production
+  estimated_completion_minutes: 10
+  estimated_completion_delta: 15
+  form_titles:
+    - Caregiver Authorization Affidavit
+    - Temporary Agent Affidavit
+  jurisdiction: NAM-US-US+MA
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/naming-caregiver-my-child
+  help_page_title: Naming a caregiver for your child
+  original_form_published_on: 2024-11-03
+  review_date: "2024-11-03"
+  update_notes: |
+    2024-11-03 Added metadata
+
+    Based on M.G.L. c. 201F and M.G.L. 190B, § 5-103
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -474,7 +516,7 @@ progress: 100
 ---
 # ALDocument objects specify the metadata for each template
 objects:
-  - caregiver_authorization_affidavit_Post_interview_instructions: ALDocument.using(title="Instructions", filename="caregiver_authorization_affidavit_next_steps.docx", enabled=True, has_addendum=False)
+  - caregiver_authorization_affidavit_Post_interview_instructions: ALDocument.using(title="Caregiver Authorization Affidavit Instructions", filename="caregiver_authorization_affidavit_next_steps.docx", enabled=True, has_addendum=False)
   - caregiver_authorization_affidavit_attachment: ALDocument.using(title="Caregiver authorization affidavit", filename="caregiver_authorization_affidavit", has_addendum=False, )
 ---
 code: |

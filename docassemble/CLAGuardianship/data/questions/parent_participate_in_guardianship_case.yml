@@ -11,14 +11,43 @@ metadata:
   short title: >-
     Parent's Consent or Objection to a Minor Guardianship
   description: |-
-    This interview helps a Massachusetts parent participate in a minor guardianship case by:
+    This interview helps a Massachusetts parent or someone else who cares about the wellbeing of a minor
+    attend and have a chance to talk to the judge in a minor guardianship case. 
+    
+    It can help the parent or other person:
 
-    * Telling the court they disagree (object) to the guardianship, or
-    * Telling the court they agree (consent) to the guardianship.
+    * Tell the judge they disagree (object) to the guardianship, or
+    * Tell the judge they agree (consent) to the guardianship.
+
+    If you want to be heard but do not yet know if you agree or disagree, you can use this 
+    interview to ask the judge to let you speak at the hearing.
 
     It can also help the parent ask the judge to give them a lawyer for the case.
+  can_I_use_this_form: |
+    You can use this interview if:
+
+    * You are a parent of the minor in the guardianship case, or
+    * You are someone else who cares about the minor's wellbeing, and
+    * Someone has filed a case in court for the guardianship of a child.
+
+    The case to get a guardian for the minor has to already be filed with 
+    the court.
+  before_you_start: |
+    Before you start, you should have the court papers for the guardianship case.
+
+    If you do not have the papers, you need to know:
+
+    * The date the case was filed
+    * The docket number for the case
+    * The name of the court where the case was filed
+
+    You may be able to find this information on [masscourts.org](https://www.masscourts.org/).
+  LIST_topics:
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   tags:
-    - "FA-04-00-00-00"
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   authors:
     - Rami Lorca
     - Quinten Steenhuis
@@ -27,6 +56,26 @@ metadata:
   typical_role: "unknown"
   al_weaver_version: "1.10.2"
   generated_on: "2024-01-09"
+  maturity: production
+  estimated_completion_minutes: 20
+  estimated_completion_delta: 10
+  languages:
+    - en
+  jurisdiction: NAM-US-US+MA
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
+  help_page_title: "Guardianship of a Minor: An Overview"
+  form_titles:
+    - "Notice of Appearance and Objection (Probate and Family Court)"
+    - "Waiver and Consent to Petition for Appointment of Guardian of a Minor"
+    - "Application for appointment of counsel"
+    - "Affidavit of indigency"
+  form_numbers:
+    - MPC 505a
+    - MPC 440
+    - MPC 263
+    - TC0002
+  update_notes: |
+    2024-11-03: Added metadata
 ---
 objects:
   - children: ALPeopleList.using(ask_number=True,target_number=1)
@@ -95,7 +144,10 @@ code: |
     explain_notarization_requirement
     nav.set_section("section_about_you")
     users.gather()
+    users[0].address.address
     interested_person_relationship
+    if interested_person_relationship == "parent":
+      waiver_and_consent_parent_relationship
     nav.set_section("section_child")
     children[0].name.first
     children[0].birthdate
@@ -354,13 +406,63 @@ code: |
 code: |
   notice_of_appearance_and_objection_affidavit_attachment.enabled = is_objection and ready_to_make_affidavit
 ---
+############## Waiver and Consent ###############
+---
+id: specify parent relationship
+question: |
+  More about your relationship to the minor
+fields:
+  - I am the minor's: waiver_and_consent_parent_relationship
+    datatype: radio
+    choices: 
+      - Father: father
+      - Mother: mother
+---
+code: |
+  # Only one parent can use this pathway at a time so this should be safe to backfill with one value
+  parents[i].parental_relationship = waiver_and_consent_parent_relationship 
+---
+code: |
+  requested_guardians[i].name.first
+  requested_guardians[i].complete = True
+---
+id: requested_guardians information
+sets:
+  - requested_guardians[i].name.first
+  - requested_guardians[i].name.last
+  - requested_guardians[i].name.middle
+  - requested_guardians[i].name.suffix
+question: |
+  Tell us about the ${ ordinal(i) } potential guardian
+fields:
+  - code: |
+      requested_guardians[i].name_fields()
+validation code: |
+  if len(requested_guardians.complete_elements()) > 0:
+    requested_guardians.there_is_another = False
+---
+id: requested_guardians there_is_another
+question: |
+  Is there another person named as a potential guardian?
+fields:
+  - Choose one: requested_guardians.there_is_another
+    datatype: yesnoradio
+---
+code: |
+  parental_consent_to_petition_attachment.enabled = False
+
+  if main_choice in ("agree"):
+    parental_consent_to_petition_attachment.enabled = True
+---
 # Bundles group the ALDocuments into separate downloads, such as for court and for the user
 objects:
   - al_user_bundle: ALDocumentBundle.using(
       elements=[
+          notice_of_appearance_and_objection_Post_interview_instructions,
           notice_of_appearance_and_objection_attachment,
           notice_of_appearance_and_objection_affidavit_attachment,
           parental_consent_to_petition_attachment,
+          Application_for_appointment_Post_interview_instructions,
           Application_for_appointment_attachment,
           affidavitofindigency_attachment,
         ],
@@ -385,7 +487,6 @@ code: |
 code: |
   if attorneys.number_gathered() >= 1:
     attorneys.there_is_another = False
----
 ---
 id: notice of appearance and objection review screen
 continue button field: review_participate_in_guardianship

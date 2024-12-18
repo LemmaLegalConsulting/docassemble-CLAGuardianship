@@ -25,10 +25,39 @@ metadata:
     to ask the court to appoint a guardian.
 
     The guardian can make decisions about the minor's health, education, finances, and
-    general welfare.
+    general welfare in place of the minor's parent.
+  can_I_use_this_form: |
+    You can use this interview if you are **either**:
+
+    * An adult who cares about a minor's well-being; **or**
+    * A minor who is 14 or older.
+
+    If you are under 14, you will need an adult to help you answer the questions in this interview.
+    
+    **If you are a parent and your child needs a guardian,** you should have the adult
+    that you want to be the guardian use this interview. You cannot use this interview if
+    you are the parent of the minor.
+
+    You may also want to use the [Care Type Finder](https://apps.suffolklitlab.org/start/care_type_finder) to decide if guardianship is the right
+    choice.
+  before_you_start: |
+    Before you start, you may want to use the [Care Type Finder](https://apps.suffolklitlab.org/start/care_type_finder) to decide if guardianship is the right choice.
+
+    You will need to gather information about:
+
+    1. The minor's parents, including name, contact information, and whether they are living.
+    2. Anyone else who has taken care of the minor over the last 60 days.
+    3. Any bank accounts and other property that the minor owns.
+    4. Any current and past court cases that have to do with the minor.
+    5. Your own financial information, unless you are the minor.
+    6. The names and contact information of the person you want to be the guardian.
+    7. Information about whether the parent and the minor will agree to the guardianship.
+  LIST_topics:
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   tags:
-    - "FA-00-00-00-00"
-    - "FA-04-00-00-00"
+    - ES-03-03-00-00
+    - FA-04-00-00-00
   authors:
     - Quinten Steenhuis
     - Rami Lorca
@@ -37,6 +66,26 @@ metadata:
   typical_role: "plaintiff"
   al_weaver_version: "1.10.3"
   generated_on: "2024-02-20"
+  form_titles:
+    - Petition for Appointment of Guardian of a Minor
+    - Motion to Appoint Temporary Guardian
+    - Bond (MPC 801)
+    - Military Affidavit
+    - Affidavit Disclosing Care or Custody Proceedings
+    - Affidavit of Indigency
+  form_numbers:
+    - MPC 140
+    - OCAJ-1
+    - TC0002
+    - MCP 263
+    - MPC 340
+    - MPC 801
+  update_notes: |
+    2024-11-03 Initial version
+  jurisdiction: NAM-US-US+MA
+  help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
+  help_page_title: "Guardianship of a Minor: An Overview"
+
 ---
 code: |
   # This controls the default country and list of states in address field questions
@@ -114,6 +163,11 @@ code: |
 
   nav.set_section("review_parents_information")
   parents.gather()
+
+  for parent in parents:
+    if not parent.is_deceased and parent.agrees_to_guardianship:
+      parent.parental_relationship
+
   if parents_deceased:
     if relatives.there_are_any:
       relatives.gather()
@@ -196,6 +250,14 @@ code: |
   petition_for_appointment_of_guardian_download
 ---
 #################### Object/Code Blocks Start #####################
+---
+code: |
+  fees['Filing fee'].waive = True
+  fees['Filing fee'].amount = 15
+  fees['Service'].waive = True
+  fees['Service'].amount = 35
+  
+  set_fee_waiver_defaults = True
 ---
 code: |
   children[i].name.first
@@ -644,6 +706,50 @@ fields:
     show if:
       variable: parents[i].is_deceased
       is: False
+---
+if: |
+  i == 0 or ( len(parents.complete_elements().filter(is_deceased=True).filter(agrees_to_guardianship=True)) == 1 )
+id: parent relationship
+question: |
+  Adding ${ parents[i] }'s parental relationship to ${ children.familiar() } on the form
+subquestion: |
+  The court form has space for one parent labeled "mother" and one parent labeled "father", regardless of each parent's gender.
+
+  You must choose which parent is labeled "mother" and which is labeled "father". It does not have any legal relevance to the case
+  if the label does not match the parent's gender.
+
+  <div class="alert alert-info" role="alert">
+    <i class="fas fa-info-circle"></i>
+    The <a href="https://www.mass.gov/news/governor-healey-signs-parentage-act-ensuring-equality-for-all-families-in-massachusetts">Parentage Act</a><i class="fas fa-external-link-alt"></i>
+    requires the Trial Court to update its forms to remove unnecessary gendered language like this. This interview will be updated to reflect the change
+    when the Trial Court has finished that work.
+  </div>
+fields:
+  - ${ parents[i] } will be labeled the: parents[i].parental_relationship
+    datatype: radio
+    choices:
+      - Father: father
+      - Mother: mother
+  - note: |
+      ${parents[1] } will be labeled the **father**
+    show if:
+      variable: parents[i].parental_relationship
+      is: mother
+      code: |
+        len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1
+  - note: |
+      ${parents[1] } will be labeled the **mother**
+    show if:
+      variable: parents[i].parental_relationship
+      is: father
+      code: |
+        len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1
+---
+code: |
+  # only reachable when parents[0] consented and is alive, 
+  # so we know that parents[0].parental_relationship is defined by the interactive question
+  if len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1:
+    parents[1].parental_relationship = "mother" if parents[0].parental_relationship == "father" else "father"
 ---
 id: parent contact information
 sets:
