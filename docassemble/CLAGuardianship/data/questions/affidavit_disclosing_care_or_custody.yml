@@ -478,10 +478,10 @@ code: |
 ---
 id: attorney signature
 question: |
-  Affidavit Disclosing Care or Custody - Attorney Signature
+  Care or Custody Disclosure Affidavit Signature
 fields:
   - label: |
-      Are you an attorney who will sign the Affidavit Disclosing Care and Custody on behalf of someone who is a juvenile (under 18) or incompetent?
+      Are you an attorney who will sign the Care or Custody Disclosure Affidavit on behalf of someone who is a juvenile (under 18) or incompetent?
     field: needs_attorney_signature
     label above field: True
     datatype: yesnoradio
@@ -1022,15 +1022,15 @@ objects:
   - al_user_bundle: ALDocumentBundle.using(elements=[
       affidavit_of_care_or_custody_attachment
       ],
-      filename="care_or_custody",
-      title="Affidavit of Care or Custody",
+      filename="child_care_or_custody_affidavit",
+      title="Child Care or Custody Affidavit",
       enabled=True
       )
 ---
 objects:
   - affidavit_of_care_or_custody_attachment:
-      ALDocument.using(filename="care_or_custody",
-      title="Affidavit of Care or Custody",
+      ALDocument.using(filename="child_care_or_custody_affidavit",
+      title="Child Care or Custody Affidavit",
       has_addendum=True,
       enabled=True
       )
@@ -1064,15 +1064,15 @@ code: |
 need: need_other_parties_appendix
 attachment:
   variable name: affidavit_of_care_or_custody_attachment.addendum
-  name: Affidavit Disclosing Care or Custody Proceedings Appendix
-  filename: Affidavit_Disclosing_Care_or_Custody_Appendix
+  name: Child Care or Custody Disclosure Affidavit Appendix
+  filename: Child_Care_or_Custody_Disclosure_Affidavit_Appendix
   docx template file: care_or_custody_proceedings_appendix.docx
 ---
 attachment:
   variable name: affidavit_of_care_or_custody_attachment[i]
   skip undefined: True
-  name: Affidavit of Care
-  filename: Affidavit_of_Care
+  name: Child Care or Custody Disclosure Affidavit
+  filename: Child_Care_or_Custody_Affidavit
   # editable: False
   pdf template file: affidavit_disclosing_care_or_custody.pdf
   decimal places: 2
@@ -1229,15 +1229,15 @@ attachment:
         ${ children_of_both.item(2).relationship }
         % endif
     - "child3_address1_end_date": |
-        % if not confidential_address:
+        % if not confidential_address and children_of_both.item(2):
         Present
         % endif
     - "child1_address1_end_date": |
-        % if not confidential_address:
+        % if not confidential_address and children_of_both.item(0):
         Present
         % endif
     - "child2_address1_end_date": |
-        % if not confidential_address:
+        % if not confidential_address and children_of_both.item(1):
         Present
         % endif
     - "child3_address1_start_date": |
@@ -1245,7 +1245,7 @@ attachment:
         ${ children_of_both.item(2).address.start_date }
         % endif
     - "child4_address1_end_date": |
-        % if not confidential_address:
+        % if not confidential_address and children_of_both.item(3):
         Present
         % endif
     - "child3_address2_adults_lives_with": |
@@ -1273,10 +1273,6 @@ attachment:
         ${ children_of_both.item(3).lives_with } - 
 
         ${ children_of_both.item(3).relationship }
-        % endif
-    - "child4_address1_end_date": |
-        % if not confidential_address:
-        Present
         % endif
     - "child4_address1_start_date": |
         % if not confidential_address:

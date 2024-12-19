@@ -48,7 +48,7 @@ question: |
   % if who_is_making_petition == "interested_party" and (not form_filled_by_attorney):
   Does ${ children[0].familiar() } agree to have you as a guardian?
   % else:
-  Does ${ children[0].familiar() } agree to have ${ users[i] } as a guardian?
+  Does ${ children[0].familiar() } agree to have ${ users.familiar() } as a guardian?
   % endif
 fields:
   - ${ children[0].familiar() } agrees: petitioner_has_minor_consent

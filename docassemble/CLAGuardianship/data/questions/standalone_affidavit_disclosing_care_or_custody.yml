@@ -6,11 +6,11 @@ include:
 ---
 metadata:
   title: |
-    Affidavit Disclosing Care or Custody Proceedings
+    Child Care or Custody Disclosure Affidavit
   short title: |
-    Affidavit of Care and Custody
+    Child Care or Custody Disclosure
   description: |
-    You can use this interview to make an Affidavit Disclosing Care or Custody Proceedings to
+    You can use this interview to make an Child Care or Custody Disclosure Affidavit to
     tell the judge about:
 
     * Any other cases that the child or children are in now
@@ -50,16 +50,15 @@ metadata:
   jurisdiction: NAM-US-US+MA
   original_form: https://www.mass.gov/doc/affidavit-disclosing-care-or-custody-proceeding-ocaj-1-trc-iv/download
   original_form_published_on: 1995
-  review_date: 2024
+  review_date: 12/2024
   form_titles:
-    - Affidavit Disclosing Care or Custody Proceedings
+    - Child Care or Custody Disclosure Affidavit
   form_numbers:
-    - OCAJ-1 TRC IV (07/95)
+    - TC0050 (06/24)
   fees:
     - Filing fee: 0.00
   update_notes: |
-    This form should still be updated to Assembly Line - it uses MAVC instead, although there is a version in the 209A
-    and in the Child Guardianship interviews that is updated to Assembly Line.
+    Latest form as of 12/2024
 ---
 code: |
   allowed_courts = [
@@ -108,15 +107,14 @@ code: |
 id: intro
 continue button field: intro
 question: |
-  Affidavit Disclosing Care or Custody
+  Child Care or Custody Disclosure Affidavit
 subquestion: |
-  This form helps you complete an "Affidavit Disclosing
-  Care or Custody Proceedings".
+  This interview helps you complete a "Child Care or Custody Disclosure Affidavit".
   
   The main purpose of this form is to find out about any open or 
   closed cases related to the care and/or custody of your 
   children. This helps the court get a better picture of your 
-  childrens’ situations. You may have to complete this form
+  childrens' situations. You may have to complete this form
   even if you do not have any cases to tell the court about.
   
   You will need to answer questions about:
