@@ -1339,7 +1339,22 @@ attachment:
     - "users1_address_on_one_line__1": ${ users[0].address.on_one_line(include_unit=True) }
     - "users1_email": ${ users[0].email }
     - "users1_phone_numbers": ${ users[0].phone_numbers() }
-    - "users1_signature":  ${ user.signature }
+    - "users1_signature": |
+          % if not esign and not (attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent):
+          ${ user.signature_if_final(i) }
+          % endif
+    - "users1_signature_text": |
+            % if esign and not (attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent):
+            /s/${ users[0] }
+            % endif
+    - "attorneys1_signature": |
+            % if attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent and not esign:
+            ${ attorneys[0].signature_if_final(i) }
+            % endif
+    - "attorneys1_signature_text": |
+            % if attorneys.there_are_any and attorneys.is_petitioner_minor_or_incompetent and esign:
+            /s/${ attorneys[0] }
+            % endif
     - "trial_court_division": ${ trial_court.division }
     - "party_name_attorney": ${ party_name_attorney }
     - "party_name_no_attorney": ${ party_name_no_attorney }
