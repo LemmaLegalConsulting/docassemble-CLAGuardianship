@@ -615,18 +615,7 @@ fields:
     datatype: yesnoradio
     help: |
       Answer "yes" if the case is still ongoing. Choose no if a judge made a final decision,
-      even if you or another person plans to appeal to it.
-  - Was custody awarded?: other_care_custody_proceedings[i].custody_awarded
-    js hide if: |
-      val("other_care_custody_proceedings[i].case_status") == "adoption"
-    datatype: yesnoradio
-  - Who was given custody?: other_care_custody_proceedings[i].person_given_custody
-    js show if: |
-      !(val("other_care_custody_proceedings[i].case_status") == "adoption") && val("other_care_custody_proceedings[i].custody_awarded")
-  - Date custody was given: other_care_custody_proceedings[i].date_of_custody
-    datatype: date
-    js show if: |
-      !(val("other_care_custody_proceedings[i].case_status") == "adoption")  && val("other_care_custody_proceedings[i].custody_awarded")
+      even if you or another person plans to appeal it.  
 validation code: |
   # We don't ask the user to select which minor is in the case if
   # there is only one child. Below code adds the minor to the appropriate
@@ -1059,6 +1048,8 @@ code: |
   affidavit_of_care_or_custody_attachment.overflow_fields['attorneys_for_children'].overflow_trigger = 3
   affidavit_of_care_or_custody_attachment.overflow_fields['attorneys_for_children'].label = "Attorneys for children (continued)"
 
+  has_too_many_gals = any((child.gals.number() > 3 for child in children_of_both.complete_elements()) )
+
   affidavit_of_care_or_custody_attachment.overflow_fields.gathered = True
 ---
 need: need_other_parties_appendix
@@ -1312,16 +1303,16 @@ attachment:
     - "child_1_has_appointed_gal_etc_yes": ${ children[0].has_gal }
     - "child_1_has_appointed_gal_etc_no": ${ children[0].has_gal == False }
     - "child_1_has_appointed_gal_etc_unknown": ${ children[0].has_gal == None }
-    - "child_1_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[0].gals.complete_elements()]) }
-    - "child_2_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[1].gals.complete_elements()]) }
+    - "child_1_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[0].gals.complete_elements()[:3]]) }
+    - "child_2_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[1].gals.complete_elements()[:3]]) }
     - "child_2_has_appointed_gal_etc_yes": ${ children[1].has_gal }
     - "child_2_has_appointed_gal_etc_no": ${ children[1].has_gal == False }
     - "child_2_has_appointed_gal_etc_unknown": ${ children[1].has_gal == None }
-    - "child_3_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[2].gals.complete_elements()]) }
+    - "child_3_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[2].gals.complete_elements()[:3]]) }
     - "child_3_has_appointed_gal_etc_yes": ${ children[2].has_gal }
     - "child_3_has_appointed_gal_etc_no": ${ children[2].has_gal == False }
     - "child_3_has_appointed_gal_etc_unknown": ${ children[2].has_gal == None }
-    - "child_4_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[3].gals.complete_elements()]) }
+    - "child_4_appointed_gal_etc_names": ${ comma_list([f"{gal} ({gal.role})" for gal in children[3].gals.complete_elements()[:3]]) }
     - "child_4_has_appointed_gal_etc_yes": ${ children[3].has_gal }
     - "child_4_has_appointed_gal_etc_no": ${ children[3].has_gal == False }
     - "child_4_has_appointed_gal_etc_unknown": ${ children[3].has_gal == None }
