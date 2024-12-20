@@ -2,12 +2,12 @@
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
+  - affidavit_disclosing_care_or_custody.yml
   - shared.yml
   - Bond_MPC_801.yml
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
   - parental_consent_to_petition.yml
-  - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
   - customized_screens.yml
 ---
@@ -71,7 +71,7 @@ metadata:
     - Motion to Appoint Temporary Guardian
     - Bond (MPC 801)
     - Military Affidavit
-    - Affidavit Disclosing Care or Custody Proceedings
+    - Child Care or Custody Disclosure Affidavit
     - Affidavit of Indigency
   form_numbers:
     - MPC 140
@@ -80,8 +80,10 @@ metadata:
     - MCP 263
     - MPC 340
     - MPC 801
+    - TC0050 (06/24)
   update_notes: |
     2024-11-03 Initial version
+    2024-12-19 Updated with new Care and Custody Disclosure Affidavity
   jurisdiction: NAM-US-US+MA
   help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
   help_page_title: "Guardianship of a Minor: An Overview"
@@ -124,7 +126,7 @@ data:
   - review_minors_guardianship: History
   - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
-  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+  - review_affidavit_disclosing_care_or_custody: Child Care or Custody Disclosure Affidavit
   - review_military_affidavit: Military affidavit
   - section_fee_waiver: Fee waiver
     hidden: |

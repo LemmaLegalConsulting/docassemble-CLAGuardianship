@@ -28,7 +28,7 @@ metadata:
 
     * Petition to appoint a temporary guardian
     * Request to get a lawyer (for a parent)
-    * Affidavit disclosing care or custody proceedings
+    * Child Care or Custody Disclosure Affidavit
     * Military affidavit
     * Fee waiver application (also called an affidavit of indigency)
   can_I_use_this_form: |
@@ -68,7 +68,7 @@ metadata:
     - Motion to Appoint Temporary Guardian
     - Military Affidavit
     - Application for Appointment of Counsel
-    - Affidavit Disclosing Care or Custody Proceedings
+    - Child Care or Custody Disclosure Affidavit
     - Affidavit of Indigency
   form_numbers:
     - MPC 240
@@ -119,7 +119,7 @@ data from code:
   - review_requests: |
       "What you need"
   - review_affidavit_disclosing_care_or_custody: |
-      "Affidavit Disclosing Care or Custody Proceedings"
+      "Child Care or Custody Disclosure Affidavit"
     hidden: |
       showifdef("who_is_making_petition") == "minor"
   - review_military_affidavit: |
