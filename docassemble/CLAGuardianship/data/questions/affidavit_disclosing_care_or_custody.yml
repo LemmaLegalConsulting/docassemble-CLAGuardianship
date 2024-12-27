@@ -155,6 +155,7 @@ fields:
       children[i].address.address_fields()
   - When did ${children_of_both.familiar()} start living at this address?: children[0].address.start_date
     validate: include_a_year
+    maxlength: 12
   - Who does ${children[i]} live with at this address?: children[i].lived_with
     datatype: area
     rows: 2
@@ -174,6 +175,7 @@ fields:
     rows: 2
   - When did ${children_of_both.familiar()} start living at this address?: children[0].address.start_date
     validate: include_a_year
+    maxlength: 12
 ---
 id: addresses of children explanation
 question: |
@@ -366,6 +368,7 @@ fields:
     default: USA
   - ${ children[i].familiar() } has lived here since: children[i].address.start_date
     validate: include_a_year
+    maxlength: 12
   - Who does ${children[i]} live with?: children[i].lives_with
     datatype: area
     rows: 2
@@ -395,6 +398,7 @@ fields:
       ${ showifdef(children[-1].attr_name("relationship")) }
   - ${ children[i].familiar() } has lived here since: children[i].address.start_date
     validate: include_a_year
+    maxlength: 12
 ---
 code: |
   # Ask the user if they want the affidavit impounded ONLY if they have an
