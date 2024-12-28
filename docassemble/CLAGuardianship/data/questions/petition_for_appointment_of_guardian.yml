@@ -111,6 +111,7 @@ objects:
   - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: ALAssetList.using(complete_attribute='complete')
+  - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
 ---
 code: |
   enable_al_nav_sections = True
