@@ -82,6 +82,9 @@ code: |
   github_repo_name =  'docassemble-CaregiverAuthorizationAffidavit'
 ---
 code: |
+  al_interview_languages = ["en", "es"]
+---
+code: |
   interview_short_title = "Allow someone to make medical and educational decisions for your child"
 ---
 language: es
