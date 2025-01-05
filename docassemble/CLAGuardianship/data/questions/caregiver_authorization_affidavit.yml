@@ -1,4 +1,7 @@
 ---
+translations:
+  - caregiver_authorization_affidavit_es.xlsx
+---
 include:
   - docassemble.AssemblyLine:assembly_line.yml
   - docassemble.MassAccess:massaccess.yml
@@ -81,6 +84,10 @@ code: |
 code: |
   interview_short_title = "Allow someone to make medical and educational decisions for your child"
 ---
+language: es
+code: |
+  interview_short_title = "Permitir a alguien tomar decisiones médicas y educativas para su hijo"
+---
 code: |
   al_form_type = "other_form" 
 ---
@@ -91,6 +98,10 @@ objects:
 ---
 sections:
   - review_caregiver_authorization_affidavit: Review your answers
+---
+language: es
+sections:
+  - review_caregiver_authorization_affidavit: Revisar sus respuestas
 ---
 #################### Interview order #####################
 comment: |

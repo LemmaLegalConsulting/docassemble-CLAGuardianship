@@ -1,4 +1,7 @@
 ---
+translations:
+  - parent_participate_in_guardianship_case_es.xlsx
+---
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - notice_of_appearance_and_objection.yml
@@ -96,8 +99,15 @@ code: |
 code: |
   interview_short_title = "Participate as a parent in your child's guardianship case"
 ---
+language: es
+code: |
+  interview_short_title = "Participar como padre en el caso de tutela de su hijo"
+---
 code: |
   al_form_type = "other"
+---
+code: |
+  al_interview_languages = ["en", "es"]
 ---
 sections:
   - section_starting: Get started
@@ -109,6 +119,18 @@ sections:
   - review_participate_in_guardianship: Review your answers
   - section_signature: Sign your forms
   - section_download: Download and print your forms
+---
+language: es
+sections:
+  - section_starting: Empezar
+  - section_choice: ¿Qué quieres hacer?
+  - section_about_you: Sobre ti
+  - section_child: Sobre el menor
+  - section_guardianship_case: Sobre el caso de tutela
+  - section_documents: Documentos opcionales
+  - review_participate_in_guardianship: Revisar tus respuestas
+  - section_signature: Firmar tus formularios
+  - section_download: Descargar e imprimir tus formularios
 ---
 ###################### Main order ######################
 mandatory: True
