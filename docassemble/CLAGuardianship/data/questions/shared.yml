@@ -133,3 +133,51 @@ fields:
 ---
 #################### Attachment Blocks End #####################
 ---
+id: basic questions intro screen
+question: |
+  ${interview_short_title}: ${ AL_ORGANIZATION_TITLE}
+pre: |
+  ${ get_language_list(lang_codes=al_interview_languages, current=al_user_language) }
+subquestion: |
+  % if form_approved_for_email_filing:
+  ${ AL_ORGANIZATION_TITLE } can help you complete and file court forms in 3 steps:
+  % else:
+  ${ AL_ORGANIZATION_TITLE } can help you complete and download forms in 3 steps:
+  % endif
+  
+  Step 1. Answer questions that will fill in your form for you.<br>
+  Step 2. Preview the completed form.<br>
+  % if form_approved_for_email_filing:
+  Step 3. Email the form to the court using this secure website and save copies
+  for yourself for later reference.  
+  % elif al_form_type in ['starts_case','existing_case','appeal']:
+  Step 3. Download and print the final form. You will need to deliver it
+  to the court on your own.
+  % else:
+  Step 3. Download and print the final form. You will need to deliver it 
+  on your own.
+  % endif
+  
+  This site is not a lawyer. If you would like a lawyer, find [your local
+  legal aid provider](https://www.lsc.gov/what-legal-aid/find-legal-aid).
+  
+  Tap the {green words} in any screen for a definition or more information.
+  
+  % if chat_partners_available().help:
+  Live help is currently available in this interview. Click the speech bubble
+  (:comment-alt:) in the navigation bar to connect to a live advocate for help.
+  % endif
+fields:
+  - note: |
+      ${ display_template(al_terms_of_use, scrollable=True) }
+      To continue, you must accept our terms of use
+  - I accept the terms of use: acknowledged_information_use
+    datatype: yesnowide
+    grid: 8
+continue button field: al_intro_screen
+terms:
+  green words: |
+    Green words are legal terms or a short way of referring to something that needs more explanation. The definition or explanation pops up when you tap the green words. 
+validation code: |
+  if not acknowledged_information_use:
+    validation_error("You must accept the terms of use to continue.", field="acknowledged_information_use")

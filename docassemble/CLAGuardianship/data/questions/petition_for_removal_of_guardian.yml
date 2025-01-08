@@ -1,4 +1,7 @@
 ---
+translations:
+  - petition_for_removal_of_guardian_es.xlsx
+---
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
@@ -98,6 +101,10 @@ code: |
 code: |
   interview_short_title = "Ask the court to remove a guardian for a minor"
 ---
+language: es
+code: |
+  interview_short_title = "Pida al tribunal que remueva a un tutor de un menor"
+---
 code: |
   al_form_type = "other"
 ---
@@ -106,6 +113,9 @@ objects:
 ---
 code: |
   enable_al_nav_sections = True
+---
+code: |
+  al_interview_languages = ["en", "es"]
 ---
 reconsider: True
 variable name: al_nav_sections
@@ -130,6 +140,32 @@ data from code:
       showifdef("who_is_making_petition") == "minor"
   - review_petition_for_removal_of_guardian: |
       "Review your answers"
+---
+language: es
+reconsider: True
+variable name: al_nav_sections
+data from code:
+  - review_case_information: |
+      "Sobre el caso"
+  - review_petitioner_information: |
+      "Solicitantes"
+  - review_guardian_information: |
+      "Tutores"
+  - review_requests: |
+      "Lo que necesitas"
+  - review_affidavit_disclosing_care_or_custody: |
+      "Declaración de cuidado o custodia de menores"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_military_affidavit: |
+      "Declaración militar"
+  - section_fee_waiver: |
+      "Exención de tarifas"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_petition_for_removal_of_guardian: |
+      "Revisar tus respuestas"
+
 ---
 #################### Interview order #####################
 comment: |

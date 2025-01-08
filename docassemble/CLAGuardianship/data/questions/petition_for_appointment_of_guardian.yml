@@ -1,4 +1,7 @@
 ---
+translations:
+  - petition_for_appointment_of_guardian_es.xlsx
+---
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
@@ -103,6 +106,10 @@ code: |
 code: |
   interview_short_title = "Ask the court for a guardian for a minor"
 ---
+language: es
+code: |
+  interview_short_title = "Pida al tribunal un tutor para un menor"
+---
 code: |
   al_form_type = "starts_case"
 ---
@@ -115,6 +122,9 @@ objects:
 ---
 code: |
   enable_al_nav_sections = True
+---
+code: |
+  al_interview_languages = ["en", "es"]
 ---
 depends on:
   - who_is_making_petition
@@ -135,6 +145,27 @@ data:
   #- review_bond: Bond
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
+---
+language: es
+depends on:
+  - who_is_making_petition
+variable name: al_nav_sections
+data:
+  - review_case_information: Acerca del caso
+  - review_petitioner_information: Solicitantes
+  - review_parents_information: Padres del menor
+  - review_requests: Lo que necesitas
+  - review_minors_guardianship: Historia
+  - review_minor_assets: Bienes
+  - review_additional_requests: Solicitudes adicionales
+  - review_affidavit_disclosing_care_or_custody: Declaración de cuidado o custodia del menor
+  - review_military_affidavit: Declaración militar
+  - section_fee_waiver: Exención de tarifas
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  #- review_bond: Bond
+  - review_petition_for_appointment_of_guardian: Revisar tus respuestas
+  - section_download_petition: Descargar e imprimir
 ---
 #################### Interview order #####################
 comment: |
