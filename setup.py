@@ -56,7 +56,7 @@ def find_package_data(
     return out
 
 setup(name='docassemble.CLAGuardianship',
-      version='1.8.0',
+      version='1.8.1',
       description=('CLA Guardianship Interviews'),
       long_description='# docassemble.CLAGuardianship\n\n## Author\n\nCourt Forms Online\n\n',
       long_description_content_type='text/markdown',
