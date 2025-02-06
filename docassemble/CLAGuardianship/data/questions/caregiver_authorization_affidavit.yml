@@ -89,6 +89,7 @@ objects:
   - children: ALPeopleList.using(ask_number=True, minimum_number=1)
   - users: ALPeopleList.using(ask_number=True,target_number=1)
   - authorized_persons: ALPeopleList.using(ask_number=True,target_number=1)
+  - non_appointing_parent: ALPeopleList.using(complete_attribute="complete")
 ---
 sections:
   - review_caregiver_authorization_affidavit: Review your answers
@@ -107,15 +108,12 @@ code: |
   users.gather()
   relationship_to_child
   authorized_persons.gather()
+  authorized_persons[0].address.address
   set_parts(subtitle=str(users))
   caregiver_relationship_to_child
-  if relationship_to_child == "parent" and other_parent:
-    parents.gather()
-    for parent in parents:
-      parent.address.address
-      parent.phone_number
-  set_progress(25)
   permission_kind
+  collect_non_appointing_parent
+  set_progress(25)
   acknowledge_what_you_affirm_by_signing
   expiration_of_authorization
   children.gather()
@@ -143,6 +141,44 @@ code: |
       },
   )
   caregiver_authorization_affidavit_download
+---
+#################### Object/Code Blocks Start #####################
+---
+code: |
+  if relationship_to_child == "parent":
+    if not other_parent:
+      undefine('other_parent_agrees')
+    else:
+      if other_parent_agrees:
+        non_appointing_parent.gather()
+  else:
+    undefine('other_parent')
+    undefine('other_parent_agrees')
+    non_appointing_parent.clear()
+
+  reset_other_parent_agreement = True
+---
+code: |
+  non_appointing_parent.there_are_any = False
+  
+  if permission_kind == "temporary agent affidavit":
+    if relationship_to_child == "parent":
+      if other_parent:
+        if other_parent_agrees:
+          non_appointing_parent.there_are_any = True
+          non_appointing_parent.gather()
+
+  collect_non_appointing_parent = True
+---
+code: |
+  non_appointing_parent.there_is_another = False
+---
+code: |
+  non_appointing_parent[i].name.first
+  non_appointing_parent[i].address.address
+  non_appointing_parent[i].complete = True
+---
+#################### Question Blocks Start #####################
 ---
 id: Caregiver_authorization_affidavit
 continue button field: caregiver_authorization_affidavit_intro
@@ -190,9 +226,30 @@ fields:
   - code: |
       users[0].address_fields(default_state="MA")
 ---
+id: non_appointing_parent information
+sets:
+  - non_appointing_parent[0].name.first
+  - non_appointing_parent[0].name.last
+  - non_appointing_parent[0].name.middle
+  - non_appointing_parent[0].name.suffix
+  - non_appointing_parent[0].address.address
+  - non_appointing_parent[0].address.unit
+  - non_appointing_parent[0].address.city
+  - non_appointing_parent[0].address.state
+  - non_appointing_parent[0].address.zip
+  - non_appointing_parent[0].phone_number
+question: |
+  Tell us about the other parent
+fields:
+  - code: |
+      non_appointing_parent[0].name_fields()
+  - code: |
+      non_appointing_parent[0].address_fields()
+  - Primary phone number: non_appointing_parent[0].phone_number
+---
 sets:
   - authorized_persons[0].name.first
-id: What best describes you
+id: Information about authorized caregiver
 question: |
   Who do you want to give permission to?
 subquestion: |
@@ -212,7 +269,7 @@ fields:
       - Cousin: cousin
       - Parent's friend: parent's friend
       - Other: other
-  - Other: caregiver_relationship_to_child
+  - Other: caregiver_other_relationship_to_child
     show if:
       variable: caregiver_relationship_to_child
       is: other
@@ -252,7 +309,7 @@ fields:
     alMin: ${ today().plus(years=-18).format('MM/dd/yyyy') }
     alMax: ${ today().format('MM/dd/yyyy') }
 ---
-id: Information about the caregiver
+id: Information about user
 question: |
   What best describes you?
 fields:
@@ -472,7 +529,6 @@ columns:
 edit:
   - name.first
 confirm: True
-
 ---
 continue button field: users.revisit
 question: |
@@ -496,7 +552,6 @@ edit:
   - name.first
   - address.address
 confirm: True
-
 ---
 id: download caregiver_authorization_affidavit
 event: caregiver_authorization_affidavit_download

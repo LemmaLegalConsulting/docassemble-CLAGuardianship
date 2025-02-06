@@ -4,7 +4,7 @@ include:
   - parent_participate_in_guardianship_case.yml
   - customized_screens.yml
 ---
-id: review petition for appointment of guardian
+id: review parental participation in guardianship
 event: review_full
 question: |
   Review your answers

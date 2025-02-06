@@ -2,14 +2,13 @@
 include:
   - caregiver_authorization_affidavit.yml
 ---
-id: review petition for appointment of guardian
+id: review caregiover authorization affidavit
 event: review_full
 question: |
   Review your answers
 review:
   - note: |
-      <hr>
-      <h2 class='h5'>Petitioner(s)</h2>
+      <h2 class='h5'>Your Information</h2>
     show if: users[0].name.first
   - Edit: users[0].name.first
     button: |-
@@ -17,10 +16,13 @@ review:
 
         **${ item }**
 
-        ${ item.address_block() }
+        ${ item.address }
 
       % endfor
-  - Edit: relationship_to_child
+  - Edit: 
+      - relationship_to_child
+      - recompute:
+        - reset_other_parent_agreement
     button: |-
       **I am the minor's:**
       % if relationship_to_child == "parent":
@@ -53,7 +55,25 @@ review:
       % endif
   - note: |
       <hr>
+      <h2 class='h5'>The Other Parent</h2>
+    show if: len(non_appointing_parent.complete_elements()) > 0
+  - Edit: non_appointing_parent[0].name.first
+    button: |-
+      % for item in non_appointing_parent:
+
+        **${ item }**
+
+        ${ item.address }
+
+        ${ phone_number_formatted(item.phone_number) }
+      % endfor
+  - note: |
+      <hr>
+      % if len(children.complete_elements()) < 2:
       <h2 class='h5'>The Minor</h2>
+      % else:
+      <h2 class='h5'>The Minors</h2>
+      % endif
     show if: children[0].name.first
   - Edit: children[0].name.first
     button: |-
@@ -66,17 +86,17 @@ review:
       % endfor
   - note: |
       <hr>
-      <h2 class='h5'>Authorized People</h2>
+      <h2 class='h5'>Person Authorized to Care for Minor</h2>
     show if: authorized_persons[0].name.first
-  - Edit: authorized_persons.revisit
+  - Edit: 
+      - authorized_persons.revisit
     button: |-
-      **Who do you want to authorize to be the minor's caregiver?**
       % for item in authorized_persons:
 
         **${ item }**
       
         % if item.phone_number:
-        ${ item.phone_number }
+        ${ phone_number_formatted(item.phone_number) }
         % endif
 
         **Relationship to minor:**
@@ -109,13 +129,35 @@ review:
 
         % elif caregiver_relationship_to_child == "other":
 
-        ${ caregiver_relationship_to_child }
+        ${ caregiver_other_relationship_to_child }
         % endif
       % endfor
+  - Edit: permission_kind
+    button: |-
+      **I want to give ${ authorized_persons[0] } permission to:**
+      % if permission_kind == "caregiver authorization affidavit":
+
+      Make decisions about medical treatment and education, for up to 2 years.
+      % elif permission_kind == "temporary agent affidavit":
+
+      Make most parental decisions, other than adoption, for up to 60 days.
+      % endif
+    show if: len(authorized_persons.complete_elements()) > 0 and defined('permission_kind')
+  - Edit: expiration_of_authorization
+    button: |-
+      **My permission ends on:**
+
+      ${ expiration_of_authorization }
+      % if excluded_powers != "":
+
+      **${ authorized_persons[0] } is not permitted to do the following:**
+
+      ${ excluded_powers }
+      % endif
 ---
 continue button field: children.revisit
 question: |
-  Edit children
+  Edit the Minor's Information
 subquestion: |
   ${ children.table }
 
@@ -138,11 +180,9 @@ confirm: True
 ---
 continue button field: users.revisit
 question: |
-  Edit users
+  Edit Your Information
 subquestion: |
   ${ users.table }
-
-  ${ users.add_action() }
 ---
 table: users.table
 rows: users
@@ -153,12 +193,24 @@ columns:
       row_item.address.block() if defined("row_item.address.unit") else ""
   - Phone number: |
       row_item.phone_number if defined("row_item.phone_number") else ""
-  - Signature: |
-      row_item.signature if defined("row_item.signature") else ""
 edit:
-  - name.last
+  - name.first
   - address.unit
   - phone_number
-  - signature
 confirm: True
+---
+continue button field: authorized_persons.revisit
+question: |
+  Edit Person Authorized to Care for Minor
+subquestion: |
+  ${ authorized_persons.table }
+---
+table: authorized_persons.table
+rows: authorized_persons
+columns:
+  - Name: |
+      row_item.name.full() if defined("row_item.name.last") else ""
+edit:
+  - name.first
+delete buttons: False
 ---

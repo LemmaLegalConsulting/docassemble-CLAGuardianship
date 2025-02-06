@@ -4,7 +4,7 @@ include:
   - petition_for_removal_of_guardian.yml
   - customized_screens.yml
 ---
-id: review petition for appointment of guardian
+id: review petition for removal of guardian
 event: review_full
 question: |
   Review your answers
