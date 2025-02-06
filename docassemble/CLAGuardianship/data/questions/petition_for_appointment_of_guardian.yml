@@ -1,13 +1,16 @@
 ---
+translations:
+  - petition_for_appointment_of_guardian_es.xlsx
+---
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
+  - affidavit_disclosing_care_or_custody.yml
   - shared.yml
   - Bond_MPC_801.yml
   - military_affidavit.yml
   - consent_to_nomination_by_a_minor.yml
   - parental_consent_to_petition.yml
-  - affidavit_disclosing_care_or_custody.yml
   - temporary_guardian.yml
   - customized_screens.yml
   - review_petition_for_appointment_of_guardian.yml
@@ -72,7 +75,7 @@ metadata:
     - Motion to Appoint Temporary Guardian
     - Bond (MPC 801)
     - Military Affidavit
-    - Affidavit Disclosing Care or Custody Proceedings
+    - Child Care or Custody Disclosure Affidavit
     - Affidavit of Indigency
   form_numbers:
     - MPC 140
@@ -81,8 +84,10 @@ metadata:
     - MCP 263
     - MPC 340
     - MPC 801
+    - TC0050 (06/24)
   update_notes: |
     2024-11-03 Initial version
+    2024-12-19 Updated with new Care and Custody Disclosure Affidavity
   jurisdiction: NAM-US-US+MA
   help_page_url: https://www.masslegalhelp.org/children-families-divorce/guardians-other-caregivers/guardianship-minor-overview
   help_page_title: "Guardianship of a Minor: An Overview"
@@ -102,6 +107,10 @@ code: |
 code: |
   interview_short_title = "Ask the court for a guardian for a minor"
 ---
+language: es
+code: |
+  interview_short_title = "Pida al tribunal un tutor para un menor"
+---
 code: |
   al_form_type = "starts_case"
 ---
@@ -110,9 +119,13 @@ objects:
   - other_custodians: ALPeopleList.using(ask_number=True, complete_attribute="complete")
   - relatives: ALPeopleList.using(maximum_number=2, complete_attribute="complete")
   - assets: ALAssetList.using(complete_attribute='complete')
+  - children: ALPeopleList.using(ask_number=True, target_number=1, complete_attribute="complete")
 ---
 code: |
   enable_al_nav_sections = True
+---
+code: |
+  al_interview_languages = ["en", "es"]
 ---
 depends on:
   - who_is_making_petition
@@ -125,7 +138,7 @@ data:
   - review_minors_guardianship: History
   - review_minor_assets: Assets
   - review_additional_requests: Additional Requests
-  - review_affidavit_disclosing_care_or_custody: Affidavit Disclosing Care or Custody Proceedings
+  - review_affidavit_disclosing_care_or_custody: Child Care or Custody Disclosure Affidavit
   - review_military_affidavit: Military affidavit
   - section_fee_waiver: Fee waiver
     hidden: |
@@ -134,6 +147,27 @@ data:
   - review_petition_for_appointment_of_guardian: Review your answers
   - section_download_petition: Download and print
   - review_full: "✎ <u>Review / Edit</u>"
+---
+language: es
+depends on:
+  - who_is_making_petition
+variable name: al_nav_sections
+data:
+  - review_case_information: Acerca del caso
+  - review_petitioner_information: Solicitantes
+  - review_parents_information: Padres del menor
+  - review_requests: Lo que necesitas
+  - review_minors_guardianship: Historia
+  - review_minor_assets: Bienes
+  - review_additional_requests: Solicitudes adicionales
+  - review_affidavit_disclosing_care_or_custody: Declaración de cuidado o custodia del menor
+  - review_military_affidavit: Declaración militar
+  - section_fee_waiver: Exención de tarifas
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  #- review_bond: Bond
+  - review_petition_for_appointment_of_guardian: Revisar tus respuestas
+  - section_download_petition: Descargar e imprimir
 ---
 #################### Interview order #####################
 comment: |

@@ -1,4 +1,7 @@
 ---
+translations:
+  - petition_for_removal_of_guardian_es.xlsx
+---
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
@@ -29,7 +32,7 @@ metadata:
 
     * Petition to appoint a temporary guardian
     * Request to get a lawyer (for a parent)
-    * Affidavit disclosing care or custody proceedings
+    * Child Care or Custody Disclosure Affidavit
     * Military affidavit
     * Fee waiver application (also called an affidavit of indigency)
   can_I_use_this_form: |
@@ -69,7 +72,7 @@ metadata:
     - Motion to Appoint Temporary Guardian
     - Military Affidavit
     - Application for Appointment of Counsel
-    - Affidavit Disclosing Care or Custody Proceedings
+    - Child Care or Custody Disclosure Affidavit
     - Affidavit of Indigency
   form_numbers:
     - MPC 240
@@ -99,6 +102,10 @@ code: |
 code: |
   interview_short_title = "Ask the court to remove a guardian for a minor"
 ---
+language: es
+code: |
+  interview_short_title = "Pida al tribunal que remueva a un tutor de un menor"
+---
 code: |
   al_form_type = "other"
 ---
@@ -107,6 +114,9 @@ objects:
 ---
 code: |
   enable_al_nav_sections = True
+---
+code: |
+  al_interview_languages = ["en", "es"]
 ---
 reconsider: True
 variable name: al_nav_sections
@@ -120,7 +130,7 @@ data from code:
   - review_requests: |
       "What you need"
   - review_affidavit_disclosing_care_or_custody: |
-      "Affidavit Disclosing Care or Custody Proceedings"
+      "Child Care or Custody Disclosure Affidavit"
     hidden: |
       showifdef("who_is_making_petition") == "minor"
   - review_military_affidavit: |
@@ -133,6 +143,32 @@ data from code:
       "Review your answers"
   - review_full: | 
       "✎ <u>Review / Edit</u>"
+---
+language: es
+reconsider: True
+variable name: al_nav_sections
+data from code:
+  - review_case_information: |
+      "Sobre el caso"
+  - review_petitioner_information: |
+      "Solicitantes"
+  - review_guardian_information: |
+      "Tutores"
+  - review_requests: |
+      "Lo que necesitas"
+  - review_affidavit_disclosing_care_or_custody: |
+      "Declaración de cuidado o custodia de menores"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_military_affidavit: |
+      "Declaración militar"
+  - section_fee_waiver: |
+      "Exención de tarifas"
+    hidden: |
+      showifdef("who_is_making_petition") == "minor"
+  - review_petition_for_removal_of_guardian: |
+      "Revisar tus respuestas"
+
 ---
 #################### Interview order #####################
 comment: |
