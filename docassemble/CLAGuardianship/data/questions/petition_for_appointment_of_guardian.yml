@@ -199,8 +199,10 @@ code: |
   parents.gather()
 
   for parent in parents:
-    if not parent.is_deceased and parent.agrees_to_guardianship:
-      parent.parental_relationship
+    if parent.is_deceased is not None:
+      if parent.is_deceased is False: 
+        if parent.agrees_to_guardianship:
+          parent.parental_relationship
 
   if parents_deceased:
     if relatives.there_are_any:
@@ -782,8 +784,9 @@ fields:
 code: |
   # only reachable when parents[0] consented and is alive, 
   # so we know that parents[0].parental_relationship is defined by the interactive question
-  if len(parents.complete_elements().filter(is_deceased=False).filter(agrees_to_guardianship=True)) > 1:
-    parents[1].parental_relationship = "mother" if parents[0].parental_relationship == "father" else "father"
+  if len(parents.complete_elements().filter(lambda p: p.is_deceased is False)) > 1:
+    if len(parents.complete_elements().filter(lambda p: p.agrees_to_guardianship is True)) > 1:
+      parents[1].parental_relationship = "mother" if parents[0].parental_relationship == "father" else "father"
 ---
 id: parent contact information
 sets:
@@ -1851,24 +1854,186 @@ attachment:
     - "users2_address_unit": ${ users.item(1).address.unit }
     - "users2_phone": ${ phone_number_formatted(users.item(1).phone_number) }
     - "users2_relationship_to_minor": ${ users.item(1).relationship_to_minor }
-    - "parents1_is_deceased": ${ parents[0].is_deceased }
-    - "parents1_name_first": ${ parents[0].name.first }
-    - "parents1_name_last": ${ parents[0].name.last }
-    - "parents1_name_middle_initial": ${ parents[0].name.middle_initial() }
-    - "parents1_address_city": ${ parents[0].address.city }
-    - "parents1_address_address": ${ parents[0].address.address }
-    - "parents1_address_unit": ${ parents[0].address.unit }
-    - "parents1_address_state": ${ parents[0].address.state }
-    - "parents1_address_zip": ${ parents[0].address.zip }
-    - "parents2_is_deceased": ${ parents[1].is_deceased }
-    - "parents2_name_first": ${ parents[1].name.first }
-    - "parents2_name_middle_initial": ${ parents[1].name.middle_initial() }
-    - "parents2_name_last": ${ parents[1].name.last }
-    - "parents2_address_city": ${ parents[1].address.city }
-    - "parents2_address_address": ${ parents[1].address.address }
-    - "parents2_address_unit": ${ parents[1].address.unit }
-    - "parents2_address_state": ${ parents[1].address.state }
-    - "parents2_address_zip": ${ parents[1].address.zip }
+    - "parents1_is_deceased": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].is_deceased }
+        % else:
+        ${ parents[0].is_deceased }
+        % endif
+        % else:
+        ${ parents[0].is_deceased }
+        % endif
+    - "parents1_name_first": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].name.first }
+        % else:
+        ${ parents[0].name.first }
+        % endif
+        % else:
+        ${ parents[0].name.first }
+        % endif
+    - "parents1_name_last": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].name.last }
+        % else:
+        ${ parents[0].name.last }
+        % endif
+        % else:
+        ${ parents[0].name.last }
+        % endif
+    - "parents1_name_middle_initial": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].name.middle_initial() }
+        % else:
+        ${ parents[0].name.middle_initial() }
+        % endif
+        % else:
+        ${ parents[0].name.middle_initial() }
+        % endif
+    - "parents1_address_city": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].address.city }
+        % else:
+        ${ parents[0].address.city }
+        % endif
+        % else:
+        ${ parents[0].address.city }
+        % endif
+    - "parents1_address_address": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].address.address }
+        % else:
+        ${ parents[0].address.address }
+        % endif
+        % else:
+        ${ parents[0].address.address }
+        % endif
+    - "parents1_address_unit": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].address.unit }
+        % else:
+        ${ parents[0].address.unit }
+        % endif
+        % else:
+        ${ parents[0].address.unit }
+        % endif
+    - "parents1_address_state": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].address.state }
+        % else:
+        ${ parents[0].address.state }
+        % endif
+        % else:
+        ${ parents[0].address.state }
+        % endif
+    - "parents1_address_zip": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[1].parental_relationship == "mother":
+        ${ parents[1].address.zip }
+        % else:
+        ${ parents[0].address.zip }
+        % endif
+        % else:
+        ${ parents[0].address.zip }
+        % endif
+    - "parents2_is_deceased": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].is_deceased }
+        % else:
+        ${ parents[1].is_deceased }
+        % endif
+        % else:
+        ${ parents[1].is_deceased }
+        % endif
+    - "parents2_name_first": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].name.first }
+        % else:
+        ${ parents[1].name.first }
+        % endif
+        % else:
+        ${ parents[1].name.first }
+        % endif
+    - "parents2_name_middle_initial": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].name.middle_initial() }
+        % else:
+        ${ parents[1].name.middle_initial() }
+        % endif
+        % else:
+        ${ parents[1].name.middle_initial() }
+        % endif
+    - "parents2_name_last": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].name.last }
+        % else:
+        ${ parents[1].name.last }
+        % endif
+        % else:
+        ${ parents[1].name.last }
+        % endif
+    - "parents2_address_city": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].address.city }
+        % else:
+        ${ parents[1].address.city }
+        % endif
+        % else:
+        ${ parents[1].address.city }
+        % endif
+    - "parents2_address_address": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].address.address }
+        % else:
+        ${ parents[1].address.address }
+        % endif
+        % else:
+        ${ parents[1].address.address }
+        % endif
+    - "parents2_address_unit": | 
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].address.unit }
+        % else:
+        ${ parents[1].address.unit }
+        % endif
+        % else:
+        ${ parents[1].address.unit }
+        % endif
+    - "parents2_address_state": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].address.state }
+        % else:
+        ${ parents[1].address.state }
+        % endif
+        % else:
+        ${ parents[1].address.state }
+        % endif
+    - "parents2_address_zip": |
+        % if len(parents.complete_elements()) > 1:
+        % if parents[0].parental_relationship == "father":
+        ${ parents[0].address.zip }
+        % else:
+        ${ parents[1].address.zip }
+        % endif
+        % else:
+        ${ parents[1].address.zip }
+        % endif
     - "has_guardian_nomination_by_signed_doc_yes": ${ has_guardian_nomination_by_signed_doc_yes }
     - "has_guardian_nomination_by_signed_doc_no": ${ has_guardian_nomination_by_signed_doc_no }
     - "parents_consent_to_guardian_appointment": ${ reason_seeking_guardianship["parents_consent"] }
