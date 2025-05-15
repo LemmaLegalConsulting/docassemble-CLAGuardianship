@@ -5,6 +5,8 @@ translations:
 include:
   - docassemble.ALAffidavitOfIndigency:affidavit_body.yml
   - docassemble.AssemblyLine:assembly_line.yml
+  # - docassemble.CARIRequest:cari_release.yml # Ours is per-guardian, so we can't import standalone version
+  - cari_request.yml
   - affidavit_disclosing_care_or_custody.yml
   - shared.yml
   - Bond_MPC_801.yml
@@ -220,6 +222,9 @@ code: |
 
   set_requested_guardians
   set_petitioner_requesting_guardianship
+  if who_is_making_petition == "interested_party" and petitioner_requesting_guardianship:
+    for user in users.complete_elements():
+      user.cari_information
 
   # if requested_guardians.there_are_any:
   #   requested_guardians.gather()
@@ -1209,9 +1214,34 @@ fields:
     required: False
   - Relationship to ${ children.familiar() }: requested_guardians[i].relationship_to_minor
     required: False
+  - note: |
+      **Court Activity Record Request Form**
+
+      Some courts may require you to give permission to look up court involvement (warrants, arrests, convictions, and restraining orders)
+      for each guardian you are requesting. The below questions are needed to complete the form that gives the court permission
+      to look up this information.
+
+      Fill out as much of the information below as you have. Have the guardian fill out the rest before your hearing.
+  - Date of birth: requested_guardians[i].birthdate
+    datatype: Birthdate
+    required: False
+  - Last 4 digits of social Security Number: requested_guardians[i].last_4_of_social
+    minlength: 4
+    maxlength: 4
+    validate: |
+      lambda y: y.isdigit() or validation_error('Enter only numbers')
+    required: False
+  - Mother's maiden name: requested_guardians[i].mothers_maiden_name
+    required: False
+  - Other names or aliases used: requested_guardians[i].other_names_or_alias
+    datatype: area
+    rows: 2
+    required: False
 validation code: |
   if who_is_making_petition == "minor":
     requested_guardians[i].has_minor_consent = True
+---
+
 ---
 id: requested guardian priority for appointment
 question: |
@@ -1774,6 +1804,11 @@ objects:
       affidavitofindigency_attachment,
       military_affidavit_bundle,
       bond_attachment,
+      ]
+      + [
+        guard.cari_attachment for guard in requested_guardians.complete_elements()
+      ] + [
+        user.cari_attachment for user in users.complete_elements()
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to download for your records",
@@ -1788,6 +1823,10 @@ objects:
       military_affidavit_bundle,
       bond_attachment,
       affidavitofindigency_attachment,
+      ] + [
+        guard.cari_attachment for guard in requested_guardians.complete_elements()
+      ] + [
+        user.cari_attachment for user in users.complete_elements()
       ],
       filename="petition_for_appointment_of_guardian",
       title="All forms to file in court",
@@ -2000,6 +2039,12 @@ attachment:
     - "attorneys1_bbo": ${ attorneys[0].bbo }
     - "minor_resides_in_court_county_division": ${ court_choice_reason["minors_county"] }
     - "guardian_nomination_probated_to_county_division": ${ court_choice_reason["will_county"] }
+---
+code: |
+  requested_guardians[i].cari_attachment.enabled = True
+---
+code: |
+  users[i].cari_attachment.enabled = who_is_making_petition == "interested_party" and petitioner_requesting_guardianship
 ---
 #################### Attachment Blocks End #####################
 ---
