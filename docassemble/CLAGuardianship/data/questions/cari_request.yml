@@ -1,0 +1,75 @@
+---
+id: users information for CARI form
+question: |
+    Court Activity Record Request Form - ${ users[i]}
+subquestion: |
+    % if i == 0:
+    Some courts may require you to give permission to look up court involvement (warrants, arrests, convictions, and restraining orders)
+    for anyone named as a guardian. The below questions are needed to complete the form that gives the court permission
+    to look up this information.
+    % endif
+fields:
+  - Date of birth: users[i].birthdate
+    datatype: Birthdate
+    required: False
+  - Last 4 digits of social Security Number: users[i].last_4_of_social
+    minlength: 4
+    maxlength: 4
+    validate: |
+      lambda y: y.isdigit() or validation_error('Enter only numbers')
+    required: False
+  - Mother's maiden name: users[i].mothers_maiden_name
+    required: False
+  - Other names or aliases used: users[i].other_names_or_alias
+    datatype: area
+    rows: 2
+    required: False
+continue button field: users[i].cari_information
+---
+objects:
+  - requested_guardians[i].cari_attachment: ALDocument.using(filename="cari", title="Court Activity Record Information Release", has_addendum=False)
+  - users[i].cari_attachment: ALDocument.using(filename="cari", title="Court Activity Record Information Release", has_addendum=False)
+---
+attachment:
+  - name: Court Activity Record Information and Warrant Management System Release Form
+    variable name: requested_guardians[i].cari_attachment[j]
+    filename: Court_Activity_Record_Information_and_Warrant_Management_System_Release_Form
+    pdf template file: CJP_34_Docassemble_project.pdf
+    editable: False
+    fields: 
+      - "case_name": |
+            In re ${ children }
+      - "docket_number": ${ docket_number } 
+      - "court_division": ${ trial_court.division }
+      - "proceeding_is_adoption": False
+      - "proceeding_is_name_change_petition": False
+      - "proceeding_is_guardianship_of_incapacitated_person": False
+      - "proceeding_is_guardianship_of_minor": True
+      - "proceeding_is_other": False
+      - "current_name": ${ requested_guardians[i] }
+      - "date_of_birth": ${ requested_guardians[i].birthdate }
+      - "last_4_of_social": ${ requested_guardians[i].last_4_of_social }
+      - "mothers_maiden_name": ${ requested_guardians[i].mothers_maiden_name }
+      - "other_names_or_alias": ${ requested_guardians[i].other_names_or_alias }
+---
+attachment:
+  - name: Court Activity Record Information and Warrant Management System Release Form
+    variable name: users[i].cari_attachment[j]
+    filename: Court_Activity_Record_Information_and_Warrant_Management_System_Release_Form
+    pdf template file: CJP_34_Docassemble_project.pdf
+    editable: False
+    fields: 
+      - "case_name": |
+            In re ${ children }
+      - "docket_number": ${ docket_number } 
+      - "court_division": ${ trial_court.division }
+      - "proceeding_is_adoption": False
+      - "proceeding_is_name_change_petition": False
+      - "proceeding_is_guardianship_of_incapacitated_person": False
+      - "proceeding_is_guardianship_of_minor": True
+      - "proceeding_is_other": False
+      - "current_name": ${ users[i] }
+      - "date_of_birth": ${ users[i].birthdate }
+      - "last_4_of_social": ${ users[i].last_4_of_social }
+      - "mothers_maiden_name": ${ users[i].mothers_maiden_name }
+      - "other_names_or_alias": ${ users[i].other_names_or_alias }
