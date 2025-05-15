@@ -126,7 +126,24 @@ fields:
       - The minor's parent(s): parent
         show if: guardian_removal
       - Someone interested in the minor's welfare: interested_party
---- 
+---
+template: surety_explanation
+subject: |
+  What is a surety and when is one required?
+content: |
+  **What is a surety?**
+
+  When a judge picks a new guardian for a minor, that person has to promise to take good care of the minor's money and property. 
+  Sometimes, the guardian needs to also choose someone else that agrees to pay the court back if the minor's money or property are not managed well. **This person is called a surety**. 
+
+  **When is a surety needed?**
+
+  Sureties are **not usually required**, since most minors do not have money or property to be managed.
+  In these cases, **the court will likely waive (or skip) the requirement**.
+
+  However, **if the minor *does* have money or property**, a surety will likely be needed. 
+  For example, this can happen when the minor has inherited money or property from a relative that passed away. 
+---
 #################### Question Blocks End #####################
 ---
 #################### Attachment Blocks Start #####################
@@ -181,3 +198,4 @@ terms:
 validation code: |
   if not acknowledged_information_use:
     validation_error("You must accept the terms of use to continue.", field="acknowledged_information_use")
+---
