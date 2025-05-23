@@ -392,7 +392,8 @@ code: |
       requested_guardians.there_are_any = True
     else:
       requested_guardians.there_are_any = False
-      petitioner_has_minor_consent 
+      petitioner_has_minor_consent
+      explain_minor_consent 
   elif (who_is_making_petition == "minor"):
     requested_guardians.there_are_any = True
 
