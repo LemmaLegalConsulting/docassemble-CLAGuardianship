@@ -54,6 +54,20 @@ fields:
   - ${ children[0].familiar() } agrees: petitioner_has_minor_consent
     datatype: yesnomaybe
 ---
+id: explain minor consent
+question: |
+  You may need to take more steps to include ${ children[0].familiar() }'s consent form in your petition!
+subquestion: |
+  **If ${ children[0].familiar() } is older than 14**, they'll need to **sign and notarize** the consent form, **regardless of whether they agree or not**. Otherwise, the court will likely not accept the form.
+
+  You'll need to file an additional **motion waiving the consent form requirements** if ${ children[0].familiar() }:
+  
+  * Can't get the form notarized because they don't have the proper ID 
+  * Refuses to sign the form
+  * Is unable to sign the form because of a disability or other limitation
+
+continue button field: explain_minor_consent
+---
 # ALDocument objects specify the metadata for each template
 objects:
   - consent_to_nomination_by_a_minor_attachment: ALDocument.using(title="Consent to Appointment by Minor", filename="consent_to_nomination_by_a_minor", has_addendum=False, )
