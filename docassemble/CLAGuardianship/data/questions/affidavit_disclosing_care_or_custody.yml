@@ -558,7 +558,7 @@ need: DCF
 question: |
   Tell us about the ${ordinal(i)} case involving ${comma_and_list(children_of_both, and_string=word("or"))}
 subquestion: |
-  Include the best information you know. If you’re not sure, it is okay to leave information blank or to write down what you remember.
+  Include the best information you know. You can skip sections *without* a <span style="color: red;">red asterisk</span> (<span style="color: red;">*</span>) if you don't know or remember the answer. 
 
   Only include information about cases that involve ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }.
 
