@@ -890,6 +890,10 @@ fields:
       Give the judge a short explanation for why the parents are not **available** to take care of ${ children.familiar() }.
 
       You do not need to list every reason. You will be able to explain more at the hearing.
+
+      % if parents.target_number < 2:
+      Include information about the unknown parent in your explanation.
+      % endif
   - ${ children.familiar() } already had a guardian, but that **guardian died** or is no longer able to act as guardian and the guardian did not name a replacement in writing: reason_seeking_guardianship["previous_guardian"]
     datatype: yesno
   - note: |
@@ -1016,6 +1020,30 @@ fields:
     field: petitioner_not_under_investigation
     datatype: yesno
     show if: petitioner_requesting_guardianship
+  - What is your relationship to ${ children.familiar() }?: users[0].relationship_to_minor
+    datatype: radio
+    choices:
+      - Grandparent: grandparent
+      - Sibling: sibling
+      - Sibling of parent: sibling of parent
+      - Aunt or uncle: aunt or uncle
+      - Family friend: family friend
+      - Other: other
+    show if: petitioner_requesting_guardianship
+  - Other: users[0].relationship_to_minor_other
+    show if:
+      variable: users[0].relationship_to_minor
+      is: other
+  - Were you nominated by ${ children[0].familiar() } to be their guardian, and therefore have priority appointment?: petitioner_priority_to_guardianship
+    datatype: yesnoradio
+    show if: 
+      variable: petitioner_requesting_guardianship
+      is: True
+      code: |
+        children[0].age_in_years() >= 14
+  - note: |
+      You need to attach a copy of the document that shows you were nominated by ${ children[0].familiar() } to be their guardian when you file.
+    show if: petitioner_priority_to_guardianship
 validation code: |
   if petitioner_requesting_guardianship and not petitioner_not_under_investigation:
     validation_error('The petitioner is not eligible to be a guardian if they are currently being investigated or have a record of past abuse or neglect of a child')
@@ -1920,7 +1948,12 @@ attachment:
     - "users2_phone": ${ phone_number_formatted(users.item(1).phone_number) }
     - "users2_relationship_to_minor": ${ users.item(1).relationship_to_minor }
     - "parents1_is_deceased": ${ parents[0].is_deceased }
-    - "parents1_name_first": ${ parents[0].name.first }
+    - "parents1_name_first": |
+        % if parents.target_number > 0:
+        ${ parents[0].name.first }
+        % else:
+        Information unknown
+        % endif
     - "parents1_name_last": ${ parents[0].name.last }
     - "parents1_name_middle_initial": ${ parents[0].name.middle_initial() }
     - "parents1_address_city": ${ parents[0].address.city }
@@ -1929,9 +1962,16 @@ attachment:
     - "parents1_address_state": ${ parents[0].address.state }
     - "parents1_address_zip": ${ parents[0].address.zip }
     - "parents2_is_deceased": ${ parents[1].is_deceased }
-    - "parents2_name_first": ${ parents[1].name.first }
-    - "parents2_name_middle_initial": ${ parents[1].name.middle_initial() }
-    - "parents2_name_last": ${ parents[1].name.last }
+    - "parents2_name_first": |
+        % if parents.target_number > 1:
+        ${ parents[1].name.first }
+        % else:
+        Information unknown
+        % endif
+    - "parents2_name_middle_initial": |
+        ${ parents[1].name.middle_initial() }
+    - "parents2_name_last": |
+        ${ parents[1].name.last }
     - "parents2_address_city": ${ parents[1].address.city }
     - "parents2_address_address": ${ parents[1].address.address }
     - "parents2_address_unit": ${ parents[1].address.unit }
@@ -2000,27 +2040,112 @@ attachment:
     - "relatives2_relationship_to_minor": ${ relatives[1].relationship_to_minor }
     - "acting_guardian_or_conservator_yes": ${ acting_guardian_yes }
     - "acting_guardian_or_conservator_no": ${ acting_guardian_no }
-    - "requested_guardians1_name_first": ${ requested_guardians[0].name.first }
-    - "requested_guardians1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
-    - "requested_guardians1_name_last": ${ requested_guardians[0].name.last }
-    - "requested_guardians1_address_address": ${ requested_guardians[0].address.address }
-    - "requested_guardians1_address_state": ${ requested_guardians[0].address.state }
-    - "requested_guardians1_address_zip": ${ requested_guardians[0].address.zip }
-    - "requested_guardians1_address_city": ${ requested_guardians[0].address.city }
-    - "requested_guardians1_address_unit": ${ requested_guardians[0].address.unit }
-    - "requested_guardians1_phone": ${ phone_number_formatted(requested_guardians[0].phone_number) }
-    - "requested_guardians1_relationship_to_minor": ${ requested_guardians[0].relationship_to_minor }
-    - "requested_guardians1_has_priority_appointment": ${ requested_guardians[0].has_priority_appointment }
-    - "requested_guardians2_has_priority_appointment": ${ requested_guardians[1].has_priority_appointment }
-    - "requested_guardians2_name_first": ${ requested_guardians[1].name.first }
-    - "requested_guardians2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
-    - "requested_guardians2_name_last": ${ requested_guardians[1].name.last }
-    - "requested_guardians2_address_address": ${ requested_guardians[1].address.address }
-    - "requested_guardians2_address_state": ${ requested_guardians[1].address.state }
-    - "requested_guardians2_address_zip": ${ requested_guardians[1].address.zip }
-    - "requested_guardians2_address_city": ${ requested_guardians[1].address.city }
-    - "requested_guardians2_address_unit": ${ requested_guardians[1].address.unit }
-    - "requested_guardians2_phone": ${ phone_number_formatted(requested_guardians[1].phone_number) }
+    - "requested_guardians1_name_first": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].name.first }
+        % else:
+        ${ requested_guardians[0].name.first }
+        % endif
+    - "requested_guardians1_name_middle_initial": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].name.middle_initial() }
+        % else:
+        ${ requested_guardians[0].name.middle_initial() }
+        % endif
+    - "requested_guardians1_name_last": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].name.last }
+        % else:
+        ${ requested_guardians[0].name.last }
+        % endif
+    - "requested_guardians1_address_address": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].address.address }
+        % else:
+        ${ requested_guardians[0].address.address }
+        % endif
+    - "requested_guardians1_address_state": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].address.state }
+        % else:
+        ${ requested_guardians[0].address.state }
+        % endif
+    - "requested_guardians1_address_zip": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].address.zip }
+        % else:
+        ${ requested_guardians[0].address.zip }
+        % endif
+    - "requested_guardians1_address_city": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].address.city }
+        % else:
+        ${ requested_guardians[0].address.city }
+        % endif
+    - "requested_guardians1_address_unit": |
+        % if petitioner_requesting_guardianship:
+        ${ users[0].address.unit }
+        % else:
+        ${ requested_guardians[0].address.unit }
+        % endif
+    - "requested_guardians1_phone": |
+        % if petitioner_requesting_guardianship:
+        ${ phone_number_formatted(users[0].phone_number) }
+        % else:
+        ${ phone_number_formatted(requested_guardians[0].phone_number) }
+        % endif
+    - "requested_guardians1_relationship_to_minor": |
+        % if petitioner_requesting_guardianship:
+        ${ option_or_other("users[0].relationship_to_minor") }
+        % else:
+        ${ requested_guardians[0].relationship_to_minor }
+        % endif
+    - "requested_guardians1_has_priority_appointment": |
+        % if petitioner_requesting_guardianship:
+        ${ petitioner_priority_to_guardianship }
+        % else:
+        ${ requested_guardians[0].has_priority_appointment }
+        % endif
+    - "requested_guardians2_has_priority_appointment": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].has_priority_appointment }
+        % endif
+    - "requested_guardians2_name_first": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].name.first }
+        % endif
+    - "requested_guardians2_name_middle_initial": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].name.middle_initial() }
+        % endif
+    - "requested_guardians2_name_last": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].name.last }
+        % endif
+    - "requested_guardians2_address_address": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].address.address }
+        % endif
+    - "requested_guardians2_address_state": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].address.state }
+        % endif
+    - "requested_guardians2_address_zip": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].address.zip }
+        % endif
+    - "requested_guardians2_address_city": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].address.city }
+        % endif
+    - "requested_guardians2_address_unit": |
+        % if not petitioner_requesting_guardianship:
+        ${ requested_guardians[1].address.unit }
+        % endif
+    - "requested_guardians2_phone": |
+        % if not petitioner_requesting_guardianship:
+        ${ phone_number_formatted(requested_guardians[1].phone_number) }
+        % endif
     - "requested_guardians2_relationship_to_minor": ${ requested_guardians[1].relationship_to_minor }
     - "guardians1_name_first": ${ guardians[0].name.first }
     - "guardians1_name_middle_initial": ${ guardians[0].name.middle_initial() }
