@@ -1487,6 +1487,8 @@ subquestion: |
   If there is something else you need to ask the court on the
   Petition for Guardianship, you can ask it here.
 
+  ${ collapse_template(traveling_with_minor_request) }
+
   This is optional.
 fields:
   - I have another request for the court: wants_additional_request
@@ -1497,6 +1499,20 @@ fields:
     show if:
       variable: wants_additional_request
       is: True
+---
+template: traveling_with_minor_request
+subject: |
+  Is the guardian planning to travel with ${ children[0].familiar() } or have them move to another state?
+content: |
+  In some cases, you may need to **request special permission for ${ children[0].familiar() } to travel** with the proposed guardian, whether that is yourself or someone else. For example, this request should be included if the guardian:
+
+  * Lives in a different state than ${ children[0].familiar() } and is planning to have ${ children[0].familiar() } move in with them.
+  * Plans to travel with ${ children[0].familiar() } outside the US for any reason, such as visiting parents or relatives that live outside the country.
+  * Wants to get ${ children[0].familiar() } a passport, even if they do not plan on doing any immediate traveling with ${ children[0].familiar() }.
+
+  **If any of the above are true**, you can select **Yes** and write why you need the court to allow the guardian to move ${ children[0].familiar() } outside of Massachusetts.
+  
+  **If the guardian wants to make this request at a later time**, they will need to file either a *General Probate Petition* or *Complaint for Modification*.
 ---
 id: preview petition_for_appointment_of_guardian
 question: |
