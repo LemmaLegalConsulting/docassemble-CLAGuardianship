@@ -1907,7 +1907,12 @@ attachment:
     - "users2_phone": ${ phone_number_formatted(users.item(1).phone_number) }
     - "users2_relationship_to_minor": ${ users.item(1).relationship_to_minor }
     - "parents1_is_deceased": ${ parents[0].is_deceased }
-    - "parents1_name_first": ${ parents[0].name.first }
+    - "parents1_name_first": |
+        % if parents.target_number > 0:
+        ${ parents[0].name.first }
+        % else:
+        Information unknown
+        % endif
     - "parents1_name_last": ${ parents[0].name.last }
     - "parents1_name_middle_initial": ${ parents[0].name.middle_initial() }
     - "parents1_address_city": ${ parents[0].address.city }
@@ -1916,9 +1921,16 @@ attachment:
     - "parents1_address_state": ${ parents[0].address.state }
     - "parents1_address_zip": ${ parents[0].address.zip }
     - "parents2_is_deceased": ${ parents[1].is_deceased }
-    - "parents2_name_first": ${ parents[1].name.first }
-    - "parents2_name_middle_initial": ${ parents[1].name.middle_initial() }
-    - "parents2_name_last": ${ parents[1].name.last }
+    - "parents2_name_first": |
+        % if parents.target_number > 1:
+        ${ parents[1].name.first }
+        % else:
+        Information unknown
+        % endif
+    - "parents2_name_middle_initial": |
+        ${ parents[1].name.middle_initial() }
+    - "parents2_name_last": |
+        ${ parents[1].name.last }
     - "parents2_address_city": ${ parents[1].address.city }
     - "parents2_address_address": ${ parents[1].address.address }
     - "parents2_address_unit": ${ parents[1].address.unit }
