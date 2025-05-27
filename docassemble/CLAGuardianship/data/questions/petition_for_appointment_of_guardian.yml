@@ -229,8 +229,9 @@ code: |
   # if requested_guardians.there_are_any:
   #   requested_guardians.gather()
 
-  if requested_temporary_guardians.there_are_any:
-    interview_order_temporary_guardian
+  if petitioner_requesting_guardianship or len(requested_guardians.complete_elements()) > 0:
+    if requested_temporary_guardians.there_are_any:
+      interview_order_temporary_guardian
   wants_sureties_waiver
   interview_order_bond
 
