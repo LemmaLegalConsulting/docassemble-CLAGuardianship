@@ -179,6 +179,9 @@ code: |
   form_filled_by_attorney
 
   who_is_making_petition
+
+  if who_is_making_petition == "interested_party":
+    appointment_petition_notice
  
   children.gather()
   if who_is_making_petition == 'minor':
@@ -1190,6 +1193,16 @@ edit:
   - address.zip
   - phone_number
 confirm: True
+---
+id: separate appointment petition notice
+question: |
+  If you want to suggest a new guardian, you'll need to make a separate petition
+subquestion: |
+  Since you are **not the minor's parent**, you cannot use this removal form to suggest a new guardian. 
+
+  **If you want to ask the court to appoint a new guardian** for the minor, you will need to file a separate *Petition for Guardianship of a Minor*.
+
+continue button field: appointment_petition_notice
 ---
 #################### Review Blocks End #####################
 ---
