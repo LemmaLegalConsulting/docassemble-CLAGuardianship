@@ -1381,6 +1381,8 @@ subquestion: |
   % else:
   Select Yes if ${ children.familiar() } either **has a conservator** or **will ask the court for one**.
   % endif
+
+  ${ collapse_template(explain_conservators)}
 fields:
   - label: |
       % if who_is_making_petition == "minor":
@@ -1390,6 +1392,16 @@ fields:
       % endif
     field: has_conservator_case_or_petition
     datatype: yesnoradio
+---
+template: explain_conservators
+subject: |
+  What is a **conservator**?
+content: |
+  A **conservator** is a person appointed by the court to make decisions about a minor's **finances**. 
+  This includes things like paying bills, making investments, handling other financial matters.
+
+  Conservators are **different from guardians**, who are appointed by the court to make decisions about a minor's **medical health** and **well-being**.
+  This can include decisions about where the minor lives, their medical care, and their schooling.
 ---
 id: minor assets there_are_any
 question: |
