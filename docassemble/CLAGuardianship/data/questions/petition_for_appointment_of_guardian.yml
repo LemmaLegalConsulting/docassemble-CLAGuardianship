@@ -1512,7 +1512,7 @@ content: |
 
   **If any of the above are true**, you can select **Yes** and enter a request in the box below, asking the court to not prohibit the guardian from moving ${ children[0].familiar() } outside of MA.
   
-  **If the guardian wants to make this request at a later time**, they'll need to file either a *General Probate Peition* or *Complaint for Modification*.
+  **If the guardian wants to make this request at a later time**, they will need to file either a *General Probate Petition* or *Complaint for Modification*.
 ---
 id: preview petition_for_appointment_of_guardian
 question: |
