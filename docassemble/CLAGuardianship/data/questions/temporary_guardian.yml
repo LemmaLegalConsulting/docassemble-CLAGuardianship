@@ -100,20 +100,12 @@ id: sureties waiver
 question: |
   Waiving the **surety** requirement
 subquestion: |
-  When a judge appoints a guardian, they require the guardian to sign a **bond**
-  to the court and name someone as a **surety**. The bond is a personal guarantee. 
-  It is a promise that the guardian will manage the money and property of the ward responsibly.
-
-  The **surety** is a person who promises to pay the court if the guardian does not manage the money
-  or property the way that they should. The surety can be someone other than the guardian.
+  ${ collapse_template(surety_explanation) }
 
   [More about surety bonds](https://www.masslegalhelp.org/children-and-families/guardians/court-appointment)
   (opens in a new tab).
 
-  When the guardian is for a minor, the surety requirement is often waived, or skipped.
-  This is because the guardian does not have control over ${ children[0].familiar() if len(children.complete_elements()) > 0 else f"the minor" }'s money or property.
-
-  You can ask the judge to skip the surety requirement now.
+  **If you don't think a surety will be needed**, you can ask the judge to skip the surety requirement below.
 fields:
   - I want permission to skip the **surety** requirement: wants_sureties_waiver
     datatype: yesnoradio
