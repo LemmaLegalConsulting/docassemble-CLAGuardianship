@@ -1409,5 +1409,5 @@ code: |
   if who_is_making_petition == "minor":
     additional_parties = ALPeopleList(elements=set(guardians + responsible_parents))
   else:
-    additional_parties = ALPeopleList(elements=guardians.union(children + guardians))
+    additional_parties = ALPeopleList(elements=guardians)
 ---
