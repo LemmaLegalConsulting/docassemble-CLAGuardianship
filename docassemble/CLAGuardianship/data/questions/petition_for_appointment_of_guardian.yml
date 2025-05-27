@@ -1510,7 +1510,7 @@ content: |
   * Plans to travel with ${ children[0].familiar() } outside the US for any reason, such as visiting parents or relatives that live outside the country.
   * Wants to get ${ children[0].familiar() } a passport, even if they do not plan on doing any immediate traveling with ${ children[0].familiar() }.
 
-  **If any of the above are true**, you can select **Yes** and enter a request in the box below, asking the court to not prohibit the guardian from moving ${ children[0].familiar() } outside of MA.
+  **If any of the above are true**, you can select **Yes** and write why you need the court to allow the guardian to move ${ children[0].familiar() } outside of Massachusetts.
   
   **If the guardian wants to make this request at a later time**, they will need to file either a *General Probate Petition* or *Complaint for Modification*.
 ---
