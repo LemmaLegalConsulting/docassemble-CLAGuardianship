@@ -58,7 +58,8 @@ id: explain minor consent
 question: |
   You may need to take more steps to include ${ children[0].familiar() }'s consent form in your petition!
 subquestion: |
-  **If ${ children[0].familiar() } is older than 14**, they'll need to **sign and notarize** the consent form, **regardless of whether they agree or not**. Otherwise, the court will likely not accept the form.
+  **If ${ children[0].familiar() } is older than 14**, most judges will require them to consent before they appoint a guardian. To accept, ${ children[0].familiar() } will need to **sign and notarize** the consent form.
+```0
 
   You'll need to file an additional **motion waiving the consent form requirements** if ${ children[0].familiar() }:
   
