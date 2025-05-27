@@ -114,6 +114,7 @@ attachment:
     variable name: parental_consent_to_petition_attachment[i]
     skip undefined: True
     pdf template file: parental_consent_to_petition.pdf
+    editable: False
     fields:
       - "docket_number__1": ${docket_number}
       - "trial_court_division": ${ trial_court.division }
@@ -141,9 +142,24 @@ attachment:
           % if al_form_type == "other" and showifdef("who_is_asking_to_participate") == "interested_person":
           ${ option_or_other("interested_person_relationship") }
           % endif
-      - "guardians1_name_first": ${ requested_guardians[0].name.first }
-      - "guardians1_name_middle_initial": ${ requested_guardians[0].name.middle_initial() }
-      - "guardians1_name_last": ${ requested_guardians[0].name.last }
+      - "guardians1_name_first": |
+          % if al_form_type == "starts_case" and showifdef("petitioner_requesting_guardianship"):
+          ${ users[0].name.first }
+          % else:
+          ${ requested_guardians[0].name.first }
+          % endif
+      - "guardians1_name_middle_initial": |
+          % if al_form_type == "starts_case" and showifdef("petitioner_requesting_guardianship"):
+          ${ users[0].name.middle_initial() }
+          % else:
+          ${ requested_guardians[0].name.middle_initial() }
+          % endif
+      - "guardians1_name_last": |
+          % if al_form_type == "starts_case" and showifdef("petitioner_requesting_guardianship"):
+          ${ users[0].name.last }
+          % else:
+          ${ requested_guardians[0].name.last }
+          % endif
       - "guardians2_name_middle_initial": ${ requested_guardians[1].name.middle_initial() }
       - "guardians2_name_first": ${ requested_guardians[1].name.first }
       - "guardians2_name_last": ${ requested_guardians[1].name.last }
