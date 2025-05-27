@@ -1504,7 +1504,7 @@ template: traveling_with_minor_request
 subject: |
   Is the guardian planning to travel with ${ children[0].familiar() } or have them move to another state?
 content: |
-  In some cases, you may need to **request special permission for ${ children[0].familiar() } to travel** with the proposed guardian, whether that's yourself or someone else. For example, this request should be included if the guardian:
+  In some cases, you may need to **request special permission for ${ children[0].familiar() } to travel** with the proposed guardian, whether that is yourself or someone else. For example, this request should be included if the guardian:
 
   * Lives in a different state than ${ children[0].familiar() } and is planning to have ${ children[0].familiar() } move in with them.
   * Plans to travel with ${ children[0].familiar() } outside the US for any reason, such as visitng parents or relatives that live outside the country.
