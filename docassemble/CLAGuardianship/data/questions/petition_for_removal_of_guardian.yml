@@ -223,6 +223,8 @@ code: |
     if requested_temporary_guardians.there_are_any:
       interview_order_temporary_guardian
 
+  set_temp_guardian_doc
+
   interview_order_petition_for_removal_of_guardian = True
 ---
 ###################### Main order ######################
@@ -506,6 +508,15 @@ code: |
 ---
 code: |
   user_ask_role = "plaintiff"
+---
+code: |
+  motion_temporary_guardian_attachment.enabled = False
+  
+  if requested_guardians.there_are_any:
+    if requested_temporary_guardians.there_are_any:
+      motion_temporary_guardian_attachment.enabled = True 
+  
+  set_temp_guardian_doc = True
 ---
 #################### Object Blocks End #####################
 ---
