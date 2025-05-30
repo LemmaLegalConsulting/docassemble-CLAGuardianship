@@ -510,12 +510,7 @@ code: |
   user_ask_role = "plaintiff"
 ---
 code: |
-  motion_temporary_guardian_attachment.enabled = False
-  
-  if requested_guardians.there_are_any:
-    if requested_temporary_guardians.there_are_any:
-      motion_temporary_guardian_attachment.enabled = True 
-  
+  motion_temporary_guardian_attachment.enabled = requested_guardians.there_are_any and requested_temporary_guardians.there_are_any
   set_temp_guardian_doc = True
 ---
 #################### Object Blocks End #####################
