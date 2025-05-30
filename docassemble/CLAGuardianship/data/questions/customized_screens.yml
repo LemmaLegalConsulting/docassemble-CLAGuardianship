@@ -174,20 +174,14 @@ sets:
 id: same guardian
 question: |
   Who do you want to name as the ${ ordinal(i) } temporary guardian?
-subquestion: |
-  % if i == 0:
-  You can name the same person as the permanent guardian, or you can
-  name someone else.
-  % endif
 fields:
-  - Someone already named: requested_temporary_guardians[i]
+  - You can choose from among the following people included in the petition: requested_temporary_guardians[i]
     datatype: object_radio
     choices:
-      - requested_guardians if ((not petitioner_requesting_guardianship) or (not bio_parents_can_resume_responsibilities)) else []
+      - requested_guardians if len(requested_guardians.complete_elements()) > 0 else []
       - users if petitioner_requesting_guardianship else []
     exclude:
       - requested_temporary_guardians.complete_elements()
-    none of the above: Someone else
+    none of the above: False
     disable others: True
-  - code: |
-      requested_temporary_guardians[i].name_fields()
+---
