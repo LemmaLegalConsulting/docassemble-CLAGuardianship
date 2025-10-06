@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Diff Word documents
-        uses: SuffolkLITLab/ALActions/word_diff@main
+        uses: SuffolkLITLab/ALActions/word_diff@test-empty-commit
         with:
           # Optional: override the base commit if needed
           # base_ref: main
