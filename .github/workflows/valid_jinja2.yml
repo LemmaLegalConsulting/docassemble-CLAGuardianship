@@ -1,9 +1,9 @@
 name: Validate DOCX Templates
 
 on:
-  pull_request:
-    paths:
-      - '**/*.docx'
+  #pull_request:
+  #  paths:
+  #    - '**/*.docx'
   push:
     paths:
       - '**/*.docx'
