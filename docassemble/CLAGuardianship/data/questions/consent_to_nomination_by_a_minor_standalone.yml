@@ -204,7 +204,7 @@ sets:
   - not_consented_guardians[i].name.last
   - not_consented_guardians[i].name.middle
   - not_consented_guardians[i].name.suffix
-id: names of opposing parties
+id: "names of opposing parties 2"
 question: |
   Name of your ${ ordinal(i) } not consented guardian
 fields:
@@ -220,7 +220,7 @@ sets:
   - nominated_guardians[i].name.last
   - nominated_guardians[i].name.middle
   - nominated_guardians[i].name.suffix
-id: names of opposing parties
+id: "names of opposing parties 3"
 question: |
   Name of your ${ ordinal(i) } nominated guardian
 fields:

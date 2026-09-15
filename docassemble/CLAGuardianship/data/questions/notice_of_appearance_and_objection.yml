@@ -286,6 +286,7 @@ review:
       ${ bbo }
 ---
 continue button field: users.revisit
+id: "edit users"
 question: |
   Edit users
 subquestion: |
@@ -312,6 +313,7 @@ edit:
 confirm: True
 ---
 continue button field: attorneys.revisit
+id: "edit attorneys"
 question: |
   Edit attorneys
 subquestion: |

@@ -358,6 +358,7 @@ code: |
 ---
 event: warn_minor_too_young
 decoration: hand
+id: "because you are under the age of 14"
 question: |
   Because you are under the age of 14
 subquestion: |
@@ -518,7 +519,7 @@ fields:
     required: False
   - Relationship to ${ children.familiar() }: users[0].relationship_to_minor
 ---
-id: petitioner information
+id: "petitioner information 2"
 sets:
   - users[i].name.first
   - users[i].name.last
@@ -1010,7 +1011,13 @@ question: |
   Do you want to be the guardian for ${ children.familiar() }?
   % endif
 fields:
-  - no label: petitioner_requesting_guardianship
+  - label: |
+      % if form_filled_by_attorney:
+      Does ${ users[0] } want to be the guardian for ${ children.familiar() }?
+      % else:
+      Do you want to be the guardian for ${ children.familiar() }?
+      % endif
+    field: petitioner_requesting_guardianship
     datatype: yesnoradio
   - label: |
       % if form_filled_by_attorney:
@@ -1713,6 +1720,7 @@ review:
     show if: len(attorneys.complete_elements()) > 0
 ---
 continue button field: children.revisit
+id: "edit children"
 question: |
   Edit children
 subquestion: |
@@ -1736,6 +1744,7 @@ edit:
 confirm: True
 ---
 continue button field: users.revisit
+id: "edit users"
 question: |
   Edit users
 subquestion: |
@@ -1762,6 +1771,7 @@ edit:
 confirm: True
 ---
 continue button field: guardians.revisit
+id: "edit guardians"
 question: |
   Edit guardians
 subquestion: |
@@ -1785,6 +1795,7 @@ edit:
 confirm: True
 ---
 continue button field: attorneys.revisit
+id: "edit attorneys"
 question: |
   Edit attorneys
 subquestion: |

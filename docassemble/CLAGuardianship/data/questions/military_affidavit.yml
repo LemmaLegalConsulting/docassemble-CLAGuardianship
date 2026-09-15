@@ -420,6 +420,7 @@ review:
       ${ bbo }
 ---
 continue button field: plaintiffs.revisit
+id: "edit plaintiffs"
 question: |
   Edit plaintiffs
 subquestion: |
@@ -438,6 +439,7 @@ confirm: True
 
 ---
 continue button field: defendants.revisit
+id: "edit defendants"
 question: |
   Edit defendants
 subquestion: |
@@ -456,6 +458,7 @@ confirm: True
 
 ---
 continue button field: docket_numbers.revisit
+id: "edit docket numbers"
 question: |
   Edit docket_numbers
 subquestion: |
@@ -473,6 +476,7 @@ confirm: True
 
 ---
 continue button field: users.revisit
+id: "edit users"
 question: |
   Edit users
 subquestion: |

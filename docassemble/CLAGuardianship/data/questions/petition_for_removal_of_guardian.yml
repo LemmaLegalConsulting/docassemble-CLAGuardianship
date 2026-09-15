@@ -548,7 +548,7 @@ fields:
     datatype: al_international_phone
     required: False
 ---
-id: petitioner information
+id: "petitioner information 2"
 sets:
   - users[i].name.first
   - users[i].name.last
@@ -775,7 +775,7 @@ fields:
   - Do you want someone else to be ${ children.familiar() }'s new guardian?: requested_guardians.there_are_any
     datatype: yesnoradio
 ---
-id: requested_guardians there_is_another
+id: "requested_guardians there_is_another 2"
 question: |
   Add another new guardian?
 fields:
@@ -906,7 +906,7 @@ validation code: |
   if len(responsible_parents.complete_elements()) > 0:
     responsible_parents.there_is_another = False
 ---
-id: responsible parent information
+id: "responsible parent information 2"
 sets:
   - responsible_parents[i].name.first
   - responsible_parents[i].name.last
@@ -1073,6 +1073,7 @@ review:
       ${ attorneys[0].bbo }
 ---
 continue button field: children.revisit
+id: "edit children"
 question: |
   Edit children
 subquestion: |
@@ -1090,6 +1091,7 @@ edit:
 confirm: True
 ---
 continue button field: users.revisit
+id: "edit users"
 question: |
   Edit users
 subquestion: |
@@ -1116,6 +1118,7 @@ edit:
 confirm: True
 ---
 continue button field: guardians.revisit
+id: "edit guardians"
 question: |
   Edit guardians
 subquestion: |
@@ -1139,6 +1142,7 @@ edit:
 confirm: True
 ---
 continue button field: responsible_parents.revisit
+id: "edit responsible parents"
 question: |
   Edit responsible_parents
 subquestion: |
@@ -1162,6 +1166,7 @@ edit:
 confirm: True
 ---
 continue button field: requested_guardians.revisit
+id: "edit requested guardians"
 question: |
   Edit requested_guardians
 subquestion: |
@@ -1179,6 +1184,7 @@ edit:
 confirm: True
 ---
 continue button field: attorneys.revisit
+id: "edit attorneys"
 question: |
   Edit attorneys
 subquestion: |
