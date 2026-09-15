@@ -468,6 +468,7 @@ review:
       > ${ single_paragraph(excluded_powers) }
 ---
 continue button field: children.revisit
+id: "edit children"
 question: |
   Edit children
 subquestion: |
@@ -486,6 +487,7 @@ confirm: True
 
 ---
 continue button field: users.revisit
+id: "edit users"
 question: |
   Edit users
 subquestion: |
